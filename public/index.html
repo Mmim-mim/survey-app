@@ -1,0 +1,580 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>แบบฟอร์มการประเมินทั้งหมด</title>
+    <style>
+      :root {
+        --sheet: #f3f4f6;
+        --card: #fff;
+        --line: #e5e7eb;
+        --ink: #0f172a;
+        --muted: #6b7280;
+        --green: #16a34a;
+        --green-ink: #fff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #0f172a;
+        font-family:
+          "Noto Sans Thai",
+          system-ui,
+          Segoe UI,
+          Arial;
+        color: var(--ink);
+      }
+
+      /* ===== Sidebar ===== */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -260px;
+        width: 260px;
+        height: 100vh;
+        background: #fff;
+        border-right: 1px solid #d1d5db;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+        transition: left 0.3s ease;
+        z-index: 2000;
+      }
+      .sidebar-header {
+        font-weight: 700;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .sidebar a {
+        display: block;
+        padding: 12px 20px;
+        color: #111;
+        text-decoration: none;
+        border-bottom: 1px solid #f1f1f1;
+      }
+      .sidebar a:hover {
+        background: #f3f4f6;
+      }
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        z-index: 1500;
+      }
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
+      body.sidebar-open .overlay {
+        display: block;
+      }
+
+      /* ===== Page (full) ===== */
+      .page {
+        min-height: 100vh;
+        padding: 20px;
+        transition:
+          transform 0.3s ease,
+          margin-left 0.3s ease,
+          filter 0.3s ease;
+      }
+      body.sidebar-open .page {
+        margin-left: 260px;
+        transform: scale(0.96);
+        filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.25));
+      }
+
+      .app {
+        background: #e5e7eb;
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      /* Top bar */
+      .topbar {
+        background: #f1f5f9;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .burger {
+        width: 18px;
+        height: 12px;
+        position: relative;
+      }
+      .burger:before,
+      .burger:after,
+      .burger span {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #111;
+      }
+      .burger:before {
+        top: 0;
+      }
+      .burger span {
+        top: 5px;
+      }
+      .burger:after {
+        bottom: 0;
+      }
+      .title {
+        font-weight: 700;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .year {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #374151;
+      }
+      .year input {
+        width: 84px;
+        padding: 8px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        background: #fff;
+      }
+      .btn {
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+      }
+      .btn.green {
+        background: var(--green);
+        color: var(--green-ink);
+        border-color: #12873c;
+      }
+
+      /* Avatar + dropdown */
+      .avatar-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .user-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+      }
+      .avatar:before {
+        content: "👤";
+        font-size: 18px;
+      }
+      .dropdown {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 8px);
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+        min-width: 180px;
+        display: none;
+        z-index: 2500;
+      }
+      .dropdown.open {
+        display: block;
+      }
+      .dropdown a {
+        display: block;
+        padding: 10px 12px;
+        color: #111;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .dropdown a:hover {
+        background: #f3f4f6;
+      }
+
+      @media (max-width: 720px) {
+        .year {
+          display: none;
+        }
+      }
+      /* แถวควบคุม (ปีงบประมาณ + เพิ่มข้อมูล) ให้อยู่ใต้ topbar */
+      .actions-row {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .actions-row .spacer {
+        flex: 1;
+      }
+
+      /* กล่องปีงบประมาณ */
+      .actions-row .year {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      /* ดันปุ่มไปขวาเล็กน้อยถ้าต้องการ */
+      .actions-row .spacer {
+        flex: 1;
+      }
+      .actions-row .year.year-combo .btn.green {
+        margin-left: 6px;
+      }
+
+      /* Card + table */
+      .card {
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 14px;
+      }
+      .table-wrap {
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        overflow: auto;
+        background: #f5f6f8;
+      }
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 850px;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: #f0f1f3;
+        z-index: 1;
+        font-weight: 700;
+        border-bottom: 1px solid #d1d5db;
+        color: #374151;
+        font-size: 14px;
+      }
+      th,
+      td {
+        padding: 12px 10px;
+        text-align: left;
+        border-right: 1px solid #e5e7eb;
+      }
+      tr > *:last-child {
+        border-right: none;
+      }
+      tbody td {
+        background: #fafafa;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+      }
+      .empty {
+        color: #9ca3af;
+        text-align: center;
+        padding: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-header">เมนู</div>
+
+      <!-- เปลี่ยน .php -> .html -->
+      <a href="index.html">หน้าแรก</a>
+      <a href="from.html">เพิ่มข้อมูล</a>
+      <a href="manage.html">จัดการแบบฟอร์ม</a>
+      <a href="dashboard.html">Dashboard</a>
+
+      <!-- ออกจากระบบ/ไปหน้า login -->
+      <a href="login.html">ออกจากระบบ</a>
+    </div>
+    <div id="overlay" class="overlay"></div>
+
+    <!-- Page -->
+    <div class="page">
+      <div class="app">
+        <div class="topbar">
+          <button id="btnMenu" class="icon-btn" aria-label="menu">
+            <span class="burger" aria-hidden="true"><span></span></span>
+          </button>
+
+          <div class="title">แบบฟอร์มการประเมินทั้งหมด</div>
+          <div class="spacer"></div>
+          <!-- Avatar + dropdown -->
+          <div class="avatar-wrap" id="avatarWrap">
+            <div class="user-label" id="userLabel">👤</div>
+
+            <div class="avatar" id="btnAvatar" title="โปรไฟล์"></div>
+            <div class="dropdown" id="avatarMenu">
+              <!-- เปลี่ยนไปหน้า login (ชื่อ login ตามที่ขอ) -->
+              <a href="login.html" id="btnLogout">ออกจากระบบ</a>
+            </div>
+          </div>
+          <!-- /Avatar -->
+        </div>
+
+        <!-- ===== แถวใหม่: ปีงบประมาณ + เพิ่มข้อมูล ===== -->
+        <div class="actions-row">
+          <div class="spacer"></div>
+
+          <div class="year year-combo">
+            <span>ปีงบประมาณ</span>
+            <select
+              id="budgetYear"
+              style="min-width: 70px; height: 30px; border-radius: 8px"
+            ></select>
+
+            <button id="btnAdd" class="btn green" type="button">
+              เพิ่มข้อมูล
+            </button>
+          </div>
+        </div>
+        <!-- Table Card -->
+        <div class="card">
+          <div class="table-wrap">
+            <table id="tbl">
+              <thead>
+                <tr>
+                  <th style="width: 80px; text-align: center">ลำดับ</th>
+                  <th style="width: 200px; text-align: center">ชื่อ-นามสกุล</th>
+                  <th style="text-align: center">หัวข้อ</th>
+                  <th style="width: 140px; text-align: center">
+                    ฝ่ายที่สังกัด
+                  </th>
+                  <th style="width: 160px; text-align: center">
+                    วันที่เข้าร่วม
+                  </th>
+                  <th style="width: 180px; text-align: center">
+                    ผลการดำเนินงาน
+                  </th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+                <tr>
+                  <td colspan="6" class="empty">ยังไม่มีข้อมูล</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const body = document.body;
+      const overlay = document.getElementById("overlay");
+      const btnMenu = document.getElementById("btnMenu");
+
+      function openMenu() {
+        body.classList.add("sidebar-open");
+      }
+      function closeMenu() {
+        body.classList.remove("sidebar-open");
+      }
+
+      btnMenu.addEventListener("click", () => {
+        body.classList.contains("sidebar-open") ? closeMenu() : openMenu();
+      });
+      overlay.addEventListener("click", closeMenu);
+
+      // ===== ตั้งค่าปีงบประมาณ =====
+      const select = document.getElementById("budgetYear");
+
+      // ปีปัจจุบัน (พ.ศ.)
+      const currentYearBE = new Date().getFullYear() + 543;
+
+      // ช่วงปีที่ต้องการให้เลือก
+      const startYear = currentYearBE - 3;
+      const endYear = currentYearBE;
+
+      for (let year = startYear; year <= endYear; year++) {
+        const option = document.createElement("option");
+        option.value = year;
+        option.textContent = year;
+
+        // ให้ปีปัจจุบันถูกเลือกอัตโนมัติ
+        if (year === currentYearBE) {
+          option.selected = true;
+        }
+
+        select.appendChild(option);
+      }
+
+      // ไปหน้าเพิ่มข้อมูล (คงเดิมตามไฟล์ของคุณ)
+      document.getElementById("btnAdd").addEventListener("click", () => {
+        localStorage.removeItem("surveyDraft");
+        window.location.href = "from.html";
+      });
+
+      // Avatar dropdown
+      const btnAvatar = document.getElementById("btnAvatar");
+      const avatarMenu = document.getElementById("avatarMenu");
+
+      btnAvatar.addEventListener("click", (e) => {
+        e.stopPropagation();
+        avatarMenu.classList.toggle("open");
+      });
+      // ===== Show logged-in user name =====
+      const userLabelEl = document.getElementById("userLabel");
+
+      // displayName จะมาจาก DB (login.html เซ็ตไว้แล้ว), ถ้าไม่มีให้ fallback ไปที่ user
+      const displayName = (localStorage.getItem("displayName") || "").trim();
+      const username = (localStorage.getItem("user") || "").trim();
+
+      userLabelEl.textContent = displayName || username || "ผู้ใช้";
+
+      // ===== Logout: clear localStorage then go login =====
+      const btnLogout = document.getElementById("btnLogout");
+      btnLogout.addEventListener("click", (e) => {
+        e.preventDefault();
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("user");
+        localStorage.removeItem("displayName");
+        localStorage.removeItem("role");
+        window.location.href = "login.html";
+      });
+
+      // ปิดเมนูเมื่อคลิกนอกกรอบ
+      document.addEventListener("click", (e) => {
+        if (!avatarMenu.contains(e.target) && !btnAvatar.contains(e.target)) {
+          avatarMenu.classList.remove("open");
+        }
+      });
+
+      // ปิดด้วยปุ่ม ESC
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") avatarMenu.classList.remove("open");
+      });
+
+      // หมายเหตุ: ปุ่มออกจากระบบเป็นลิงก์ไป login.html อยู่แล้ว
+
+      // ===== โหลดรายการฟอร์มทั้งหมด (ล่าสุดก่อน) แล้วใส่ในตาราง =====
+      const tbody = document.getElementById("tbody");
+
+      function esc(s) {
+        return String(s ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      async function loadFormsList() {
+        try {
+          const username = (localStorage.getItem("user") || "").trim();
+          const role = (localStorage.getItem("role") || "staff").trim();
+
+          const qs = new URLSearchParams({
+            username,
+            role,
+          });
+
+          const res = await fetch("/api/forms?" + qs.toString());
+          const rows = await res.json();
+          if (!res.ok)
+            throw new Error(rows?.error || "โหลดรายการฟอร์มไม่สำเร็จ");
+
+          if (!Array.isArray(rows) || rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>`;
+            return;
+          }
+
+          tbody.innerHTML = rows
+            .map((r, idx) => {
+              const creator = esc(r.created_by || "-");
+              const title = esc(r.form_title || "แบบประเมิน");
+              return `
+          <tr>
+            <td style="text-align:center">${idx + 1}</td>
+            <td style="text-align:center">${creator}</td>
+            <td>${title}</td>
+            <td style="text-align:center">${esc(r.dept_name || "-")}</td>
+            <td style="text-align:center">
+              <button class="btn green btn-do" data-form-id="${r.id}" type="button">
+                ทำแบบประเมิน
+              </button>
+            </td>
+            <td style="text-align:center">-</td>
+          </tr>
+        `;
+            })
+            .join("");
+        } catch (e) {
+          tbody.innerHTML = `<tr><td colspan="6" class="empty">เกิดข้อผิดพลาด: ${esc(
+            e.message,
+          )}</td></tr>`;
+        }
+      }
+
+      // คลิกปุ่ม "ทำแบบประเมิน" -> โหลดฟอร์ม -> ใส่ localStorage -> ไป preview.html
+      tbody.addEventListener("click", async (e) => {
+        const btn = e.target.closest(".btn-do");
+        if (!btn) return;
+
+        const id = btn.getAttribute("data-form-id");
+        if (!id) return;
+
+        try {
+          btn.disabled = true;
+
+          const res = await fetch("/api/forms/" + encodeURIComponent(id));
+          const json = await res.json();
+          if (!res.ok) throw new Error(json?.error || "โหลดฟอร์มไม่สำเร็จ");
+          if (!json.form)
+            throw new Error("ฟอร์มนี้อ่านไม่ได้ (form_json ไม่ถูกต้อง)");
+
+          // ให้ preview.html ใช้เหมือนเดิม (อ่านจาก surveyDraft)
+          localStorage.setItem("surveyDraft", JSON.stringify(json.form));
+
+          // ไปหน้าทำแบบประเมิน
+          window.location.href = "preview.html";
+        } catch (err) {
+          alert("เปิดฟอร์มไม่สำเร็จ: " + err.message);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+
+      // เรียกตอนเปิดหน้า
+      loadFormsList();
+    </script>
+  </body>
+</html>

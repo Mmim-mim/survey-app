@@ -1,0 +1,1621 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <title>ฟอร์มประเมิน</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --line: #e5e7eb;
+        --ink: #0f172a;
+        --muted: #64748b;
+        --soft: #f1f5f9;
+
+        --accent: #2563eb;
+        --accent2: #7c3aed;
+
+        --radius-xl: 22px;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+
+        --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        --shadow2: 0 6px 18px rgba(15, 23, 42, 0.08);
+
+        --ring: 0 0 0 4px rgba(37, 99, 235, 0.15);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          "Noto Sans Thai",
+          system-ui,
+          Segoe UI,
+          Arial;
+        background:
+          radial-gradient(
+            1200px 600px at 10% -10%,
+            rgba(37, 99, 235, 0.12),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 500px at 100% 0%,
+            rgba(124, 58, 237, 0.1),
+            transparent 55%
+          ),
+          var(--bg);
+        color: var(--ink);
+        margin: 0;
+        padding: clamp(16px, 2.2vw, 28px);
+      }
+
+      .wrap {
+        width: 100%;
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      /* --- Top header card --- */
+      .header {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfbff 100%);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xl);
+        padding: clamp(18px, 2vw, 26px);
+        margin-bottom: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .title-inp {
+        width: 100%;
+        font-weight: 900;
+        font-size: clamp(26px, 2.6vw, 34px);
+        line-height: 1.2;
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 8px 10px;
+        border-radius: 12px;
+      }
+
+      .title-inp::placeholder {
+        color: #94a3b8;
+      }
+
+      .title-inp:focus {
+        background: #fff;
+        border-color: #cbd5e1;
+        box-shadow: var(--ring);
+        outline: none;
+      }
+
+      .subtitle-inp {
+        width: 100%;
+        margin-top: 10px;
+        color: var(--muted);
+        border: 1px solid transparent;
+        background: transparent;
+        padding: 10px 10px;
+        border-radius: 12px;
+        resize: vertical;
+        min-height: 48px;
+      }
+
+      .subtitle-inp::placeholder {
+        color: #94a3b8;
+      }
+
+      .subtitle-inp:focus {
+        background: #fff;
+        border-color: #cbd5e1;
+        box-shadow: var(--ring);
+        outline: none;
+        color: #334155;
+      }
+
+      h2 {
+        font-size: clamp(22px, 2.2vw, 30px);
+        margin: 22px 0 10px;
+        letter-spacing: -0.2px;
+      }
+
+      /* --- Section cards --- */
+      .section {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        background: var(--card);
+        margin: 12px 0 18px;
+        box-shadow: var(--shadow2);
+      }
+
+      .section > .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 800;
+        padding: 6px 6px 10px;
+      }
+
+      .head .left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .head .title {
+        font-size: 16px;
+        line-height: 1.2;
+      }
+
+      .hint {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      /* --- Group --- */
+      .group {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        padding: 14px;
+        margin: 12px 0;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+      }
+
+      .group .ghead {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-weight: 800;
+        margin-bottom: 10px;
+      }
+
+      .ghead .left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      /* --- Switch (checkbox) --- */
+      input.toggle,
+      input.subtoggle {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 44px;
+        height: 26px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        border: 1px solid #cbd5e1;
+        position: relative;
+        cursor: pointer;
+        transition: 0.18s ease;
+        flex: 0 0 auto;
+      }
+
+      input.toggle::after,
+      input.subtoggle::after {
+        content: "";
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: #fff;
+        position: absolute;
+        top: 50%;
+        left: 3px;
+        transform: translateY(-50%);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+        transition: 0.18s ease;
+      }
+
+      input.toggle:checked,
+      input.subtoggle:checked {
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        border-color: transparent;
+      }
+
+      input.toggle:checked::after,
+      input.subtoggle:checked::after {
+        left: 21px;
+      }
+
+      input.toggle:focus-visible,
+      input.subtoggle:focus-visible {
+        outline: none;
+        box-shadow: var(--ring);
+      }
+
+      /* --- Chips --- */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        transition: 0.15s ease;
+        user-select: none;
+      }
+
+      .chip:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+        transform: translateY(-1px);
+      }
+
+      .chip input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--accent);
+      }
+
+      /* --- Stacks / rows --- */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+      }
+
+      .num {
+        width: 42px;
+        text-align: right;
+        color: #94a3b8;
+        font-weight: 700;
+        flex: 0 0 auto;
+      }
+
+      .input {
+        flex: 1 1 auto;
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+        padding: 14px 16px;
+        /* ปรับให้สูง/สมมาตรมากขึ้น */
+        min-height: 48px;
+        /* ทำให้ช่องเท่ากันทุกส่วน */
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        outline: none;
+        background: #fff;
+        transition: 0.15s ease;
+      }
+
+      .input:focus {
+        border-color: #93c5fd;
+        box-shadow: var(--ring);
+      }
+
+      /* --- Buttons --- */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        background: #fff;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 700;
+        transition: 0.15s ease;
+        white-space: nowrap;
+      }
+
+      .btn:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+        transform: translateY(-1px);
+      }
+
+      .btn:active {
+        transform: translateY(0px);
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+      }
+
+      .btn.soft {
+        background: #f8fafc;
+      }
+
+      .btn.del {
+        padding: 10px 12px;
+      }
+
+      .center {
+        display: flex;
+        justify-content: center;
+        margin: 14px 0 0;
+      }
+
+      .right {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+      }
+
+      .remove-dim:hover {
+        background: #fee2e2 !important;
+        border-color: #fecaca !important;
+      }
+
+      /* --- Disabled look --- */
+      .section.disabled,
+      .group.disabled {
+        opacity: 0.55;
+        filter: grayscale(0.05);
+      }
+
+      /* footer buttons */
+      .footer {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin: 18px 0 8px;
+      }
+
+      /* make add buttons look consistent */
+      #addDimensionTop,
+      #addDimensionBottom {
+        min-width: 220px;
+      }
+
+      /* Responsive tweaks */
+      @media (max-width: 640px) {
+        .item {
+          align-items: stretch;
+        }
+
+        .num {
+          width: 34px;
+        }
+
+        .btn {
+          width: 100%;
+        }
+
+        .center {
+          margin-top: 10px;
+        }
+      }
+
+      /* ===== Custom Dimension (หัวข้อด้านต่างๆ) : FIX ===== */
+      .custom-dimension {
+        width: 100%;
+      }
+
+      .custom-dimension .dim-row {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        /* เลข | ช่องเต็ม | ปุ่มลบ */
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .custom-dimension .dim-row .sec-num {
+        width: auto;
+      }
+
+      .custom-dimension .dim-row .dim-title {
+        width: 100%;
+        min-width: 0;
+        /* สำคัญมาก เพื่อให้ช่องยืดเต็ม */
+        min-height: 48px;
+      }
+
+      /* ✅ FIX ตัวจริง: กัน .right (ปุ่มลบ) ดันช่องพิมพ์ใน grid */
+      .custom-dimension .dim-row .right {
+        margin-left: 0;
+        /* ห้ามใช้ auto ใน grid */
+        justify-self: end;
+        /* ให้ grid จัดไปชิดขวาแทน */
+      }
+
+      @media (max-width: 640px) {
+        .custom-dimension .dim-row {
+          grid-template-columns: 34px 1fr;
+          grid-template-areas:
+            "num title"
+            ".   del";
+        }
+
+        .custom-dimension .dim-row .sec-num {
+          grid-area: num;
+        }
+
+        .custom-dimension .dim-row .dim-title {
+          grid-area: title;
+        }
+
+        .custom-dimension .dim-row .right {
+          grid-area: del;
+          justify-self: end;
+        }
+      }
+
+      /* ขยายเฉพาะกล่องข้อความ (ชื่อหัวข้อด้านต่างๆ) */
+      .custom-dimension .dim-row {
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        /* เลข | กล่องข้อความยืดเต็ม | ปุ่มลบ (ขนาดเดิม) */
+      }
+
+      /* ย้ำให้ input ยืดจริง */
+      .custom-dimension .dim-row .dim-title {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+      }
+
+      /* === FORCE FULL WIDTH: หัวข้อด้านต่างๆ (กล่องชื่อหัวข้อ) === */
+      .group.custom-dimension {
+        width: 100% !important;
+        max-width: none !important;
+      }
+
+      .group.custom-dimension .dim-row {
+        width: 100% !important;
+        max-width: none !important;
+        display: grid !important;
+        grid-template-columns: 42px minmax(0, 1fr) auto !important;
+        /* เลข | ช่องยืดเต็ม | ปุ่มลบ */
+        align-items: center !important;
+      }
+
+      /* กันปุ่มลบ (right) ไปดัน/บีบช่องกลาง */
+      .group.custom-dimension .dim-row .right {
+        margin-left: 0 !important;
+        justify-self: end !important;
+      }
+
+      /* บังคับให้ช่องชื่อหัวข้อยืดเต็มจริง */
+      .group.custom-dimension .dim-row .dim-title {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        display: block !important;
+      }
+
+      /* ===== FIX เฉพาะส่วนที่ 2: หัวข้อด้านต่างๆ ที่เพิ่ม (data-role="rating") ===== */
+      /* เพราะ role=rating ไม่มีเลขหน้าแล้ว -> ตัดคอลัมน์ 42px ทิ้ง ให้ช่องชื่อหัวข้อยาวขึ้น */
+      .section[data-sec="s2"]
+        .group.custom-dimension[data-role="rating"]
+        .dim-row {
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        /* ชื่อหัวข้อ | ปุ่มลบ */
+      }
+
+      /* ย้ำให้ช่องชื่อหัวข้อยืดเต็มจริง */
+      .section[data-sec="s2"]
+        .group.custom-dimension[data-role="rating"]
+        .dim-title {
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      /* ===== Section 2 : main model layout ===== */
+      #mainModels {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .main-model {
+        width: 100%;
+      }
+
+      .main-model > .ghead {
+        margin-bottom: 12px;
+      }
+
+      .main-model-body {
+        display: block;
+        width: 100%;
+      }
+
+      .main-model .subgroups {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .main-model .title.main-model-title {
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .footer {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <form
+        id="formSurvey"
+        class="section"
+        style="
+          border: none;
+          background: transparent;
+          padding: 0;
+          margin: 0;
+          box-shadow: none;
+        "
+      >
+        <div class="header">
+          <input
+            class="title-inp"
+            type="text"
+            name="form_title"
+            placeholder="ชื่อโครงการ"
+          />
+          <textarea
+            class="subtitle-inp"
+            name="form_desc"
+            placeholder="คำอธิบาย (ถ้ามี)"
+          ></textarea>
+        </div>
+
+        <!-- ====== ตัวชี้วัด ====== -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+          <!-- 🔵 ซ้าย: ตัวชี้วัด -->
+          <div class="section">
+            <div class="head">
+              <div class="left">
+                <div class="title">ตัวชี้วัด:</div>
+              </div>
+            </div>
+
+            <div class="group">
+              <div class="title" style="font-size: 16px; margin-bottom: 10px">
+                เป้าหมาย:
+              </div>
+              <input
+                type="text"
+                id="goal_text"
+                class="input"
+                placeholder="เป้าหมายโครงการ"
+              />
+
+              <div class="title" style="font-size: 16px; margin: 16px 0 10px">
+                ตัวชี้วัดเชิงปริมาณ:
+              </div>
+              <input
+                type="text"
+                id="kpi_quantity"
+                class="input"
+                placeholder="ตัวชี้วัดเชิงปริมาณ"
+              />
+
+              <div class="title" style="font-size: 16px; margin: 16px 0 10px">
+                ตัวชี้วัดเชิงคุณภาพ:
+              </div>
+              <input
+                type="text"
+                id="kpi_quality"
+                class="input"
+                placeholder="ตัวชี้วัดเชิงคุณภาพ"
+              />
+            </div>
+          </div>
+
+          <!-- 🟢 ขวา: ช่วงเวลา -->
+          <div class="section">
+            <div class="head">
+              <div class="left">
+                <div class="title">ช่วงเวลาจัดกิจกรรม:</div>
+              </div>
+            </div>
+
+            <div class="group">
+              <div style="font-size: 16px; margin-bottom: 10px">
+                วันที่เริ่มต้น:
+              </div>
+              <input type="date" id="start_date" class="input" />
+
+              <div style="font-size: 16px; margin: 16px 0 10px">
+                วันที่สิ้นสุด:
+              </div>
+              <input type="date" id="end_date" class="input" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== ข้อมูลประกอบโครงการ ====== -->
+        <div class="section">
+          <div class="head">
+            <div class="left">
+              <div class="title">ข้อมูลประกอบโครงการ:</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+            <!-- ซ้าย -->
+            <div class="group">
+              <div class="title" style="font-size: 16px; margin-bottom: 10px">
+                ฝ่ายที่สังกัด:
+              </div>
+              <select id="dept_name" class="input">
+                <option value="">-- เลือกฝ่ายที่สังกัด --</option>
+                <option value="ฝ่ายเลขานุการ">ฝ่ายเลขานุการ</option>
+                <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ">
+                  ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ
+                </option>
+                <option value="ฝ่ายบริการทรัพยากรสารนิเทศ">
+                  ฝ่ายบริการทรัพยากรสารนิเทศ
+                </option>
+                <option value="ฝ่ายเทคโนโลยีสารสนเทศ">
+                  ฝ่ายเทคโนโลยีสารสนเทศ
+                </option>
+              </select>
+
+              <div class="title" style="font-size: 16px; margin: 16px 0 10px">
+                พันธกิจของศูนย์บรรณสารฯ:
+              </div>
+              <select id="center_mission" class="input">
+                <option value="">-- เลือกพันธกิจของศูนย์บรรณสารฯ --</option>
+                <option value="จัดหาทรัพยากรสารสนเทศที่มีคุณภาพ ทันสมัย">
+                  จัดหาทรัพยากรสารสนเทศที่มีคุณภาพ ทันสมัย
+                </option>
+                <option value="วิเคราะห์ จัดระบบทรัพยากรสารสนเทศอย่างมีมาตรฐาน">
+                  วิเคราะห์ จัดระบบทรัพยากรสารสนเทศอย่างมีมาตรฐาน
+                </option>
+                <option
+                  value="บริการและเผยแพร่ทรัพยากรสารสนเทศ และองค์ความรู้ต่าง ๆ ด้วยเทคโนโลยีที่เหมาะสม"
+                >
+                  บริการและเผยแพร่ทรัพยากรสารสนเทศ และองค์ความรู้ต่าง ๆ
+                  ด้วยเทคโนโลยีที่เหมาะสม
+                </option>
+                <option
+                  value="สร้างเสริมบรรยากาศที่เอื้อต่อการศึกษาค้นคว้าทางวิชาการ"
+                >
+                  สร้างเสริมบรรยากาศที่เอื้อต่อการศึกษาค้นคว้าทางวิชาการ
+                </option>
+                <option
+                  value="ส่งเสริมให้เป็นพื้นที่แห่งการเรียนรู้และการแสดงออกอย่างสร้างสรรค์"
+                >
+                  ส่งเสริมให้เป็นพื้นที่แห่งการเรียนรู้และการแสดงออกอย่างสร้างสรรค์
+                </option>
+                <option
+                  value="ทําหน้าที่เป็นหอจดหมายเหตุและหอประวัติของมหาวิทยาลัย"
+                >
+                  ทําหน้าที่เป็นหอจดหมายเหตุและหอประวัติของมหาวิทยาลัย
+                </option>
+                <option value="ถ่ายทอดองค์ความรู้ทางวิชาชีพห้องสมุดแก่ชุมชน">
+                  ถ่ายทอดองค์ความรู้ทางวิชาชีพห้องสมุดแก่ชุมชน
+                </option>
+              </select>
+            </div>
+
+            <!-- ขวา -->
+            <div class="group">
+              <div class="title" style="font-size: 16px; margin-bottom: 10px">
+                ยุทธศาสตร์ที่เกี่ยวข้องถึง:
+              </div>
+              <select id="uni_strategy" class="input">
+                <option value="">-- เลือกยุทธศาสตร์ของมหาวิทยาลัย --</option>
+                <option value="แหล่งเรียนรู้ทางวิชาการที่ทันสมัย">
+                  แหล่งเรียนรู้ทางวิชาการที่ทันสมัย
+                </option>
+                <option value="มาตรฐานคุณภาพการให้บริการระดับสากล">
+                  มาตรฐานคุณภาพการให้บริการระดับสากล
+                </option>
+                <option value="ภายใต้การพัฒนาที่ยั่งยืน">
+                  ภายใต้การพัฒนาที่ยั่งยืน
+                </option>
+              </select>
+
+              <div class="title" style="font-size: 16px; margin: 16px 0 10px">
+                ยุทธศาสตร์ของศูนย์บรรณสารฯ:
+              </div>
+              <select id="center_strategy" class="input">
+                <option value="">-- เลือกยุทธศาสตร์ของศูนย์บรรณสารฯ --</option>
+                <option
+                  value="ยุทธศาสตร์ที่ 1 : จัดหาทรัพยากรสารสนเทศที่มีคุณภาพ สอดคล้องกับความต้องการของอาจารย์และนักศึกษาของมหาวิทยาลัย"
+                >
+                  ยุทธศาสตร์ที่ 1 : จัดหาทรัพยากรสารสนเทศที่มีคุณภาพ
+                  สอดคล้องกับความต้องการของอาจารย์และนักศึกษาของมหาวิทยาลัย
+                </option>
+                <option
+                  value="ยุทธศาสตร์ที่ 2 : ส่งเสริมการใช้บริการและการรู้สารสนเทศ"
+                >
+                  ยุทธศาสตร์ที่ 2 : ส่งเสริมการใช้บริการและการรู้สารสนเทศ
+                </option>
+                <option
+                  value="ยุทธศาสตร์ที่ 3 : แหล่งเรียนรู้ และถ่ายทอดองค์ความรู้วิชาชีพห้องสมุด"
+                >
+                  ยุทธศาสตร์ที่ 3 : แหล่งเรียนรู้
+                  และถ่ายทอดองค์ความรู้วิชาชีพห้องสมุด
+                </option>
+                <option
+                  value="ยุทธศาสตร์ที่ 4 : พัฒนาระบบสารสนเทศ/นวัตกรรม เพื่อส่งเสริมการให้บริการสารสนเทศและการบริหารจัดการองค์กร"
+                >
+                  ยุทธศาสตร์ที่ 4 : พัฒนาระบบสารสนเทศ/นวัตกรรม
+                  เพื่อส่งเสริมการให้บริการสารสนเทศและการบริหารจัดการองค์กร
+                </option>
+                <option
+                  value="ยุทธศาสตร์ที่ 5 : พัฒนาศักยภาพของบุคลากรให้พร้อมรับการเปลี่ยนแปลงของกระแสโลก"
+                >
+                  ยุทธศาสตร์ที่ 5 :
+                  พัฒนาศักยภาพของบุคลากรให้พร้อมรับการเปลี่ยนแปลงของกระแสโลก
+                </option>
+                <option
+                  value="ยุทธศาสตร์ที่ 6 : สร้างความยั่งยืนการจัดการสิ่งแวดล้อมและมาตรฐานคุณภาพ"
+                >
+                  ยุทธศาสตร์ที่ 6 :
+                  สร้างความยั่งยืนการจัดการสิ่งแวดล้อมและมาตรฐานคุณภาพ
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <h2>เลือกบล็อก</h2>
+
+        <div class="section" data-sec="s1">
+          <div class="head">
+            <div class="left">
+              <input type="checkbox" class="toggle" />
+              <div class="title">1. ส่วนของข้อมูลผู้ประเมิน</div>
+            </div>
+            <div class="hint">เปิด/ปิดทั้งส่วน</div>
+          </div>
+
+          <div class="group">
+            <div class="chips">
+              <label class="chip"
+                ><input type="checkbox" name="profile[]" value="ชื่อ-สกุล" />
+                ชื่อ-สกุล</label
+              >
+              <label class="chip"
+                ><input
+                  type="checkbox"
+                  name="profile[]"
+                  value="สถานะภาพผู้ประเมิน"
+                />
+                สถานะภาพผู้ประเมิน</label
+              >
+              <label class="chip"
+                ><input type="checkbox" name="profile[]" value="ระดับ" />
+                ระดับ</label
+              >
+              <label class="chip"
+                ><input
+                  type="checkbox"
+                  name="profile[]"
+                  value="สำนักวิชา/หน่วยงานที่สังกัด"
+                />
+                สำนักวิชา/หน่วยงานที่สังกัด</label
+              >
+              <label class="chip"
+                ><input type="checkbox" name="profile[]" value="สาขาวิชา" />
+                สาขาวิชา</label
+              >
+              <label class="chip"
+                ><input type="checkbox" name="profile[]" value="อื่นๆ" />
+                ฯลฯ</label
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="section" data-sec="s2">
+          <div class="head">
+            <div class="left">
+              <input type="checkbox" class="toggle" />
+              <div class="title">2. ส่วนของคำถาม</div>
+            </div>
+            <div class="hint">เปิด/ปิดทั้งส่วน</div>
+          </div>
+
+          <div id="mainModels"></div>
+        </div>
+
+        <div class="section" data-sec="s3">
+          <div class="head">
+            <div class="left">
+              <input type="checkbox" class="toggle" />
+              <div class="title">3. ความไม่พึงพอใจ</div>
+            </div>
+            <div class="hint">เปิด/ปิดทั้งส่วน</div>
+          </div>
+
+          <div class="group">
+            <div class="stack" id="dissat">
+              <div class="item">
+                <span class="num">1.</span>
+                <input
+                  class="input"
+                  type="text"
+                  name="q31[]"
+                  list="dissSuggestions"
+                  placeholder="กรอกคำถาม."
+                />
+              </div>
+
+              <div class="item">
+                <span class="num">2.</span>
+                <input
+                  class="input"
+                  type="text"
+                  name="q31[]"
+                  list="dissSuggestions"
+                  placeholder="กรอกคำถาม."
+                />
+              </div>
+            </div>
+
+            <div class="center">
+              <button type="button" class="btn soft" data-add="#dissat">
+                + เพิ่มหัวข้อ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="section" data-sec="s4">
+          <div class="head">
+            <div class="left">
+              <input type="checkbox" class="toggle" />
+              <div class="title">4. ความผูกพัน</div>
+            </div>
+            <div class="hint">เปิด/ปิดทั้งส่วน</div>
+          </div>
+
+          <div class="group">
+            <div class="stack" id="engage">
+              <div class="item">
+                <span class="num">1.</span
+                ><input
+                  class="input"
+                  type="text"
+                  name="q41[]"
+                  list="engagementSuggestions"
+                  placeholder="กรอกคำถาม..."
+                />
+              </div>
+              <div class="item">
+                <span class="num">2.</span
+                ><input
+                  class="input"
+                  type="text"
+                  name="q41[]"
+                  list="engagementSuggestions"
+                  placeholder="กรอกคำถาม..."
+                />
+              </div>
+            </div>
+            <div class="center">
+              <button type="button" class="btn soft" data-add="#engage">
+                + เพิ่มหัวข้อ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ส่วนที่ 5 : ข้อเสนอแนะ (แสดงตลอด) -->
+        <div class="section" data-sec="s5">
+          <div class="head">
+            <div class="left">
+              <input type="checkbox" class="toggle" />
+              <div class="title">5. ข้อเสนอแนะ</div>
+            </div>
+            <div class="hint">เปิด/ปิดทั้งส่วน</div>
+          </div>
+
+          <div class="stack">
+            <textarea
+              class="input"
+              name="suggestion_prompt"
+              placeholder="กรอกข้อเสนอแนะเพิ่มเติม"
+              style="min-height: 120px"
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="footer">
+          <button type="button" class="btn" id="addDimensionBottom">
+            + เพิ่มหัวข้อด้านต่างๆ
+          </button>
+
+          <div style="margin-top: 10px">
+            <button type="submit" class="btn primary">บันทึก</button>
+          </div>
+        </div>
+
+        <!-- ✅ TEMPLATE ที่แก้แล้ว: ช่องเต็ม + ปุ่มลบอยู่หลังช่อง -->
+        <template id="dimension-template">
+          <div class="group custom-dimension">
+            <div class="dim-row">
+              <span class="num sec-num"></span>
+
+              <input
+                type="text"
+                class="input dim-title"
+                placeholder="กรอกชื่อหัวข้อด้านต่างๆ"
+                style="font-weight: 800"
+              />
+              <div class="right">
+                <button class="btn soft del remove-dim">
+                  ลบ
+                </button>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="item">
+                <span class="num">1.</span>
+                <input
+                  class="input dim-question"
+                  type="text"
+                  placeholder="กรอกคำถาม..."
+                />
+              </div>
+            </div>
+
+            <div class="center">
+              <button type="button" class="btn soft add-inside">
+                + เพิ่มหัวข้อ
+              </button>
+            </div>
+          </div>
+        </template>
+      </form>
+      <template id="main-model-template">
+        <div class="group main-model" data-main-model>
+          <div class="ghead">
+            <div class="left">
+              <input
+                type="checkbox"
+                class="subtoggle main-model-toggle"
+                checked
+              />
+              <div class="title main-model-title">LibQUAL+TM</div>
+            </div>
+          </div>
+
+          <div class="main-model-body">
+            <div class="subgroups"></div>
+          </div>
+        </div>
+      </template>
+      <template id="subgroup-template">
+        <div class="group" data-subgroup-item>
+          <div class="ghead">
+            <div class="left" style="flex: 1">
+              <input type="checkbox" class="subtoggle" checked />
+              <input
+                type="text"
+                class="input subgroup-title"
+                placeholder="กรอกชื่อด้าน เช่น ด้านการให้บริการ"
+                style="min-width: 260px; font-weight: 700"
+              />
+            </div>
+
+            <div class="right">
+              <button
+                type="button"
+                class="btn soft del remove-subgroup"
+                style="display: none"
+              >
+                ลบ
+              </button>
+            </div>
+          </div>
+
+          <div class="stack questions"></div>
+
+          <div class="center">
+            <button type="button" class="btn soft add-question">
+              + เพิ่มหัวข้อ
+            </button>
+          </div>
+        </div>
+      </template>
+
+      <template id="question-row-template">
+        <div class="item">
+          <span class="num">1.</span>
+          <input
+            class="input dim-question"
+            type="text"
+            placeholder="กรอกคำถาม."
+            list="questionSuggestions"
+          />
+          <button
+            type="button"
+            class="btn soft del remove-question"
+            style="display: none"
+          >
+            ลบ
+          </button>
+        </div>
+      </template>
+    </div>
+
+    <script>
+      function renumber(stack) {
+        stack
+          .querySelectorAll(".item .num")
+          .forEach((n, i) => (n.textContent = i + 1 + "."));
+      }
+
+      function attachDelete(btn, stack) {
+        btn.addEventListener("click", () => {
+          btn.closest(".item").remove();
+          renumber(stack);
+        });
+      }
+
+      function renumberStack(stack) {
+        stack.querySelectorAll(".item .num").forEach((n, i) => {
+          n.textContent = `${i + 1}.`;
+        });
+      }
+      function bindQuestionRow(row, stack) {
+        const delBtn = row.querySelector(".remove-question");
+        if (delBtn) {
+          delBtn.addEventListener("click", () => {
+            row.remove();
+            renumberStack(stack);
+          });
+        }
+      }
+
+      function addQuestion(
+        stack,
+        value = "",
+        listId = "questionSuggestions",
+        isDefault = false,
+      ) {
+        const tpl = document
+          .getElementById("question-row-template")
+          .content.cloneNode(true);
+
+        const row = tpl.querySelector(".item");
+        const input = row.querySelector(".dim-question");
+        const delBtn = row.querySelector(".remove-question");
+
+        input.value = value || "";
+        input.setAttribute("list", listId);
+
+        if (!isDefault && delBtn) {
+          delBtn.style.display = "";
+        }
+
+        stack.appendChild(row);
+        bindQuestionRow(row, stack);
+        renumberStack(stack);
+      }
+
+      function bindSubgroup(group) {
+        const stack = group.querySelector(".questions");
+        const addBtn = group.querySelector(".add-question");
+        const delBtn = group.querySelector(".remove-subgroup");
+        const toggle = group.querySelector(".subtoggle");
+
+        addBtn.addEventListener("click", () => {
+          addQuestion(stack, "", "questionSuggestions", false);
+        });
+
+        if (delBtn) {
+          delBtn.addEventListener("click", () => {
+            group.remove();
+          });
+        }
+
+        const update = () => {
+          const enabled = toggle.checked;
+          group.classList.toggle("disabled", !enabled);
+
+          group
+            .querySelectorAll("input,button,textarea,select")
+            .forEach((el) => {
+              if (el === toggle) return;
+              el.disabled = !enabled;
+            });
+
+          if (delBtn) delBtn.disabled = false;
+        };
+
+        toggle.addEventListener("change", update);
+        update();
+      }
+      function addSubgroup(subgroupsRoot, data = {}, isDefault = false) {
+        const tpl = document
+          .getElementById("subgroup-template")
+          .content.cloneNode(true);
+
+        const group = tpl.querySelector("[data-subgroup-item]");
+        const titleInput = group.querySelector(".subgroup-title");
+        const stack = group.querySelector(".questions");
+        const delBtn = group.querySelector(".remove-subgroup");
+
+        titleInput.value = data.title || "";
+
+        if (!isDefault && delBtn) {
+          delBtn.style.display = "";
+        }
+
+        subgroupsRoot.appendChild(group);
+        bindSubgroup(group);
+
+        const questions = Array.isArray(data.questions) ? data.questions : [];
+
+        if (questions.length) {
+          questions.forEach((q, i) => {
+            addQuestion(stack, q, "questionSuggestions", i < 2);
+          });
+        } else {
+          addQuestion(stack, "", "questionSuggestions", true);
+          addQuestion(stack, "", "questionSuggestions", true);
+        }
+
+        if (data.enabled === false) {
+          const st = group.querySelector(".subtoggle");
+          st.checked = false;
+          st.dispatchEvent(new Event("change"));
+        }
+      }
+
+      function bindMainModel(block) {
+        const subgroupsRoot = block.querySelector(".subgroups");
+        const toggle = block.querySelector(".main-model-toggle");
+        const body = block.querySelector(".main-model-body");
+
+        const update = () => {
+          const enabled = toggle.checked;
+          block.classList.toggle("disabled", !enabled);
+          if (body) body.style.display = enabled ? "" : "none";
+        };
+
+        toggle.addEventListener("change", update);
+        update();
+      }
+      function addMainModel(data = {}) {
+        const tpl = document
+          .getElementById("main-model-template")
+          .content.cloneNode(true);
+
+        const block = tpl.querySelector("[data-main-model]");
+        const titleEl = block.querySelector(".main-model-title");
+        const toggle = block.querySelector(".main-model-toggle");
+        const subgroupsRoot = block.querySelector(".subgroups");
+
+        titleEl.textContent = data.title || "หัวข้อใหม่";
+
+        document.getElementById("mainModels").appendChild(block);
+        bindMainModel(block);
+
+        if (data.enabled === false && toggle) {
+          toggle.checked = false;
+        }
+
+        if (Array.isArray(data.dimensions) && data.dimensions.length) {
+          data.dimensions.forEach((dim, i) =>
+            addSubgroup(subgroupsRoot, dim, i < 3),
+          );
+        } else {
+          addSubgroup(subgroupsRoot, { title: "ด้านการให้บริการ" }, true);
+          addSubgroup(subgroupsRoot, { title: "ด้านความสะดวกสบาย" }, true);
+          addSubgroup(
+            subgroupsRoot,
+            { title: "ด้านเจ้าหน้าที่ผู้ให้บริการ" },
+            true,
+          );
+        }
+
+        toggle?.dispatchEvent(new Event("change"));
+      }
+
+      const defaultMainModels = [
+        { title: "LibQUAL+TM" },
+        { title: "SERVQUAL" },
+        { title: "WEBQUAL" },
+        { title: "SiteQUAL" },
+        { title: "ESQUAL" },
+      ];
+
+      let savedDraft = {};
+      try {
+        savedDraft = JSON.parse(localStorage.getItem("surveyDraft") || "{}");
+      } catch (_) {
+        savedDraft = {};
+      }
+
+      if (
+        Array.isArray(savedDraft.section2_models) &&
+        savedDraft.section2_models.length
+      ) {
+        savedDraft.section2_models.forEach((m) => addMainModel(m));
+      } else {
+        defaultMainModels.forEach((m) => addMainModel(m));
+      }
+
+      function renumberDimensions() {
+        const base = 5; // มี 1-5 อยู่แล้ว
+        const dims = document.querySelectorAll(
+          '.custom-dimension[data-role="section"]',
+        );
+        dims.forEach((dim, i) => {
+          const span = dim.querySelector(".sec-num");
+          if (span) span.textContent = base + i + 1 + ".";
+        });
+      }
+
+      // Toggle section (เปิด/ปิดทั้งส่วน)
+      document.querySelectorAll(".section .toggle").forEach((cb) => {
+        const sec = cb.closest(".section");
+
+        const setDisabled = () => {
+          sec.classList.toggle("disabled", !cb.checked);
+
+          sec.querySelectorAll("input,button,textarea,select").forEach((el) => {
+            if (el === cb) return;
+            el.disabled = !cb.checked;
+          });
+
+          // ถ้าเปิด section ให้ subgroup toggle ใช้ได้
+          if (cb.checked) {
+            sec.querySelectorAll(".subtoggle").forEach((st) => {
+              st.disabled = false;
+              st.dispatchEvent(new Event("change"));
+            });
+          }
+        };
+
+        cb.addEventListener("change", setDisabled);
+        setDisabled();
+      });
+
+      // Subgroup toggle
+      document.querySelectorAll("[data-subgroup]").forEach((gr) => {
+        const st = gr.querySelector(".subtoggle");
+
+        const update = () => {
+          const enabled = st.checked;
+          gr.classList.toggle("disabled", !enabled);
+          gr.querySelectorAll("input,button,textarea,select").forEach((el) => {
+            if (el === st) return;
+            el.disabled = !enabled;
+          });
+        };
+
+        st.checked = false;
+        update();
+        st.addEventListener("change", update);
+      });
+
+      // Add rows
+      function addRow(sel, name) {
+        const list = document.querySelector(sel);
+        const idx = list.querySelectorAll(".item").length + 1;
+
+        let listId = "questionSuggestions";
+
+        if (name === "q21[]") listId = "serviceSuggestions";
+        else if (name === "q22[]") listId = "comfortSuggestions";
+        else if (name === "q23[]") listId = "staffSuggestions";
+        else if (name === "dissatisfied[]") listId = "dissSuggestions";
+        else if (name === "engagement[]") listId = "engagementSuggestions";
+
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+    <span class="num">${idx}.</span>
+    <input class="input dim-question" type="text" name="${name}" list="${listId}" placeholder="กรอกคำถาม...">
+    <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+  `;
+        list.appendChild(div);
+        attachDelete(div.querySelector(".del"), list);
+      }
+
+      const nameMap = {
+        "#q21": "q21[]",
+        "#q22": "q22[]",
+        "#q23": "q23[]",
+        "#dissat": "dissatisfied[]",
+        "#engage": "engagement[]",
+      };
+
+      document.querySelectorAll("[data-add]").forEach((b) => {
+        b.addEventListener("click", () => {
+          const sel = b.getAttribute("data-add");
+          addRow(sel, nameMap[sel] || "items[]");
+        });
+      });
+
+      function mountDimension(anchorEl, role) {
+        const tpl = document
+          .getElementById("dimension-template")
+          .content.cloneNode(true);
+
+        const block = tpl.querySelector(".custom-dimension");
+        block.dataset.role = role;
+        block.querySelector(".remove-dim")?.addEventListener("click", () => {
+          block.remove();
+          if (role === "section") renumberDimensions();
+        });
+
+        if (role === "rating") {
+          const secNum = block.querySelector(".sec-num");
+          if (secNum) secNum.remove();
+        }
+
+        block.querySelector(".add-inside").addEventListener("click", () => {
+          const stack = block.querySelector(".stack");
+          const idx = stack.querySelectorAll(".item").length + 1;
+
+          let listId = "questionSuggestions";
+          if (role === "section") listId = "serviceSuggestions";
+          else if (role === "diss") listId = "dissSuggestions";
+          else if (role === "engage") listId = "engagementSuggestions";
+
+          const row = document.createElement("div");
+          row.className = "item";
+          row.innerHTML = `
+    <span class="num">${idx}.</span>
+    <input class="input dim-question" type="text" list="${listId}" placeholder="กรอกคำถาม...">
+    <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+  `;
+          stack.appendChild(row);
+          attachDelete(row.querySelector(".del"), stack);
+        });
+
+        anchorEl.insertAdjacentElement("beforebegin", block);
+
+        if (role === "section") renumberDimensions();
+      }
+
+      // ส่วนที่ 5+: แทรกก่อน footer
+      document
+        .getElementById("addDimensionBottom")
+        .addEventListener("click", (e) => {
+          const footer = e.target.closest(".footer");
+          mountDimension(footer, "section");
+        });
+
+      // บังคับให้เลือกประเภทได้ทีละ 1 (checkbox -> single select)
+      document.querySelectorAll(".form-type").forEach((cb) => {
+        cb.addEventListener("change", (e) => {
+          if (!e.target.checked) return;
+          document.querySelectorAll(".form-type").forEach((x) => {
+            if (x !== e.target) x.checked = false;
+          });
+        });
+      });
+
+      // Save -> DB -> กลับหน้า index.html
+      document
+        .getElementById("formSurvey")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          const obj = {};
+
+          for (const [k, v] of fd.entries()) {
+            if (k.endsWith("[]")) {
+              const kk = k.slice(0, -2);
+              (obj[kk] || (obj[kk] = [])).push(v);
+            } else {
+              obj[k] = v;
+            }
+          }
+
+          const ratingExtra = [];
+          document
+            .querySelectorAll('.custom-dimension[data-role="rating"]')
+            .forEach((block) => {
+              const title = (
+                block.querySelector(".dim-title")?.value || ""
+              ).trim();
+              const questions = Array.from(
+                block.querySelectorAll(".dim-question"),
+              )
+                .map((ip) => (ip.value || "").trim())
+                .filter(Boolean);
+              if (title || questions.length)
+                ratingExtra.push({ title, questions });
+            });
+          obj.ratingExtra = ratingExtra;
+
+          const dimensions = [];
+          document
+            .querySelectorAll('.custom-dimension[data-role="section"]')
+            .forEach((block) => {
+              const title = (
+                block.querySelector(".dim-title")?.value || ""
+              ).trim();
+              const questions = Array.from(
+                block.querySelectorAll(".dim-question"),
+              )
+                .map((ip) => (ip.value || "").trim())
+                .filter(Boolean);
+              if (title || questions.length)
+                dimensions.push({ title, questions });
+            });
+          obj.dimensions = dimensions;
+
+          // ชื่อผู้สร้าง (ใช้จาก login)
+          const displayName = (
+            localStorage.getItem("displayName") || ""
+          ).trim();
+          const username = (localStorage.getItem("user") || "").trim();
+          const createdBy = displayName || username || null;
+
+          try {
+            const deptName =
+              document.getElementById("dept_name")?.value || null;
+            const uniStrategy =
+              document.getElementById("uni_strategy")?.value || null;
+            const centerStrategy =
+              document.getElementById("center_strategy")?.value || null;
+            const centerMission =
+              document.getElementById("center_mission")?.value || null;
+
+            const goalText =
+              document.getElementById("goal_text")?.value || null;
+            const kpiQuantity =
+              document.getElementById("kpi_quantity")?.value || null;
+            const kpiQuality =
+              document.getElementById("kpi_quality")?.value || null;
+            const startDate =
+              document.getElementById("start_date")?.value || null;
+            const endDate = document.getElementById("end_date")?.value || null;
+
+            const section2_models = Array.from(
+              document.querySelectorAll("[data-main-model]"),
+            ).map((main) => {
+              return {
+                title:
+                  main.querySelector(".main-model-title")?.textContent.trim() ||
+                  "",
+                enabled:
+                  main.querySelector(".main-model-toggle")?.checked ?? true,
+                dimensions: Array.from(
+                  main.querySelectorAll("[data-subgroup-item]"),
+                ).map((dim) => {
+                  return {
+                    title:
+                      dim.querySelector(".subgroup-title")?.value.trim() || "",
+                    enabled: dim.querySelector(".subtoggle")?.checked ?? true,
+                    questions: Array.from(dim.querySelectorAll(".dim-question"))
+                      .map((inp) => inp.value.trim())
+                      .filter(Boolean),
+                  };
+                }),
+              };
+            });
+
+            obj.dept_name = deptName;
+            obj.uni_strategy = uniStrategy;
+            obj.center_strategy = centerStrategy;
+            obj.center_mission = centerMission;
+            obj.goal_text = goalText;
+            obj.kpi_quantity = kpiQuantity;
+            obj.kpi_quality = kpiQuality;
+            obj.start_date = startDate;
+            obj.section2_models = section2_models;
+            obj.end_date = endDate;
+            obj.dissatisfied = Array.isArray(obj["q31"])
+              ? obj["q31"].filter(Boolean)
+              : obj["q31"]
+                ? [obj["q31"]].filter(Boolean)
+                : [];
+
+            obj.engagement = Array.isArray(obj["q41"])
+              ? obj["q41"].filter(Boolean)
+              : obj["q41"]
+                ? [obj["q41"]].filter(Boolean)
+                : [];
+
+            obj.section_state = {
+              s1:
+                document.querySelector('[data-sec="s1"] .toggle')?.checked ??
+                true,
+              s2:
+                document.querySelector('[data-sec="s2"] .toggle')?.checked ??
+                true,
+              s3:
+                document.querySelector('[data-sec="s3"] .toggle')?.checked ??
+                true,
+              s4:
+                document.querySelector('[data-sec="s4"] .toggle')?.checked ??
+                true,
+              s5:
+                document.querySelector('[data-sec="s5"] .toggle')?.checked ??
+                true,
+            };
+            const res = await fetch("/api/forms", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                created_by: createdBy,
+                created_by_username: username || null,
+                form_title: obj.form_title || null,
+                dept_name: deptName,
+                uni_strategy: uniStrategy,
+                center_strategy: centerStrategy,
+                center_mission: centerMission,
+                goal_text: goalText,
+                kpi_quantity: kpiQuantity,
+                kpi_quality: kpiQuality,
+                start_date: startDate,
+                end_date: endDate,
+                form: obj,
+              }),
+            });
+
+            const json = await res.json();
+            if (!res.ok || !json.ok)
+              throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
+
+            // กลับไปหน้า list (index)
+            window.location.href = "index.html";
+          } catch (err) {
+            alert("บันทึกไม่สำเร็จ: " + err.message);
+          }
+        });
+    </script>
+    <datalist id="serviceSuggestions">
+      <option value="ได้รับบริการอย่างรวดเร็ว"></option>
+      <option value="ขั้นตอนการให้บริการสะดวก"></option>
+      <option value="การให้บริการมีความต่อเนื่อง"></option>
+    </datalist>
+
+    <datalist id="comfortSuggestions">
+      <option value="สถานที่สะอาดและเป็นระเบียบ"></option>
+      <option value="พื้นที่ให้บริการสะดวกสบาย"></option>
+      <option value="อุปกรณ์และสิ่งอำนวยความสะดวกเพียงพอ"></option>
+    </datalist>
+
+    <datalist id="staffSuggestions">
+      <option value="เจ้าหน้าที่ให้บริการด้วยความสุภาพ"></option>
+      <option value="เจ้าหน้าที่ให้คำแนะนำได้ชัดเจน"></option>
+      <option value="เจ้าหน้าที่เต็มใจให้บริการ"></option>
+    </datalist>
+
+    <datalist id="dissSuggestions">
+      <option value="ได้รับบริการล่าช้า"></option>
+      <option value="ข้อมูลไม่ชัดเจน"></option>
+      <option value="ขั้นตอนการให้บริการซับซ้อน"></option>
+    </datalist>
+
+    <datalist id="engagementSuggestions">
+      <option value="มีความตั้งใจใช้บริการอีกครั้ง"></option>
+      <option value="แนะนำบริการให้ผู้อื่น"></option>
+      <option value="มีความประทับใจต่อการบริการ"></option>
+    </datalist>
+  </body>
+</html>

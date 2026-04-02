@@ -14,11 +14,15 @@ app.use(express.static(path.join(__dirname, "public")));
 // ตั้งค่าเชื่อม MySQL (XAMPP ปกติ root / รหัสว่าง)
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "127.0.0.1",
+  port: process.env.DB_PORT || 25248,
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASS || "",
   database: process.env.DB_NAME || "survey_app",
   waitForConnections: true,
   connectionLimit: 10,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 function safeJsonParse(s) {

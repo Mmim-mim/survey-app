@@ -12,7 +12,6 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 // ตั้งค่าเชื่อม MySQL (XAMPP ปกติ root / รหัสว่าง)
-const fs = require("fs"); // 👈 เพิ่มด้านบนไฟล์
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "127.0.0.1",
@@ -23,7 +22,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   ssl: {
-    ca: fs.readFileSync("./ca.pem") // 👈 เปลี่ยนตรงนี้
+    rejectUnauthorized: false
   }
 });
 

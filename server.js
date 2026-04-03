@@ -308,14 +308,17 @@ app.get("/api/dashboard/summary", async (req, res) => {
   }
 });
 
-console.log("DB_HOST =", process.env.DB_HOST);
-console.log("DB_PORT =", process.env.DB_PORT);
+const dns = require("dns");
+
+console.log("DB_HOST =", JSON.stringify(process.env.DB_HOST));
+console.log("DB_PORT =", JSON.stringify(process.env.DB_PORT));
+
+dns.lookup(process.env.DB_HOST, (err, address, family) => {
+  console.log("DNS_LOOKUP =", err || { address, family });
+});
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
 
 /** -----------------------------
  *  FORMS (ตาราง survey_forms)

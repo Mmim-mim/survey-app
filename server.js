@@ -307,6 +307,9 @@ app.get("/api/dashboard/summary", async (req, res) => {
   }
 });
 
+console.log("DB_HOST =", process.env.DB_HOST);
+console.log("DB_PORT =", process.env.DB_PORT);
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

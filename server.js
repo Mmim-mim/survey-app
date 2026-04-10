@@ -34,6 +34,44 @@ function safeJsonParse(s) {
   }
 }
 
+function parseSubmissionPayload(payloadJson) {
+  const p = safeJsonParse(payloadJson) || {};
+
+  const profile = p.profile || {};
+  const ratings = Array.isArray(p.ratings) ? p.ratings : [];
+
+  const comments = Array.isArray(p.comments)
+    ? p.comments
+    : Array.isArray(p.suggestions)
+      ? p.suggestions
+      : (typeof p.suggestion === "string" && p.suggestion.trim())
+        ? [p.suggestion.trim()]
+        : [];
+
+  return {
+    fiscal_year: Number(p.fiscal_year) || null,
+    dept: String(profile.dept || "").trim(),
+    fullname: String(profile.fullname || "").trim(),
+    ratings,
+    comments,
+    raw: p,
+  };
+}
+function avg(arr) {
+  const nums = arr.map(Number).filter(Number.isFinite);
+  if (!nums.length) return 0;
+  return nums.reduce((s, n) => s + n, 0) / nums.length;
+}
+
+function stddev(arr) {
+  const nums = arr.map(Number).filter(Number.isFinite);
+  if (nums.length <= 1) return 0;
+  const m = avg(nums);
+  const variance =
+    nums.reduce((s, n) => s + Math.pow(n - m, 2), 0) / (nums.length - 1);
+  return Math.sqrt(variance);
+}
+
 function mean(arr) {
   const xs = arr.filter((x) => Number.isFinite(x));
   if (!xs.length) return 0;
@@ -134,52 +172,205 @@ app.get("/api/submissions", async (req, res) => {
  * ----------------------------- */
 app.get("/api/dashboard/options", async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      "SELECT payload_json FROM submissions ORDER BY id DESC LIMIT 5000"
-    );
+    const username = String(req.query.username || "").trim();
+    const role = String(req.query.role || "staff").trim();
 
-    const years = new Set();
-    const statuses = new Set();
-    const depts = new Set();
+    let sql = `
+      SELECT id, created_at, created_by, form_title, payload_json
+      FROM submissions
+    `;
+    const params = [];
 
-    // majorsByDept: { dept: Set(major) }
-    const majorsByDept = {};
-
-    for (const r of rows) {
-      const p = safeJsonParse(r.payload_json);
-      if (!p) continue;
-
-      const year = Number(p.fiscal_year);
-      if (Number.isFinite(year)) years.add(year);
-
-      const prof = p.profile || {};
-      const status = (prof.status || "").trim();
-      const dept = (prof.dept || "").trim();
-      const major = (prof.major || "").trim();
-
-      if (status) statuses.add(status);
-      if (dept) {
-        depts.add(dept);
-        majorsByDept[dept] ||= new Set();
-
-        // เฉพาะ major ที่ “มีจริง” (ไม่เอา placeholder)
-        if (major && !major.includes("--ไม่มีสาขา")) {
-          majorsByDept[dept].add(major);
-        }
-      }
+    if (role !== "manager") {
+      sql += ` WHERE created_by = ? `;
+      params.push(username);
     }
 
-    // แปลง Set -> Array
-    const majorsByDeptObj = {};
-    for (const [dept, setMaj] of Object.entries(majorsByDept)) {
-      majorsByDeptObj[dept] = Array.from(setMaj);
+    sql += ` ORDER BY created_at DESC LIMIT 5000`;
+
+    const [rows] = await pool.execute(sql, params);
+
+    const forms = new Set();
+    const years = new Set();
+    const depts = new Set();
+
+    for (const row of rows) {
+      if (row.form_title) forms.add(String(row.form_title).trim());
+
+      const parsed = parseSubmissionPayload(row.payload_json);
+      if (parsed.fiscal_year) years.add(parsed.fiscal_year);
+      if (parsed.dept) depts.add(parsed.dept);
     }
 
     res.json({
-      years: Array.from(years).sort((a, b) => b - a),
-      statuses: Array.from(statuses),
-      depts: Array.from(depts),
-      majorsByDept: majorsByDeptObj,
+      forms: Array.from(forms).sort((a, b) => a.localeCompare(b, "th")),
+      fiscalYears: Array.from(years).sort((a, b) => b - a),
+      depts: Array.from(depts).sort((a, b) => a.localeCompare(b, "th")),
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/dashboard/summary", async (req, res) => {
+  try {
+    const username = String(req.query.username || "").trim();
+    const role = String(req.query.role || "staff").trim();
+
+    const formTitle = String(req.query.form_title || "").trim();
+    const dateFrom = String(req.query.date_from || "").trim();
+    const dateTo = String(req.query.date_to || "").trim();
+    const fiscalYear = req.query.fiscal_year ? Number(req.query.fiscal_year) : null;
+    const deptQ = String(req.query.dept || "").trim();
+
+    let sql = `
+      SELECT id, created_at, created_by, form_title, payload_json
+      FROM submissions
+      WHERE 1=1
+    `;
+    const params = [];
+
+    if (role !== "manager") {
+      sql += ` AND created_by = ? `;
+      params.push(username);
+    }
+
+    if (formTitle) {
+      sql += ` AND form_title = ? `;
+      params.push(formTitle);
+    }
+
+    if (dateFrom) {
+      sql += ` AND DATE(created_at) >= ? `;
+      params.push(dateFrom);
+    }
+
+    if (dateTo) {
+      sql += ` AND DATE(created_at) <= ? `;
+      params.push(dateTo);
+    }
+
+    sql += ` ORDER BY created_at DESC LIMIT 5000`;
+
+    const [rows] = await pool.execute(sql, params);
+
+    const filtered = [];
+    for (const row of rows) {
+      const parsed = parseSubmissionPayload(row.payload_json);
+
+      if (fiscalYear && parsed.fiscal_year !== fiscalYear) continue;
+      if (deptQ && parsed.dept !== deptQ) continue;
+
+      filtered.push({
+        id: row.id,
+        created_at: row.created_at,
+        created_by: row.created_by,
+        form_title: row.form_title,
+        ...parsed,
+      });
+    }
+
+    const respondentCount = filtered.length;
+
+    const allRatingValues = [];
+    const itemMap = new Map();
+    const comments = [];
+
+    let satisfiedCount = 0;
+    let unsatisfiedCount = 0;
+
+    const barMap = new Map();
+
+    for (const row of filtered) {
+      for (const r of row.ratings) {
+        const label = String(r.questionText || r.label || "").trim();
+        const value = Number(r.value);
+
+        if (!label || !Number.isFinite(value)) continue;
+
+        allRatingValues.push(value);
+
+        if (!itemMap.has(label)) itemMap.set(label, []);
+        itemMap.get(label).push(value);
+
+        if (!barMap.has(label)) {
+          barMap.set(label, { positive: 0, negative: 0 });
+        }
+
+        if (value >= 4) {
+          satisfiedCount++;
+          barMap.get(label).positive++;
+        } else {
+          unsatisfiedCount++;
+          barMap.get(label).negative++;
+        }
+      }
+
+      for (const c of row.comments) {
+        const text =
+          typeof c === "string"
+            ? c.trim()
+            : String(c.comment || c.text || c.message || "").trim();
+
+        if (!text) continue;
+
+        comments.push({
+          text,
+          created_at: row.created_at,
+          created_by: row.created_by,
+          form_title: row.form_title,
+        });
+      }
+    }
+
+    const items = Array.from(itemMap.entries()).map(([question, values], index) => ({
+      no: index + 1,
+      question,
+      avg: Number(avg(values).toFixed(2)),
+      sd: Number(stddev(values).toFixed(2)),
+      count: values.length,
+    }));
+
+    const overallAvg = Number(avg(allRatingValues).toFixed(2));
+
+    const barLabels = [];
+    const barPositive = [];
+    const barNegative = [];
+
+    for (const [label, counts] of barMap.entries()) {
+      barLabels.push(label);
+      barPositive.push(counts.positive);
+      barNegative.push(counts.negative);
+    }
+
+    comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    res.json({
+      kpi: {
+        respondents: respondentCount,
+        avgSatisfaction: overallAvg,
+        totalComments: comments.length,
+      },
+      filters: {
+        form_title: formTitle,
+        date_from: dateFrom,
+        date_to: dateTo,
+        fiscal_year: fiscalYear,
+        dept: deptQ,
+      },
+      table: items,
+      charts: {
+        pie: {
+          labels: ["พึงพอใจ", "ควรปรับปรุง"],
+          values: [satisfiedCount, unsatisfiedCount],
+        },
+        bar: {
+          labels: barLabels,
+          positive: barPositive,
+          negative: barNegative,
+        },
+      },
+      comments: comments.slice(0, 50),
     });
   } catch (e) {
     res.status(500).json({ error: e.message });

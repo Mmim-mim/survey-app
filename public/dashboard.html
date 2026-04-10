@@ -1,607 +1,340 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>ผลการประเมินความพึงพอใจ (Dashboard)</title>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Survey Dashboard</title>
 
-    <!-- Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --line: #e5e7eb;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --danger: #ef4444;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      --radius: 16px;
+    }
 
-    <style>
-      :root {
-        --bg: #f4f7fb;
-        --card: #ffffff;
-        --line: #e5e7eb;
-        --ink: #0f172a;
-        --muted: #6b7280;
-        --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        font-family:
-          "Noto Sans Thai",
-          system-ui,
-          -apple-system,
-          Segoe UI,
-          Arial;
-        background: var(--bg);
-        color: var(--ink);
-      }
-      .page {
-        padding: 16px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
+    * { box-sizing: border-box; }
 
-      .title {
-        font-size: 28px;
-        font-weight: 800;
-        margin: 4px 0 6px;
-        letter-spacing: 0.2px;
-      }
-      .subtitle {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 20px;
-        font-weight: 700;
-        margin: 0 0 14px;
-      }
-      .subtitle .dot {
-        width: 18px;
-        height: 18px;
-        border-radius: 999px;
-        background: #111827;
-        display: inline-block;
-      }
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      color: var(--text);
+    }
 
-      .filters {
-        background: #eaf3ff;
-        border: 1px solid #cfe3ff;
-        border-radius: 12px;
-        padding: 12px;
-        display: grid;
-        grid-template-columns: 220px 240px 1fr 260px;
-        gap: 10px;
-        align-items: end;
-      }
-      .field label {
-        display: block;
-        font-size: 12px;
-        color: var(--muted);
-        margin: 0 0 6px;
-      }
-      select {
-        width: 100%;
-        height: 36px;
-        border: 1px solid var(--line);
-        border-radius: 10px;
-        padding: 0 10px;
-        background: #fff;
-        color: var(--ink);
-        outline: none;
-      }
+    .page {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
 
-      .strip {
-        margin-top: 12px;
-        background: #1b4f9c;
-        color: #fff;
-        border-radius: 12px 12px 0 0;
-        padding: 10px 12px;
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        flex-wrap: wrap;
-        font-size: 14px;
-      }
-      .strip b {
-        color: #ffe66d;
-      }
-      .strip .mini-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #9ae6b4;
-        display: inline-block;
-        margin-right: 6px;
-      }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
 
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-top: 0;
-        border-radius: 0 0 12px 12px;
-        box-shadow: var(--shadow);
-        overflow: hidden;
-      }
-      .table-wrap {
-        overflow: auto;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 980px;
-      }
-      thead th {
-        background: #f8fafc;
-        color: #334155;
-        font-weight: 700;
-        border-bottom: 1px solid var(--line);
-        padding: 10px 10px;
-        font-size: 13px;
-        text-align: center;
-        white-space: nowrap;
-      }
-      tbody td {
-        border-bottom: 1px solid var(--line);
-        padding: 10px 10px;
-        font-size: 13px;
-        vertical-align: top;
-      }
-      tbody td.num {
-        text-align: center;
-        width: 64px;
-        color: #334155;
-      }
-      tbody td.metric {
-        text-align: center;
-        width: 120px;
-        font-variant-numeric: tabular-nums;
-      }
-      tbody tr:hover {
-        background: #fbfdff;
-      }
-      tbody tr.total {
-        background: #f4fbf7;
-        font-weight: 800;
-      }
+    .header h1 {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+    }
 
-      .grid2 {
-        display: grid;
-        grid-template-columns: 1fr 1.2fr;
-        gap: 12px;
-        margin-top: 12px;
-      }
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        padding: 12px;
-      }
-      .panel h3 {
-        margin: 0 0 10px;
-        font-size: 14px;
-        color: #0f2a55;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .panel h3 .mini {
-        width: 18px;
-        height: 18px;
-        border-radius: 5px;
-        background: #eaf3ff;
-        display: inline-block;
-        border: 1px solid #cfe3ff;
-      }
-      .legend-row {
-        display: flex;
-        gap: 18px;
-        align-items: center;
-        justify-content: flex-start;
-        margin-top: 10px;
-        padding-top: 10px;
-        border-top: 1px dashed var(--line);
-      }
-      .stat {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: #334155;
-        font-size: 13px;
-      }
-      .badge {
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        display: inline-block;
-      }
-      .footnote {
-        margin-top: 8px;
-        font-size: 12px;
-        color: #ef4444;
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        align-items: center;
-      }
-      .footnote:before {
-        content: "•";
-      }
+    .sub {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 14px;
+    }
 
-      @media (max-width: 980px) {
-        .filters {
-          grid-template-columns: 1fr;
-        }
-        .grid2 {
-          grid-template-columns: 1fr;
-        }
-        table {
-          min-width: 860px;
-        }
-      }
-    </style>
-  </head>
+    .refresh-btn {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
 
-  <body>
-    <div class="page">
-      <div class="title">ผลการประเมินความพึงพอใจ</div>
-      <div class="subtitle"><span class="dot"></span>ผู้ใช้บริการห้องสมุด</div>
+    .filters {
+      background: #eef5ff;
+      border: 1px solid #d8e6ff;
+      border-radius: var(--radius);
+      padding: 16px;
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      box-shadow: var(--shadow);
+    }
 
-      <div class="filters">
-        <div class="field">
-          <label>ปีงบประมาณ :</label>
-          <select id="fYear"></select>
-        </div>
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
 
-        <div class="field">
-          <label>สถานภาพผู้ประเมิน :</label>
-          <select id="fStatus"></select>
-        </div>
+    .field select,
+    .field input {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0 12px;
+      background: white;
+      font: inherit;
+      color: var(--text);
+      outline: none;
+    }
 
-        <div class="field">
-          <label>สำนักวิชา/หน่วยงาน :</label>
-          <select id="fDept"></select>
-        </div>
+    .summary-strip {
+      margin-top: 14px;
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      color: white;
+      border-radius: 14px;
+      padding: 12px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 14px;
+      box-shadow: var(--shadow);
+    }
 
-        <div class="field" id="majorWrap" style="display: none">
-          <label>สาขาวิชา :</label>
-          <select id="fMajor"></select>
-        </div>
+    .cards {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .section-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+
+    .chart-wrap {
+      height: 320px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 700;
+    }
+
+    .comment-list {
+      display: grid;
+      gap: 10px;
+      max-height: 500px;
+      overflow: auto;
+    }
+
+    .comment-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fafcff;
+    }
+
+    .comment-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .section-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      .filters { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Dashboard ผลการประเมิน</h1>
+        <div class="sub">สรุปผลแบบสอบถาม, คะแนน, กราฟ และข้อเสนอแนะ</div>
       </div>
+      <button id="btnRefresh" class="refresh-btn">รีเฟรช</button>
+    </div>
 
-      <div class="strip">
-        <span
-          ><span class="mini-dot"></span>ปีงบประมาณ :
-          <b id="stripYear">-</b></span
-        >
-        <span>⦿ ผู้ตอบแบบสอบถามทั้งหมด <b id="stripN">0</b> คน</span>
-        <span>⦿ สำนักวิชา/หน่วยงาน : <b id="stripDept">-</b></span>
-        <span id="stripMajorWrap" style="display: none"
-          >⦿ สาขาวิชา : <b id="stripMajor">-</b></span
-        >
+    <div class="filters">
+      <div class="field">
+        <label>ชื่อฟอร์ม</label>
+        <select id="fForm"></select>
       </div>
+      <div class="field">
+        <label>ปีงบประมาณ</label>
+        <select id="fFiscalYear"></select>
+      </div>
+      <div class="field">
+        <label>หน่วยงาน</label>
+        <select id="fDept"></select>
+      </div>
+      <div class="field">
+        <label>วันที่เริ่ม</label>
+        <input id="fDateFrom" type="date" />
+      </div>
+      <div class="field">
+        <label>วันที่สิ้นสุด</label>
+        <input id="fDateTo" type="date" />
+      </div>
+      <div class="field">
+        <label>สิทธิ์ผู้ใช้</label>
+        <input id="fRoleView" type="text" disabled />
+      </div>
+    </div>
 
+    <div class="summary-strip">
+      <div>ฟอร์ม: <b id="sForm">ทั้งหมด</b></div>
+      <div>ปีงบประมาณ: <b id="sYear">ทั้งหมด</b></div>
+      <div>หน่วยงาน: <b id="sDept">ทั้งหมด</b></div>
+      <div>ช่วงเวลา: <b id="sDate">ทั้งหมด</b></div>
+    </div>
+
+    <div class="cards">
       <div class="card">
+        <div class="kpi-label">จำนวนผู้ตอบ</div>
+        <div class="kpi-value" id="kpiRespondents">0</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">ค่าเฉลี่ยความพึงพอใจ</div>
+        <div class="kpi-value" id="kpiAvg">0.00</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">จำนวนข้อเสนอแนะ</div>
+        <div class="kpi-value" id="kpiComments">0</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">บทบาทปัจจุบัน</div>
+        <div class="kpi-value" id="kpiRole" style="font-size:24px;">-</div>
+      </div>
+    </div>
+
+    <div class="section-grid">
+      <div class="panel">
+        <h3>ตารางสรุปผลรายข้อ</h3>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th rowspan="2" style="width: 70px">ลำดับ</th>
-                <th rowspan="2" style="min-width: 440px">รายการประเมิน</th>
-                <th colspan="2">ความคาดหวัง</th>
-                <th colspan="2">ความพึงพอใจ</th>
-              </tr>
-              <tr>
-                <th>ค่าเฉลี่ย (x̄)</th>
-                <th>ค่าความเบี่ยงเบน (S.D.)</th>
-                <th>ค่าเฉลี่ย (x̄)</th>
-                <th>ค่าความเบี่ยงเบน (S.D.)</th>
+                <th style="width:80px;">ลำดับ</th>
+                <th>รายการประเมิน</th>
+                <th style="width:140px;">ค่าเฉลี่ย</th>
+                <th style="width:140px;">S.D.</th>
+                <th style="width:120px;">จำนวน</th>
               </tr>
             </thead>
-            <tbody id="tbody"></tbody>
+            <tbody id="summaryTableBody">
+              <tr><td colspan="5" class="empty">ยังไม่มีข้อมูล</td></tr>
+            </tbody>
           </table>
         </div>
       </div>
 
-      <div class="grid2">
-        <div class="panel">
-          <h3>
-            <span class="mini"></span
-            >สัดส่วนความไม่พึงพอใจต่อการให้บริการของศูนย์บรรณสารและสื่อการศึกษา
-          </h3>
-          <div style="height: 260px">
-            <canvas id="pieChart"></canvas>
-          </div>
-
-          <div class="legend-row">
-            <div class="stat">
-              <span class="badge" style="background: #2563eb"></span>พึงพอใจ:
-              <b id="okCount">0</b>
-            </div>
-            <div class="stat">
-              <span class="badge" style="background: #ef4444"></span>ไม่พึงพอใจ:
-              <b id="badCount">0</b>
-            </div>
-          </div>
+      <div class="panel">
+        <h3>ข้อเสนอแนะล่าสุด</h3>
+        <div id="commentList" class="comment-list">
+          <div class="empty">ยังไม่มีข้อเสนอแนะ</div>
         </div>
-
-        <div class="panel">
-          <h3><span class="mini"></span>ความผูกพันของผู้ใช้บริการ</h3>
-          <div style="height: 310px">
-            <canvas id="barChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <div class="footnote">
-        ข้อมูลสาขาวิชาได้เพิ่มตั้งแต่ปีงบประมาณ 256X เป็นต้นไป
       </div>
     </div>
 
-    <script>
-      /** ----------------------------
-       *  DOM refs
-       * ---------------------------- */
-      const fYear = document.getElementById("fYear");
-      const fStatus = document.getElementById("fStatus");
-      const fDept = document.getElementById("fDept");
-      const majorWrap = document.getElementById("majorWrap");
-      const fMajor = document.getElementById("fMajor");
+    <div class="section-grid">
+      <div class="panel">
+        <h3>สัดส่วนความพึงพอใจ</h3>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
 
-      const stripYear = document.getElementById("stripYear");
-      const stripN = document.getElementById("stripN");
-      const stripDept = document.getElementById("stripDept");
-      const stripMajorWrap = document.getElementById("stripMajorWrap");
-      const stripMajor = document.getElementById("stripMajor");
+      <div class="panel">
+        <h3>จำนวนคำตอบเชิงบวก / ควรปรับปรุง รายข้อ</h3>
+        <div class="chart-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-      const tbody = document.getElementById("tbody");
-      const okCountEl = document.getElementById("okCount");
-      const badCountEl = document.getElementById("badCount");
-
-      const fmt = (n) => (Math.round(Number(n || 0) * 100) / 100).toFixed(2);
-
-      /** ----------------------------
-       *  Charts
-       * ---------------------------- */
-      let pieChart, barChart;
-
-      function buildCharts() {
-        pieChart = new Chart(document.getElementById("pieChart"), {
-          type: "pie",
-          data: {
-            labels: ["พึงพอใจ", "ไม่พึงพอใจ"],
-            datasets: [
-              {
-                data: [0, 0],
-                backgroundColor: ["#2563eb", "#ef4444"],
-                borderColor: "#ffffff",
-                borderWidth: 2,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: "right" } },
-          },
-        });
-
-        barChart = new Chart(document.getElementById("barChart"), {
-          type: "bar",
-          data: {
-            labels: [],
-            datasets: [
-              { label: "พึงพอใจ", data: [], backgroundColor: "#3b82f6" },
-              { label: "ไม่พึงพอใจ", data: [], backgroundColor: "#ef4444" },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
-            plugins: { legend: { position: "top" } },
-          },
-        });
-      }
-
-      function updateCharts(summary) {
-        pieChart.data.datasets[0].data = [
-          summary.satisfactionSplit?.ok || 0,
-          summary.satisfactionSplit?.bad || 0,
-        ];
-        pieChart.update();
-
-        okCountEl.textContent = summary.satisfactionSplit?.ok || 0;
-        badCountEl.textContent = summary.satisfactionSplit?.bad || 0;
-
-        barChart.data.labels = summary.engagement?.labels || [];
-        barChart.data.datasets[0].data = summary.engagement?.ok || [];
-        barChart.data.datasets[1].data = summary.engagement?.bad || [];
-        barChart.update();
-      }
-
-      /** ----------------------------
-       *  Table render
-       * ---------------------------- */
-      function calcTotals(items) {
-        if (!items.length)
-          return { expMean: 0, expSd: 0, satMean: 0, satSd: 0 };
-        const avg = (key) =>
-          items.reduce((s, it) => s + Number(it[key] || 0), 0) / items.length;
-        return {
-          expMean: avg("expMean"),
-          expSd: avg("expSd"),
-          satMean: avg("satMean"),
-          satSd: avg("satSd"),
-        };
-      }
-
-      function renderTable(summary) {
-        tbody.innerHTML = "";
-
-        const items = Array.isArray(summary.items) ? summary.items : [];
-
-        if (!items.length) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#64748b;padding:18px">
-          ยังไม่มีข้อมูลตามตัวกรอง (ลองส่งแบบประเมินก่อน)
-        </td></tr>`;
-          return;
-        }
-
-        items.forEach((it, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-        <td class="num">${idx + 1}.</td>
-        <td>${it.text}</td>
-        <td class="metric">${fmt(it.expMean)}</td>
-        <td class="metric">${fmt(it.expSd)}</td>
-        <td class="metric">${fmt(it.satMean)}</td>
-        <td class="metric">${fmt(it.satSd)}</td>
-      `;
-          tbody.appendChild(tr);
-        });
-
-        const t = calcTotals(items);
-        const trTotal = document.createElement("tr");
-        trTotal.className = "total";
-        trTotal.innerHTML = `
-      <td class="num"></td>
-      <td style="text-align:center">ค่ารวม</td>
-      <td class="metric">${fmt(t.expMean)}</td>
-      <td class="metric">${fmt(t.expSd)}</td>
-      <td class="metric">${fmt(t.satMean)}</td>
-      <td class="metric">${fmt(t.satSd)}</td>
-    `;
-        tbody.appendChild(trTotal);
-      }
-
-      /** ----------------------------
-       *  majors mapping from API
-       * ---------------------------- */
-      let MAJORS_BY_DEPT = {}; // { dept: [major1, major2] }
-
-      function updateMajorDropdown() {
-        const dept = fDept.value;
-        const majors = MAJORS_BY_DEPT[dept] || [];
-
-        fMajor.innerHTML = "";
-
-        if (majors.length > 0 && dept !== "ทั้งหมด") {
-          majorWrap.style.display = "";
-          stripMajorWrap.style.display = "";
-
-          const optAll = document.createElement("option");
-          optAll.value = "";
-          optAll.textContent = "-- รวมทุกสาขา --";
-          fMajor.appendChild(optAll);
-
-          majors.forEach((m) => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = m;
-            fMajor.appendChild(opt);
-          });
-
-          fMajor.value = "";
-        } else {
-          majorWrap.style.display = "none";
-          stripMajorWrap.style.display = "none";
-          fMajor.value = "";
-        }
-      }
-
-      /** ----------------------------
-       *  API calls
-       * ---------------------------- */
-      async function loadOptions() {
-        const res = await fetch("/api/dashboard/options");
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
-
-        const years = Array.isArray(json.years) ? json.years : [];
-        const statuses = Array.isArray(json.statuses) ? json.statuses : [];
-        const depts = Array.isArray(json.depts) ? json.depts : [];
-
-        MAJORS_BY_DEPT = json.majorsByDept || {};
-
-        fYear.innerHTML = years
-          .map((y) => `<option value="${y}">${y}</option>`)
-          .join("");
-        fStatus.innerHTML = ["ทั้งหมด", ...statuses]
-          .map((s) => `<option value="${s}">${s}</option>`)
-          .join("");
-        fDept.innerHTML = ["ทั้งหมด", ...depts]
-          .map((d) => `<option value="${d}">${d}</option>`)
-          .join("");
-
-        // default
-        if (years.length) fYear.value = years[0];
-        fStatus.value = "ทั้งหมด";
-        fDept.value = "ทั้งหมด";
-
-        updateMajorDropdown();
-      }
-
-      async function loadSummaryAndRender() {
-        const year = fYear.value;
-        const status = fStatus.value;
-        const dept = fDept.value;
-        const major = majorWrap.style.display === "none" ? "" : fMajor.value;
-
-        stripYear.textContent = year || "-";
-        stripDept.textContent = dept || "-";
-        if (majorWrap.style.display !== "none") {
-          stripMajor.textContent =
-            fMajor.options[fMajor.selectedIndex]?.textContent ||
-            "-- รวมทุกสาขา --";
-        }
-
-        const qs = new URLSearchParams({
-          year,
-          status,
-          dept,
-          major,
-        });
-
-        const res = await fetch("/api/dashboard/summary?" + qs.toString());
-        const json = await res.json();
-        if (!res.ok) throw new Error(json?.error || "โหลด summary ไม่สำเร็จ");
-
-        stripN.textContent = json.n || 0;
-
-        renderTable(json);
-        updateCharts(json);
-      }
-
-      /** ----------------------------
-       *  Boot
-       * ---------------------------- */
-      (async function boot() {
-        try {
-          buildCharts();
-          await loadOptions();
-          await loadSummaryAndRender();
-
-          fYear.addEventListener("change", loadSummaryAndRender);
-          fStatus.addEventListener("change", loadSummaryAndRender);
-
-          fDept.addEventListener("change", async () => {
-            updateMajorDropdown();
-            await loadSummaryAndRender();
-          });
-
-          fMajor.addEventListener("change", loadSummaryAndRender);
-        } catch (e) {
-          console.error(e);
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:#ef4444;padding:18px">
-          Dashboard โหลดไม่สำเร็จ: ${e.message}
-        </td></tr>`;
-        }
-      })();
-    </script>
-  </body>
+  <script src="dashboard.js"></script>
+</body>
 </html>

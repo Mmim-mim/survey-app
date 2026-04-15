@@ -178,12 +178,25 @@ app.get("/api/dashboard/options", async (req, res) => {
     let sql = `
       SELECT id, created_at, created_by, form_title, payload_json
       FROM submissions
+      WHERE 1=1
     `;
     const params = [];
 
     if (role !== "manager") {
-      sql += ` WHERE created_by = ? `;
-      params.push(username);
+     const [forms] = await pool.execute(
+  "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+  [username]
+);
+
+const formTitles = forms
+  .map((f) => String(f.form_title || "").trim())
+  .filter(Boolean);
+      if (formTitles.length > 0) {
+        sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
+        params.push(...formTitles);
+      } else {
+        sql += ` AND 1 = 0 `;
+      }
     }
 
     sql += ` ORDER BY created_at DESC LIMIT 5000`;
@@ -231,9 +244,22 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const params = [];
 
     if (role !== "manager") {
-      sql += ` AND created_by = ? `;
-      params.push(username);
-    }
+  const [forms] = await pool.execute(
+    "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+    [username]
+  );
+
+  const formTitles = forms
+    .map((f) => String(f.form_title || "").trim())
+    .filter(Boolean);
+
+  if (formTitles.length > 0) {
+    sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
+    params.push(...formTitles);
+  } else {
+    sql += ` AND 1 = 0 `;
+  }
+}
 
     if (formTitle) {
       sql += ` AND form_title = ? `;
@@ -376,128 +402,10 @@ app.get("/api/dashboard/summary", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
-
 /** -----------------------------
  *  4) Dashboard: summary ตาม filter
  *  GET /api/dashboard/summary?year=2569&status=...&dept=...&major=...
  * ----------------------------- */
-app.get("/api/dashboard/summary", async (req, res) => {
-  try {
-    const yearQ = req.query.year ? Number(req.query.year) : null;
-    const statusQ = (req.query.status || "ทั้งหมด").trim();
-    const deptQ = (req.query.dept || "ทั้งหมด").trim();
-    const majorQ = (req.query.major || "").trim(); // "" = รวมทุกสาขา
-
-    const [rows] = await pool.query(
-      "SELECT payload_json FROM submissions ORDER BY id DESC LIMIT 5000"
-    );
-
-    // เลือก submissions ตาม filter
-    const picked = [];
-    for (const r of rows) {
-      const p = safeJsonParse(r.payload_json);
-      if (!p) continue;
-
-      const yr = Number(p.fiscal_year);
-      if (yearQ && yr !== yearQ) continue;
-
-      const prof = p.profile || {};
-      const status = (prof.status || "").trim();
-      const dept = (prof.dept || "").trim();
-      const major = (prof.major || "").trim();
-
-      if (statusQ !== "ทั้งหมด" && status !== statusQ) continue;
-      if (deptQ !== "ทั้งหมด" && dept !== deptQ) continue;
-      if (majorQ && major !== majorQ) continue;
-
-      picked.push(p);
-    }
-
-    // n = จำนวน submissions
-    const n = picked.length;
-
-    // ===== TABLE: รวมคะแนนจาก ratings โดยใช้ questionText เป็น key =====
-    // itemsMap[text] = { values: [..] }
-    const itemsMap = new Map();
-
-    for (const p of picked) {
-      const ratings = Array.isArray(p.ratings) ? p.ratings : [];
-      for (const r of ratings) {
-        const text = (r.questionText || "").trim();
-        const v = Number(r.value);
-        if (!text) continue;
-        if (!itemsMap.has(text)) itemsMap.set(text, []);
-        if (Number.isFinite(v)) itemsMap.get(text).push(v);
-      }
-    }
-
-    // แปลงเป็น items[] ตามที่ dashboard ใช้
-    // NOTE: ตอนนี้ใช้คะแนนเดียวใส่ทั้ง “ความคาดหวัง” และ “ความพึงพอใจ” ไปก่อน
-    const items = Array.from(itemsMap.entries()).map(([text, arr]) => {
-      const m = mean(arr);
-      const s = sd(arr);
-      return {
-        text,
-        expMean: m,
-        expSd: s,
-        satMean: m,
-        satSd: s,
-      };
-    });
-
-    // ===== PIE: พึงพอใจ vs ไม่พึงพอใจ จาก diss (no=พึงพอใจ, yes=ไม่พึงพอใจ) =====
-    let ok = 0,
-      bad = 0;
-    for (const p of picked) {
-      const diss = Array.isArray(p.diss) ? p.diss : [];
-      for (const d of diss) {
-        if (d.yn === "no") ok++;
-        else if (d.yn === "yes") bad++;
-      }
-    }
-
-    // ===== BAR: ความผูกพัน จาก engagement (yes=มี, no=ไม่มี) แยกตามคำถาม =====
-    const engLabels = [];
-    const engOk = [];
-    const engBad = [];
-
-    // รวมเป็น map: label -> {yesCount, noCount}
-    const engMap = new Map();
-    for (const p of picked) {
-      const eng = Array.isArray(p.engagement) ? p.engagement : [];
-      for (const e of eng) {
-        const label = (e.questionText || "").trim();
-        if (!label) continue;
-        engMap.set(label, engMap.get(label) || { yes: 0, no: 0 });
-        if (e.yn === "yes") engMap.get(label).yes++;
-        if (e.yn === "no") engMap.get(label).no++;
-      }
-    }
-
-    for (const [label, c] of engMap.entries()) {
-      engLabels.push(label);
-      engOk.push(c.yes);
-      engBad.push(c.no);
-    }
-
-    res.json({
-      year: yearQ,
-      status: statusQ,
-      dept: deptQ,
-      major: majorQ,
-      n,
-      items,
-      satisfactionSplit: { ok, bad },
-      engagement: {
-        labels: engLabels,
-        ok: engOk,
-        bad: engBad,
-      },
-    });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
 
 
 const PORT = process.env.PORT || 3000;

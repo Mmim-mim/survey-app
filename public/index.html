@@ -554,12 +554,12 @@
 
   <!-- 🔥 จัดการฟอร์ม -->
   <td style="text-align:center;">
-    <div class="action-icons">
-      <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
-      <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">📋</button>
-      <button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>
-    </div>
-  </td>
+  <div class="action-icons">
+    <button class="icon-btn btn-preview" data-form-id="${r.id}" title="ดูฟอร์ม" type="button">👁️</button>
+    <button class="icon-btn btn-copy" data-form-id="${r.id}" title="คัดลอกลิงก์" type="button">📋</button>
+    <button class="icon-btn btn-edit" data-form-id="${r.id}" title="แก้ไขฟอร์ม" type="button">✏️</button>
+  </div>
+</td>
 
   <!-- ผลการดำเนินงาน -->
   <td style="text-align:center;">-</td>
@@ -590,34 +590,57 @@
         }
       }
 
-      // คลิกปุ่ม "ทำแบบประเมิน" -> โหลดฟอร์ม -> ใส่ localStorage -> ไป preview.html
       tbody.addEventListener("click", async (e) => {
-        const btn = e.target.closest(".btn-do");
+        const previewBtn = e.target.closest(".btn-preview");
+        const copyBtn = e.target.closest(".btn-copy");
+        const editBtn = e.target.closest(".btn-edit");
+
+        const btn = previewBtn || copyBtn || editBtn;
         if (!btn) return;
 
         const id = btn.getAttribute("data-form-id");
         if (!id) return;
 
-        try {
-          btn.disabled = true;
+        // 👁️ ดูฟอร์ม
+        if (previewBtn) {
+          try {
+            previewBtn.disabled = true;
 
-          const res = await fetch("/api/forms/" + encodeURIComponent(id));
-          const json = await res.json();
-          if (!res.ok) throw new Error(json?.error || "โหลดฟอร์มไม่สำเร็จ");
-          if (!json.form)
-            throw new Error("ฟอร์มนี้อ่านไม่ได้ (form_json ไม่ถูกต้อง)");
+            const res = await fetch("/api/forms/" + encodeURIComponent(id));
+            const json = await res.json();
 
-          // ให้ preview.html ใช้เหมือนเดิม (อ่านจาก surveyDraft)
-          localStorage.setItem("surveyDraft", JSON.stringify(json.form));
+            if (!res.ok) throw new Error(json?.error || "โหลดฟอร์มไม่สำเร็จ");
+            if (!json.form)
+              throw new Error("ฟอร์มนี้อ่านไม่ได้ (form_json ไม่ถูกต้อง)");
 
-          // ไปหน้าทำแบบประเมิน
-          window.location.href = "preview.html";
-        } catch (err) {
-          alert("เปิดฟอร์มไม่สำเร็จ: " + err.message);
-        } finally {
-          btn.disabled = false;
+            localStorage.setItem("surveyDraft", JSON.stringify(json.form));
+            window.location.href = "preview.html";
+          } catch (err) {
+            alert("เปิดฟอร์มไม่สำเร็จ: " + err.message);
+          } finally {
+            previewBtn.disabled = false;
+          }
+          return;
+        }
+
+        // 📋 คัดลอกลิงก์
+        if (copyBtn) {
+          try {
+            const url = `${window.location.origin}/preview.html?formId=${id}`;
+            await navigator.clipboard.writeText(url);
+            alert("คัดลอกลิงก์แล้ว");
+          } catch (err) {
+            alert("คัดลอกลิงก์ไม่สำเร็จ: " + err.message);
+          }
+          return;
+        }
+
+        // ✏️ แก้ไขฟอร์ม
+        if (editBtn) {
+          window.location.href = `from.html?mode=edit&id=${encodeURIComponent(id)}`;
         }
       });
+
       function formatThaiDateShort(dateStr) {
         if (!dateStr) return "-";
 

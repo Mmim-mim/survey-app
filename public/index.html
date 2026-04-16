@@ -309,6 +309,24 @@
         text-align: center;
         padding: 18px;
       }
+      .action-icons {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .icon-btn {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 4px 6px;
+        border-radius: 6px;
+      }
+
+      .icon-btn:hover {
+        background: #f3f4f6;
+      }
     </style>
   </head>
   <body>
@@ -384,11 +402,14 @@
                   <th style="width: 180px; text-align: center">
                     ผลการดำเนินงาน
                   </th>
+                  <th style="width: 180px; text-align: center">
+                    ผลการดำเนินงาน
+                  </th>
                 </tr>
               </thead>
               <tbody id="tbody">
                 <tr>
-                  <td colspan="6" class="empty">ยังไม่มีข้อมูล</td>
+                  <td colspan="7" class="empty">ยังไม่มีข้อมูล</td>
                 </tr>
               </tbody>
             </table>
@@ -513,32 +534,57 @@
             throw new Error(rows?.error || "โหลดรายการฟอร์มไม่สำเร็จ");
 
           if (!Array.isArray(rows) || rows.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="empty">ยังไม่มีข้อมูล</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มีข้อมูล</td></tr>`;
             return;
           }
 
           tbody.innerHTML = rows
-            .map((r, idx) => {
-              const creator = esc(r.created_by || "-");
-              const title = esc(r.form_title || "แบบประเมิน");
+            .map((r, i) => {
+              const dateText = formatDateRange(r.start_date, r.end_date);
+
               return `
-          <tr>
-            <td style="text-align:center">${idx + 1}</td>
-            <td style="text-align:center">${creator}</td>
-            <td>${title}</td>
-            <td style="text-align:center">${esc(r.dept_name || "-")}</td>
-            <td style="text-align:center">
-              <button class="btn green btn-do" data-form-id="${r.id}" type="button">
-                ทำแบบประเมิน
-              </button>
-            </td>
-            <td style="text-align:center">-</td>
-          </tr>
-        `;
+<tr>
+  <td style="text-align:center;">${i + 1}</td>
+  <td style="text-align:center;">${r.created_by_username || "-"}</td>
+  <td>${r.form_title || "-"}</td>
+  <td style="text-align:center;">${r.dept_name || "-"}</td>
+
+  <!-- วันที่เข้าร่วม -->
+  <td style="text-align:center;">${dateText}</td>
+
+  <!-- 🔥 จัดการฟอร์ม -->
+  <td style="text-align:center;">
+    <div class="action-icons">
+      <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
+      <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">📋</button>
+      <button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>
+    </div>
+  </td>
+
+  <!-- ผลการดำเนินงาน -->
+  <td style="text-align:center;">-</td>
+</tr>
+`;
             })
             .join("");
+
+          function previewForm(id) {
+            window.open(`/preview.html?formId=${id}`, "_blank");
+          }
+
+          function editForm(id) {
+            window.location.href = `/from.html?formId=${id}`;
+          }
+
+          function copyLink(id) {
+            const url = `${window.location.origin}/preview.html?formId=${id}`;
+
+            navigator.clipboard.writeText(url).then(() => {
+              alert("คัดลอกลิงก์แล้ว");
+            });
+          }
         } catch (e) {
-          tbody.innerHTML = `<tr><td colspan="6" class="empty">เกิดข้อผิดพลาด: ${esc(
+          tbody.innerHTML = `<tr><td colspan="7" class="empty">เกิดข้อผิดพลาด: ${esc(
             e.message,
           )}</td></tr>`;
         }
@@ -572,6 +618,31 @@
           btn.disabled = false;
         }
       });
+      function formatThaiDateShort(dateStr) {
+        if (!dateStr) return "-";
+
+        const d = new Date(dateStr);
+        if (isNaN(d)) return "-";
+
+        const day = d.getDate().toString().padStart(2, "0");
+        const month = (d.getMonth() + 1).toString().padStart(2, "0");
+        const year = (d.getFullYear() + 543).toString().slice(-2);
+
+        return `${day}.${month}.${year}`;
+      }
+
+      function formatDateRange(start, end) {
+        if (!start && !end) return "-";
+
+        const s = formatThaiDateShort(start);
+        const e = formatThaiDateShort(end);
+
+        if (!end || s === e) {
+          return s;
+        }
+
+        return `${s} - ${e}`;
+      }
 
       // เรียกตอนเปิดหน้า
       loadFormsList();

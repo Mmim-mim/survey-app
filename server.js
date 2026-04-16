@@ -650,3 +650,7 @@ app.put("/api/forms/:id", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

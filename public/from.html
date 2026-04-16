@@ -967,9 +967,7 @@
                 style="font-weight: 800"
               />
               <div class="right">
-                <button class="btn soft del remove-dim">
-                  ลบ
-                </button>
+                <button class="btn soft del remove-dim">ลบ</button>
               </div>
             </div>
 
@@ -1254,6 +1252,303 @@
         savedDraft = {};
       }
 
+      const qs = new URLSearchParams(window.location.search);
+      const pageMode = qs.get("mode") === "edit" ? "edit" : "create";
+      const editingFormId = qs.get("id");
+
+      const currentUser = (localStorage.getItem("user") || "").trim();
+      const currentRole = (localStorage.getItem("role") || "staff").trim();
+      const currentDisplayName = (
+        localStorage.getItem("displayName") || currentUser
+      ).trim();
+
+      function setValue(selector, value) {
+        const el = document.querySelector(selector);
+        if (el) el.value = value ?? "";
+      }
+
+      function setCheckboxValues(name, values = []) {
+        const set = new Set(Array.isArray(values) ? values : []);
+        document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+          el.checked = set.has(el.value);
+        });
+      }
+
+      function toggleSectionBySec(secNo, enabled) {
+        const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
+        if (!sec) return;
+
+        const cb = sec.querySelector(".toggle");
+        if (!cb) return;
+
+        cb.checked = !!enabled;
+        cb.dispatchEvent(new Event("change"));
+      }
+
+      function addSimpleRows(
+        containerSelector,
+        items = [],
+        inputName = "items[]",
+      ) {
+        const root = document.querySelector(containerSelector);
+        if (!root) return;
+
+        root.innerHTML = "";
+
+        const values = Array.isArray(items) && items.length ? items : ["", ""];
+
+        values.forEach((text, index) => {
+          const row = document.createElement("div");
+          row.className = "item";
+          row.innerHTML = `
+      <span class="num">${index + 1}.</span>
+      <input class="input" type="text" name="${inputName}" placeholder="กรอกคำถาม..." />
+      ${index >= 2 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+    `;
+          row.querySelector("input").value = text || "";
+          root.appendChild(row);
+
+          const delBtn = row.querySelector(".del");
+          if (delBtn) attachDelete(delBtn, root);
+        });
+
+        renumber(root);
+      }
+
+      function getSectionEnabled(secNo) {
+        const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
+        const cb = sec?.querySelector(".toggle");
+        return !!cb?.checked;
+      }
+
+      function getCheckedValues(name) {
+        return Array.from(
+          document.querySelectorAll(`input[name="${name}"]:checked`),
+        ).map((el) => el.value);
+      }
+
+      function getInputValues(selector) {
+        return Array.from(document.querySelectorAll(selector))
+          .map((el) => String(el.value || "").trim())
+          .filter(Boolean);
+      }
+
+      function collectSection2Models() {
+        return Array.from(document.querySelectorAll("[data-main-model]")).map(
+          (modelEl) => {
+            const title =
+              modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
+              "";
+            const enabled =
+              !!modelEl.querySelector(".main-model-toggle")?.checked;
+
+            const dimensions = Array.from(
+              modelEl.querySelectorAll("[data-subgroup-item]"),
+            ).map((groupEl) => ({
+              title:
+                groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
+              enabled: !!groupEl.querySelector(".subtoggle")?.checked,
+              questions: Array.from(
+                groupEl.querySelectorAll(".questions .dim-question"),
+              )
+                .map((el) => String(el.value || "").trim())
+                .filter(Boolean),
+            }));
+
+            return { title, enabled, dimensions };
+          },
+        );
+      }
+
+      function collectExtraSections() {
+        return Array.from(
+          document.querySelectorAll('.custom-dimension[data-role="section"]'),
+        ).map((el) => ({
+          title: el.querySelector(".dim-title")?.value?.trim() || "",
+          questions: Array.from(el.querySelectorAll(".dim-question"))
+            .map((q) => String(q.value || "").trim())
+            .filter(Boolean),
+        }));
+      }
+
+      function buildFormPayload() {
+        return {
+          form_title:
+            document.querySelector('[name="form_title"]')?.value?.trim() || "",
+          form_desc:
+            document.querySelector('[name="form_desc"]')?.value?.trim() || "",
+
+          goal_text: document.getElementById("goal_text")?.value?.trim() || "",
+          kpi_quantity:
+            document.getElementById("kpi_quantity")?.value?.trim() || "",
+          kpi_quality:
+            document.getElementById("kpi_quality")?.value?.trim() || "",
+          start_date: document.getElementById("start_date")?.value || "",
+          end_date: document.getElementById("end_date")?.value || "",
+
+          dept_name: document.getElementById("dept_name")?.value || "",
+          uni_strategy: document.getElementById("uni_strategy")?.value || "",
+          center_strategy:
+            document.getElementById("center_strategy")?.value || "",
+          center_mission:
+            document.getElementById("center_mission")?.value || "",
+
+          section1_enabled: getSectionEnabled(1),
+          profile: getCheckedValues("profile[]"),
+
+          section2_enabled: getSectionEnabled(2),
+          section2_models: collectSection2Models(),
+
+          section3_enabled: getSectionEnabled(3),
+          q31: getInputValues('#dissat input[name="q31[]"]'),
+
+          section4_enabled: getSectionEnabled(4),
+          q41: getInputValues('#engage input[name="q41[]"]'),
+
+          section5_enabled: getSectionEnabled(5),
+          suggestion_prompt:
+            document
+              .querySelector('[name="suggestion_prompt"]')
+              ?.value?.trim() || "",
+
+          extra_sections: collectExtraSections(),
+        };
+      }
+
+      function applyFormToPage(data) {
+        if (!data) return;
+
+        setValue('[name="form_title"]', data.form_title);
+        setValue('[name="form_desc"]', data.form_desc);
+
+        setValue("#goal_text", data.goal_text);
+        setValue("#kpi_quantity", data.kpi_quantity);
+        setValue("#kpi_quality", data.kpi_quality);
+        setValue("#start_date", data.start_date);
+        setValue("#end_date", data.end_date);
+
+        setValue("#dept_name", data.dept_name);
+        setValue("#uni_strategy", data.uni_strategy);
+        setValue("#center_strategy", data.center_strategy);
+        setValue("#center_mission", data.center_mission);
+
+        toggleSectionBySec(1, data.section1_enabled !== false);
+        setCheckboxValues("profile[]", data.profile || []);
+
+        toggleSectionBySec(2, data.section2_enabled !== false);
+        const mainModelsEl = document.getElementById("mainModels");
+        if (mainModelsEl) mainModelsEl.innerHTML = "";
+
+        if (
+          Array.isArray(data.section2_models) &&
+          data.section2_models.length
+        ) {
+          data.section2_models.forEach((m) => addMainModel(m));
+        } else {
+          defaultMainModels.forEach((m) => addMainModel(m));
+        }
+
+        toggleSectionBySec(3, data.section3_enabled !== false);
+        addSimpleRows("#dissat", data.q31 || [], "q31[]");
+
+        toggleSectionBySec(4, data.section4_enabled !== false);
+        addSimpleRows("#engage", data.q41 || [], "q41[]");
+
+        toggleSectionBySec(5, data.section5_enabled !== false);
+        setValue('[name="suggestion_prompt"]', data.suggestion_prompt);
+
+        document
+          .querySelectorAll('.custom-dimension[data-role="section"]')
+          .forEach((el) => el.remove());
+
+        if (Array.isArray(data.extra_sections)) {
+          data.extra_sections.forEach((sec) => {
+            const footer = document.querySelector(".footer");
+            mountDimension(footer, "section");
+
+            const blocks = document.querySelectorAll(
+              '.custom-dimension[data-role="section"]',
+            );
+            const block = blocks[blocks.length - 1];
+            if (!block) return;
+
+            const titleInput = block.querySelector(".dim-title");
+            if (titleInput) titleInput.value = sec.title || "";
+
+            const stack = block.querySelector(".stack");
+            stack.innerHTML = "";
+
+            const qs =
+              Array.isArray(sec.questions) && sec.questions.length
+                ? sec.questions
+                : [""];
+
+            qs.forEach((q, i) => {
+              const row = document.createElement("div");
+              row.className = "item";
+              row.innerHTML = `
+          <span class="num">${i + 1}.</span>
+          <input class="input dim-question" type="text" placeholder="กรอกคำถาม..." />
+          ${i > 0 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+        `;
+              row.querySelector(".dim-question").value = q || "";
+              stack.appendChild(row);
+
+              const delBtn = row.querySelector(".del");
+              if (delBtn) attachDelete(delBtn, stack);
+            });
+
+            renumber(stack);
+          });
+        }
+
+        renumberDimensions();
+      }
+
+      async function loadFormForEdit() {
+        if (pageMode !== "edit" || !editingFormId) return;
+
+        const res = await fetch(
+          `/api/forms/${encodeURIComponent(editingFormId)}`,
+        );
+        const json = await res.json();
+
+        if (!res.ok) {
+          throw new Error(json?.error || "โหลดข้อมูลฟอร์มไม่สำเร็จ");
+        }
+
+        const ownerUsername = String(json.created_by_username || "").trim();
+        const isOwner = ownerUsername === currentUser;
+        const isManager = currentRole === "manager";
+
+        if (!isOwner && !isManager) {
+          throw new Error("คุณไม่มีสิทธิ์แก้ไขฟอร์มนี้");
+        }
+
+        const merged = {
+          ...(json.form || {}),
+          form_title: json.form_title ?? json.form?.form_title ?? "",
+          dept_name: json.dept_name ?? json.form?.dept_name ?? "",
+          uni_strategy: json.uni_strategy ?? json.form?.uni_strategy ?? "",
+          center_strategy:
+            json.center_strategy ?? json.form?.center_strategy ?? "",
+          center_mission:
+            json.center_mission ?? json.form?.center_mission ?? "",
+          goal_text: json.goal_text ?? json.form?.goal_text ?? "",
+          kpi_quantity: json.kpi_quantity ?? json.form?.kpi_quantity ?? "",
+          kpi_quality: json.kpi_quality ?? json.form?.kpi_quality ?? "",
+          start_date: json.start_date ?? json.form?.start_date ?? "",
+          end_date: json.end_date ?? json.form?.end_date ?? "",
+        };
+
+        applyFormToPage(merged);
+
+        const submitBtn = document.querySelector(
+          '#formSurvey button[type="submit"]',
+        );
+        if (submitBtn) submitBtn.textContent = "อัปเดตฟอร์ม";
+      }
+
       if (
         Array.isArray(savedDraft.section2_models) &&
         savedDraft.section2_models.length
@@ -1416,175 +1711,94 @@
         });
       });
 
+      window.addEventListener("DOMContentLoaded", async () => {
+        try {
+          if (pageMode === "edit") {
+            await loadFormForEdit();
+          }
+        } catch (err) {
+          alert("เปิดหน้าแก้ไขไม่สำเร็จ: " + err.message);
+          window.location.href = "index.html";
+        }
+      });
+
       // Save -> DB -> กลับหน้า index.html
       document
         .getElementById("formSurvey")
         .addEventListener("submit", async (e) => {
           e.preventDefault();
-          const fd = new FormData(e.target);
-          const obj = {};
 
-          for (const [k, v] of fd.entries()) {
-            if (k.endsWith("[]")) {
-              const kk = k.slice(0, -2);
-              (obj[kk] || (obj[kk] = [])).push(v);
-            } else {
-              obj[k] = v;
-            }
-          }
-
-          const ratingExtra = [];
-          document
-            .querySelectorAll('.custom-dimension[data-role="rating"]')
-            .forEach((block) => {
-              const title = (
-                block.querySelector(".dim-title")?.value || ""
-              ).trim();
-              const questions = Array.from(
-                block.querySelectorAll(".dim-question"),
-              )
-                .map((ip) => (ip.value || "").trim())
-                .filter(Boolean);
-              if (title || questions.length)
-                ratingExtra.push({ title, questions });
-            });
-          obj.ratingExtra = ratingExtra;
-
-          const dimensions = [];
-          document
-            .querySelectorAll('.custom-dimension[data-role="section"]')
-            .forEach((block) => {
-              const title = (
-                block.querySelector(".dim-title")?.value || ""
-              ).trim();
-              const questions = Array.from(
-                block.querySelectorAll(".dim-question"),
-              )
-                .map((ip) => (ip.value || "").trim())
-                .filter(Boolean);
-              if (title || questions.length)
-                dimensions.push({ title, questions });
-            });
-          obj.dimensions = dimensions;
-
-          // ชื่อผู้สร้าง (ใช้จาก login)
-          const displayName = (
-            localStorage.getItem("displayName") || ""
-          ).trim();
-          const username = (localStorage.getItem("user") || "").trim();
-          const createdBy = displayName || username || null;
+          const submitBtn = e.target.querySelector('button[type="submit"]');
 
           try {
-            const deptName =
-              document.getElementById("dept_name")?.value || null;
-            const uniStrategy =
-              document.getElementById("uni_strategy")?.value || null;
-            const centerStrategy =
-              document.getElementById("center_strategy")?.value || null;
-            const centerMission =
-              document.getElementById("center_mission")?.value || null;
+            if (submitBtn) submitBtn.disabled = true;
 
-            const goalText =
-              document.getElementById("goal_text")?.value || null;
-            const kpiQuantity =
-              document.getElementById("kpi_quantity")?.value || null;
-            const kpiQuality =
-              document.getElementById("kpi_quality")?.value || null;
-            const startDate =
-              document.getElementById("start_date")?.value || null;
-            const endDate = document.getElementById("end_date")?.value || null;
+            const formData = buildFormPayload();
 
-            const section2_models = Array.from(
-              document.querySelectorAll("[data-main-model]"),
-            ).map((main) => {
-              return {
-                title:
-                  main.querySelector(".main-model-title")?.textContent.trim() ||
-                  "",
-                enabled:
-                  main.querySelector(".main-model-toggle")?.checked ?? true,
-                dimensions: Array.from(
-                  main.querySelectorAll("[data-subgroup-item]"),
-                ).map((dim) => {
-                  return {
-                    title:
-                      dim.querySelector(".subgroup-title")?.value.trim() || "",
-                    enabled: dim.querySelector(".subtoggle")?.checked ?? true,
-                    questions: Array.from(dim.querySelectorAll(".dim-question"))
-                      .map((inp) => inp.value.trim())
-                      .filter(Boolean),
-                  };
-                }),
-              };
-            });
+            if (!formData.form_title) {
+              alert("กรุณากรอกชื่อฟอร์ม");
+              return;
+            }
 
-            obj.dept_name = deptName;
-            obj.uni_strategy = uniStrategy;
-            obj.center_strategy = centerStrategy;
-            obj.center_mission = centerMission;
-            obj.goal_text = goalText;
-            obj.kpi_quantity = kpiQuantity;
-            obj.kpi_quality = kpiQuality;
-            obj.start_date = startDate;
-            obj.section2_models = section2_models;
-            obj.end_date = endDate;
-            obj.dissatisfied = Array.isArray(obj["q31"])
-              ? obj["q31"].filter(Boolean)
-              : obj["q31"]
-                ? [obj["q31"]].filter(Boolean)
-                : [];
+            const payload = {
+              created_by: currentDisplayName || currentUser,
+              created_by_username: currentUser,
+              username: currentUser,
+              role: currentRole,
 
-            obj.engagement = Array.isArray(obj["q41"])
-              ? obj["q41"].filter(Boolean)
-              : obj["q41"]
-                ? [obj["q41"]].filter(Boolean)
-                : [];
-
-            obj.section_state = {
-              s1:
-                document.querySelector('[data-sec="s1"] .toggle')?.checked ??
-                true,
-              s2:
-                document.querySelector('[data-sec="s2"] .toggle')?.checked ??
-                true,
-              s3:
-                document.querySelector('[data-sec="s3"] .toggle')?.checked ??
-                true,
-              s4:
-                document.querySelector('[data-sec="s4"] .toggle')?.checked ??
-                true,
-              s5:
-                document.querySelector('[data-sec="s5"] .toggle')?.checked ??
-                true,
+              form_title: formData.form_title,
+              dept_name: formData.dept_name,
+              uni_strategy: formData.uni_strategy,
+              center_strategy: formData.center_strategy,
+              center_mission: formData.center_mission,
+              goal_text: formData.goal_text,
+              kpi_quantity: formData.kpi_quantity,
+              kpi_quality: formData.kpi_quality,
+              start_date: formData.start_date || null,
+              end_date: formData.end_date || null,
+              form: formData,
             };
-            const res = await fetch("/api/forms", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                created_by: createdBy,
-                created_by_username: username || null,
-                form_title: obj.form_title || null,
-                dept_name: deptName,
-                uni_strategy: uniStrategy,
-                center_strategy: centerStrategy,
-                center_mission: centerMission,
-                goal_text: goalText,
-                kpi_quantity: kpiQuantity,
-                kpi_quality: kpiQuality,
-                start_date: startDate,
-                end_date: endDate,
-                form: obj,
-              }),
-            });
 
-            const json = await res.json();
-            if (!res.ok || !json.ok)
-              throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
+            let res;
+            let json;
 
-            // กลับไปหน้า list (index)
+            if (pageMode === "edit" && editingFormId) {
+              res = await fetch(
+                `/api/forms/${encodeURIComponent(editingFormId)}`,
+                {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                },
+              );
+              json = await res.json();
+
+              if (!res.ok) {
+                throw new Error(json?.error || "อัปเดตฟอร์มไม่สำเร็จ");
+              }
+
+              alert("อัปเดตฟอร์มเรียบร้อยแล้ว");
+            } else {
+              res = await fetch("/api/forms", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              });
+              json = await res.json();
+
+              if (!res.ok) {
+                throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
+              }
+
+              alert("บันทึกฟอร์มเรียบร้อยแล้ว");
+            }
+
+            localStorage.removeItem("surveyDraft");
             window.location.href = "index.html";
           } catch (err) {
-            alert("บันทึกไม่สำเร็จ: " + err.message);
+            alert(err.message || "เกิดข้อผิดพลาด");
+          } finally {
+            if (submitBtn) submitBtn.disabled = false;
           }
         });
     </script>

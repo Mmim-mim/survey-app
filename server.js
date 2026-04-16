@@ -510,29 +510,34 @@ app.get("/api/forms/:id", async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      `SELECT id, created_at, created_by, form_title,
+      `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
-              goal_text, kpi_quantity, kpi_quality, form_json
+              goal_text, kpi_quantity, kpi_quality,
+              start_date, end_date, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
       [id]
     );
 
-    if (!rows.length) return res.status(404).json({ error: "not found" });
+    if (!rows.length) {
+      return res.status(404).json({ error: "not found" });
+    }
 
     const r = rows[0];
     let form = null;
+
     try {
       form = JSON.parse(r.form_json);
     } catch {
       form = null;
     }
 
-    res.json({  
+    res.json({
       id: r.id,
       created_at: r.created_at,
       created_by: r.created_by,
+      created_by_username: r.created_by_username,
       form_title: r.form_title,
       dept_name: r.dept_name,
       uni_strategy: r.uni_strategy,
@@ -541,12 +546,107 @@ app.get("/api/forms/:id", async (req, res) => {
       goal_text: r.goal_text,
       kpi_quantity: r.kpi_quantity,
       kpi_quality: r.kpi_quality,
+      start_date: r.start_date,
+      end_date: r.end_date,
       form,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+
+const ALLOW_MANAGER_EDIT = true;
+
+app.put("/api/forms/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "invalid id" });
+    }
+
+    const {
+      username,
+      role,
+      form_title,
+      dept_name,
+      uni_strategy,
+      center_strategy,
+      center_mission,
+      goal_text,
+      kpi_quantity,
+      kpi_quality,
+      start_date,
+      end_date,
+      form,
+    } = req.body || {};
+
+    if (!form) {
+      return res.status(400).json({ error: "form is required" });
+    }
+
+    const reqUsername = String(username || "").trim();
+    const reqRole = String(role || "staff").trim();
+
+    if (!reqUsername) {
+      return res.status(400).json({ error: "username is required" });
+    }
+
+    const [foundRows] = await pool.execute(
+      `SELECT id, created_by_username
+       FROM survey_forms
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!foundRows.length) {
+      return res.status(404).json({ error: "form not found" });
+    }
+
+    const existing = foundRows[0];
+    const ownerUsername = String(existing.created_by_username || "").trim();
+
+    const isOwner = ownerUsername === reqUsername;
+    const isManager = reqRole === "manager";
+
+    if (!isOwner && !(isManager && ALLOW_MANAGER_EDIT)) {
+      return res.status(403).json({ error: "ไม่มีสิทธิ์แก้ไขฟอร์มนี้" });
+    }
+
+    const form_json = JSON.stringify(form);
+
+    await pool.execute(
+      `UPDATE survey_forms
+       SET form_title = ?,
+           dept_name = ?,
+           uni_strategy = ?,
+           center_strategy = ?,
+           center_mission = ?,
+           goal_text = ?,
+           kpi_quantity = ?,
+           kpi_quality = ?,
+           start_date = ?,
+           end_date = ?,
+           form_json = ?
+       WHERE id = ?`,
+      [
+        form_title || null,
+        dept_name || null,
+        uni_strategy || null,
+        center_strategy || null,
+        center_mission || null,
+        goal_text || null,
+        kpi_quantity || null,
+        kpi_quality || null,
+        start_date || null,
+        end_date || null,
+        form_json,
+        id,
+      ]
+    );
+
+    res.json({ ok: true, id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 });

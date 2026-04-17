@@ -399,9 +399,7 @@
                   <th style="width: 160px; text-align: center">
                     วันที่เข้าร่วม
                   </th>
-                  <th style="width: 180px; text-align: center">
-                    จัดการฟอร์ม
-                  </th>
+                  <th style="width: 180px; text-align: center">จัดการฟอร์ม</th>
                   <th style="width: 180px; text-align: center">
                     ผลการดำเนินงาน
                   </th>
@@ -555,9 +553,10 @@
   <!-- 🔥 จัดการฟอร์ม -->
   <td style="text-align:center;">
   <div class="action-icons">
-    <button class="icon-btn btn-preview" data-form-id="${r.id}" title="ดูฟอร์ม" type="button">👁️</button>
-    <button class="icon-btn btn-copy" data-form-id="${r.id}" title="คัดลอกลิงก์" type="button">📋</button>
-    <button class="icon-btn btn-edit" data-form-id="${r.id}" title="แก้ไขฟอร์ม" type="button">✏️</button>
+    <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
+    <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">📋</button>
+    <button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>
+    <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">📄</button>
   </div>
 </td>
 
@@ -567,22 +566,6 @@
 `;
             })
             .join("");
-
-          function previewForm(id) {
-            window.open(`/preview.html?formId=${id}`, "_blank");
-          }
-
-          function editForm(id) {
-            window.location.href = `/from.html?formId=${id}`;
-          }
-
-          function copyLink(id) {
-            const url = `${window.location.origin}/preview.html?formId=${id}`;
-
-            navigator.clipboard.writeText(url).then(() => {
-              alert("คัดลอกลิงก์แล้ว");
-            });
-          }
         } catch (e) {
           tbody.innerHTML = `<tr><td colspan="7" class="empty">เกิดข้อผิดพลาด: ${esc(
             e.message,
@@ -590,56 +573,89 @@
         }
       }
 
-      tbody.addEventListener("click", async (e) => {
-        const previewBtn = e.target.closest(".btn-preview");
-        const copyBtn = e.target.closest(".btn-copy");
-        const editBtn = e.target.closest(".btn-edit");
+      function previewForm(id) {
+        window.open(`/preview.html?formId=${id}`, "_blank");
+      }
 
-        const btn = previewBtn || copyBtn || editBtn;
-        if (!btn) return;
+      function editForm(id) {
+        window.location.href = `/from.html?mode=edit&id=${id}`;
+      }
 
-        const id = btn.getAttribute("data-form-id");
-        if (!id) return;
+      function copyLink(id) {
+        const url = `${window.location.origin}/preview.html?formId=${id}`;
 
-        // 👁️ ดูฟอร์ม
-        if (previewBtn) {
-          try {
-            previewBtn.disabled = true;
+        navigator.clipboard.writeText(url).then(() => {
+          alert("คัดลอกลิงก์แล้ว");
+        });
+      }
 
-            const res = await fetch("/api/forms/" + encodeURIComponent(id));
-            const json = await res.json();
+      async function copyForm(id) {
+        try {
+          const res = await fetch(`/api/forms/${id}`);
+          const data = await res.json();
 
-            if (!res.ok) throw new Error(json?.error || "โหลดฟอร์มไม่สำเร็จ");
-            if (!json.form)
-              throw new Error("ฟอร์มนี้อ่านไม่ได้ (form_json ไม่ถูกต้อง)");
+          if (!res.ok) throw new Error(data.error || "โหลดฟอร์มไม่สำเร็จ");
 
-            localStorage.setItem("surveyDraft", JSON.stringify(json.form));
-            window.location.href = "preview.html";
-          } catch (err) {
-            alert("เปิดฟอร์มไม่สำเร็จ: " + err.message);
-          } finally {
-            previewBtn.disabled = false;
-          }
-          return;
+          const form = data.form || data;
+          form.form_title = (form.form_title || "ฟอร์มใหม่") + " (copy)";
+
+          localStorage.setItem("copyForm", JSON.stringify(form));
+          window.location.href = "/from.html?mode=copy";
+        } catch (err) {
+          alert(err.message);
         }
+      }
 
-        // 📋 คัดลอกลิงก์
-        if (copyBtn) {
-          try {
-            const url = `${window.location.origin}/preview.html?formId=${id}`;
-            await navigator.clipboard.writeText(url);
-            alert("คัดลอกลิงก์แล้ว");
-          } catch (err) {
-            alert("คัดลอกลิงก์ไม่สำเร็จ: " + err.message);
-          }
-          return;
-        }
+      // tbody.addEventListener("click", async (e) => {
+      //   const previewBtn = e.target.closest(".btn-preview");
+      //   const copyBtn = e.target.closest(".btn-copy");
+      //   const editBtn = e.target.closest(".btn-edit");
 
-        // ✏️ แก้ไขฟอร์ม
-        if (editBtn) {
-          window.location.href = `from.html?mode=edit&id=${encodeURIComponent(id)}`;
-        }
-      });
+      //   const btn = previewBtn || copyBtn || editBtn;
+      //   if (!btn) return;
+
+      //   const id = btn.getAttribute("data-form-id");
+      //   if (!id) return;
+
+      //   // 👁️ ดูฟอร์ม
+      //   if (previewBtn) {
+      //     try {
+      //       previewBtn.disabled = true;
+
+      //       const res = await fetch("/api/forms/" + encodeURIComponent(id));
+      //       const json = await res.json();
+
+      //       if (!res.ok) throw new Error(json?.error || "โหลดฟอร์มไม่สำเร็จ");
+      //       if (!json.form)
+      //         throw new Error("ฟอร์มนี้อ่านไม่ได้ (form_json ไม่ถูกต้อง)");
+
+      //       localStorage.setItem("surveyDraft", JSON.stringify(json.form));
+      //       window.location.href = "preview.html";
+      //     } catch (err) {
+      //       alert("เปิดฟอร์มไม่สำเร็จ: " + err.message);
+      //     } finally {
+      //       previewBtn.disabled = false;
+      //     }
+      //     return;
+      //   }
+
+      //   // 📋 คัดลอกลิงก์
+      //   if (copyBtn) {
+      //     try {
+      //       const url = `${window.location.origin}/preview.html?formId=${id}`;
+      //       await navigator.clipboard.writeText(url);
+      //       alert("คัดลอกลิงก์แล้ว");
+      //     } catch (err) {
+      //       alert("คัดลอกลิงก์ไม่สำเร็จ: " + err.message);
+      //     }
+      //     return;
+      //   }
+
+      //   // ✏️ แก้ไขฟอร์ม
+      //   if (editBtn) {
+      //     window.location.href = `from.html?mode=edit&id=${encodeURIComponent(id)}`;
+      //   }
+      // });
 
       function formatThaiDateShort(dateStr) {
         if (!dateStr) return "-";

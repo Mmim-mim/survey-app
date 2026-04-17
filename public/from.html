@@ -1715,9 +1715,20 @@
         try {
           if (pageMode === "edit") {
             await loadFormForEdit();
+          } else if (pageMode === "copy") {
+            const copied = JSON.parse(localStorage.getItem("copyForm") || "{}");
+            if (!Object.keys(copied).length) {
+              throw new Error("ไม่พบข้อมูลสำหรับคัดลอกฟอร์ม");
+            }
+            applyFormToPage(copied);
+
+            const submitBtn = document.querySelector(
+              '#formSurvey button[type="submit"]',
+            );
+            if (submitBtn) submitBtn.textContent = "บันทึกเป็นฟอร์มใหม่";
           }
         } catch (err) {
-          alert("เปิดหน้าแก้ไขไม่สำเร็จ: " + err.message);
+          alert("เปิดหน้าไม่สำเร็จ: " + err.message);
           window.location.href = "index.html";
         }
       });

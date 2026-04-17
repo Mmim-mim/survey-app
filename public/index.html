@@ -596,10 +596,25 @@
 
           if (!res.ok) throw new Error(data.error || "โหลดฟอร์มไม่สำเร็จ");
 
-          const form = data.form || data;
-          form.form_title = (form.form_title || "ฟอร์มใหม่") + " (copy)";
+          const copied = {
+            ...(data.form || {}),
+            form_title: data.form_title ?? data.form?.form_title ?? "",
+            dept_name: data.dept_name ?? data.form?.dept_name ?? "",
+            uni_strategy: data.uni_strategy ?? data.form?.uni_strategy ?? "",
+            center_strategy:
+              data.center_strategy ?? data.form?.center_strategy ?? "",
+            center_mission:
+              data.center_mission ?? data.form?.center_mission ?? "",
+            goal_text: data.goal_text ?? data.form?.goal_text ?? "",
+            kpi_quantity: data.kpi_quantity ?? data.form?.kpi_quantity ?? "",
+            kpi_quality: data.kpi_quality ?? data.form?.kpi_quality ?? "",
+            start_date: data.start_date ?? data.form?.start_date ?? "",
+            end_date: data.end_date ?? data.form?.end_date ?? "",
+          };
 
-          localStorage.setItem("copyForm", JSON.stringify(form));
+          copied.form_title = (copied.form_title || "ฟอร์มใหม่") + " (copy)";
+
+          localStorage.setItem("copyForm", JSON.stringify(copied));
           window.location.href = "/from.html?mode=copy";
         } catch (err) {
           alert(err.message);

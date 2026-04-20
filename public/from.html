@@ -1253,7 +1253,10 @@
       }
 
       const qs = new URLSearchParams(window.location.search);
-      const pageMode = qs.get("mode") === "edit" ? "edit" : "create";
+      const mode = (qs.get("mode") || "").trim().toLowerCase();
+
+      const pageMode =
+        mode === "edit" ? "edit" : mode === "copy" ? "copy" : "create";
       const editingFormId = qs.get("id");
 
       const currentUser = (localStorage.getItem("user") || "").trim();
@@ -1528,6 +1531,7 @@
         const merged = {
           ...(json.form || {}),
           form_title: json.form_title ?? json.form?.form_title ?? "",
+          form_desc: json.form_desc ?? json.form?.form_desc ?? "",
           dept_name: json.dept_name ?? json.form?.dept_name ?? "",
           uni_strategy: json.uni_strategy ?? json.form?.uni_strategy ?? "",
           center_strategy:

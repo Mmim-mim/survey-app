@@ -308,33 +308,33 @@
       const savedSub = localStorage.getItem("surveySubtitle");
 
       /* ---------- อ่านข้อมูลแบบร่าง ---------- */
-      const raw = localStorage.getItem("surveyDraft");
+      const qs = new URLSearchParams(window.location.search);
+      const formId = qs.get("formId");
+
       let data = {};
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch (_) {}
 
-      const sectionState = data.section_state || {};
+      function renderPage() {
+        const sectionState = data.section_state || {};
 
-      const sec1El = document.getElementById("sec1");
-      const sec2El = document.getElementById("sec2");
-      const sec3El = document.getElementById("sec3");
-      const sec4El = document.getElementById("sec4");
-      const sec5El = document.getElementById("sec5");
+        const sec1El = document.getElementById("sec1");
+        const sec2El = document.getElementById("sec2");
+        const sec3El = document.getElementById("sec3");
+        const sec4El = document.getElementById("sec4");
+        const sec5El = document.getElementById("sec5");
 
-      if (sec1El && sectionState.s1 === false) sec1El.style.display = "none";
-      if (sec2El && sectionState.s2 === false) sec2El.style.display = "none";
-      if (sec3El && sectionState.s3 === false) sec3El.style.display = "none";
-      if (sec4El && sectionState.s4 === false) sec4El.style.display = "none";
-      if (sec5El && sectionState.s5 === false) sec5El.style.display = "none";
+        if (sec1El && sectionState.s1 === false) sec1El.style.display = "none";
+        if (sec2El && sectionState.s2 === false) sec2El.style.display = "none";
+        if (sec3El && sectionState.s3 === false) sec3El.style.display = "none";
+        if (sec4El && sectionState.s4 === false) sec4El.style.display = "none";
+        if (sec5El && sectionState.s5 === false) sec5El.style.display = "none";
 
-      titleEl.textContent = data.form_title || savedTitle || "ชื่อเรื่อง";
-      subEl.textContent = data.form_desc || savedSub || "คำอธิบายแบบประเมิน";
+        titleEl.textContent = data.form_title || savedTitle || "ชื่อเรื่อง";
+        subEl.textContent = data.form_desc || savedSub || "คำอธิบายแบบประเมิน";
 
-      const projectInfoBody = document.getElementById("projectInfoBody");
+        const projectInfoBody = document.getElementById("projectInfoBody");
 
-      if (projectInfoBody) {
-        projectInfoBody.innerHTML = `
+        if (projectInfoBody) {
+          projectInfoBody.innerHTML = `
         <div style="grid-column: 1 / -1;"><b>ช่วงเวลา:</b> ${data.start_date || "-"} ถึง ${data.end_date || "-"}</div>
 
         <div style="grid-column: 1 / -1;"><b>เป้าหมาย:</b> ${data.goal_text || "-"}</div>
@@ -347,80 +347,80 @@
         <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์ศูนย์ฯ:</b> ${data.center_strategy || "-"}</div>
         <div style="grid-column: 1 / -1;"><b>พันธกิจ:</b> ${data.center_mission || "-"}</div>
       `;
-      }
+        }
 
-      const suggestTitle = document.getElementById("suggestTitle");
-      const prompt = (data.suggestion_prompt || "").trim();
-      if (prompt && suggestTitle) {
-        suggestTitle.textContent = `ส่วนที่ 5. ${prompt}`;
-      }
-      const suggestInput = document.getElementById("suggestAnswer");
-      if (suggestInput) {
-        suggestInput.value = data.suggestion || "";
-      }
+        const suggestTitle = document.getElementById("suggestTitle");
+        const prompt = (data.suggestion_prompt || "").trim();
+        if (prompt && suggestTitle) {
+          suggestTitle.textContent = `ส่วนที่ 5. ${prompt}`;
+        }
+        const suggestInput = document.getElementById("suggestAnswer");
+        if (suggestInput) {
+          suggestInput.value = data.suggestion || "";
+        }
 
-      const saveHero = () => {
-        localStorage.setItem("surveyTitle", titleEl.textContent.trim());
-        localStorage.setItem("surveySubtitle", subEl.textContent.trim());
-      };
-      titleEl.addEventListener("input", saveHero);
-      subEl.addEventListener("input", saveHero);
+        const saveHero = () => {
+          localStorage.setItem("surveyTitle", titleEl.textContent.trim());
+          localStorage.setItem("surveySubtitle", subEl.textContent.trim());
+        };
+        titleEl.addEventListener("input", saveHero);
+        subEl.addEventListener("input", saveHero);
 
-      /* ---------- ส่วนที่ 1 ---------- */
-      const pfRoot = document.getElementById("profileFields");
-      const profileValue =
-        data.profile && !Array.isArray(data.profile) ? data.profile : {};
+        /* ---------- ส่วนที่ 1 ---------- */
+        const pfRoot = document.getElementById("profileFields");
+        const profileValue =
+          data.profile && !Array.isArray(data.profile) ? data.profile : {};
 
-      const selected = Array.isArray(data.profile) ? data.profile : [];
+        const selected = Array.isArray(data.profile) ? data.profile : [];
 
-      const row = (label, control, note) => {
-        const wrap = document.createElement("div");
-        wrap.className = "form-grid";
-        wrap.style.marginBottom = "20px";
-        wrap.innerHTML = `
+        const row = (label, control, note) => {
+          const wrap = document.createElement("div");
+          wrap.className = "form-grid";
+          wrap.style.marginBottom = "20px";
+          wrap.innerHTML = `
     <div class="form-label">${label}</div>
     <div>${control}${note ? `<div class="form-note">${note}</div>` : ""}</div>
   `;
-        return wrap;
-      };
+          return wrap;
+        };
 
-      const renderers = {
-        "ชื่อ-สกุล": () =>
-          row(
-            "ชื่อ-สกุล",
-            `<input class="form-input" type="text" name="pf_fullname" placeholder="กรอกชื่อ-สกุล">`,
-          ),
-        สถานะภาพผู้ประเมิน: () => {
-          const opts = ["นักศึกษา", "เจ้าหน้าที่", "อาจารย์", "บุคคลภายนอก"];
-          const radios = opts
-            .map(
-              (o) => `
+        const renderers = {
+          "ชื่อ-สกุล": () =>
+            row(
+              "ชื่อ-สกุล",
+              `<input class="form-input" type="text" name="pf_fullname" placeholder="กรอกชื่อ-สกุล">`,
+            ),
+          สถานะภาพผู้ประเมิน: () => {
+            const opts = ["นักศึกษา", "เจ้าหน้าที่", "อาจารย์", "บุคคลภายนอก"];
+            const radios = opts
+              .map(
+                (o) => `
           <label class="form-radio">
             <input type="radio" name="pf_role" value="${o}"><span>${o}</span>
           </label>`,
-            )
-            .join("");
-          return row(
-            "สถานะภาพผู้ประเมิน",
-            `<div class="form-row">${radios}</div>`,
-          );
-        },
-        ระดับ: () => {
-          const opts = ["ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"];
-          const radios = opts
-            .map(
-              (o) => `
+              )
+              .join("");
+            return row(
+              "สถานะภาพผู้ประเมิน",
+              `<div class="form-row">${radios}</div>`,
+            );
+          },
+          ระดับ: () => {
+            const opts = ["ปริญญาตรี", "ปริญญาโท", "ปริญญาเอก"];
+            const radios = opts
+              .map(
+                (o) => `
           <label class="form-radio">
             <input type="radio" name="pf_level" value="${o}"><span>${o}</span>
           </label>`,
-            )
-            .join("");
-          return row("ระดับ", `<div class="form-row">${radios}</div>`);
-        },
-        "สำนักวิชา/หน่วยงานที่สังกัด": () =>
-          row(
-            "สำนักวิชา/หน่วยงานที่สังกัด",
-            `<select class="form-input" name="pf_faculty" id="pf_faculty">
+              )
+              .join("");
+            return row("ระดับ", `<div class="form-row">${radios}</div>`);
+          },
+          "สำนักวิชา/หน่วยงานที่สังกัด": () =>
+            row(
+              "สำนักวิชา/หน่วยงานที่สังกัด",
+              `<select class="form-input" name="pf_faculty" id="pf_faculty">
           <option value="" selected disabled>— เลือกสำนักวิชา/หน่วยงาน —</option>
           <option>สำนักวิชาศิลปศาสตร์</option>
           <option>สำนักวิชาวิทยาศาสตร์</option>
@@ -475,262 +475,262 @@
           <option>บุคคลภายนอก</option>
           <option>โรงพยาบาลศูนย์การแพทย์มหาวิทยาลัยแม่ฟ้าหลวง</option>
         </select>`,
-          ),
-        สาขาวิชา: () =>
-          row(
-            "สาขาวิชา",
-            `<select class="form-input" name="pf_major" id="pf_major">
+            ),
+          สาขาวิชา: () =>
+            row(
+              "สาขาวิชา",
+              `<select class="form-input" name="pf_major" id="pf_major">
           <option value="" selected disabled>— เลือกสาขาวิชา —</option>
         </select>`,
-          ),
-        อื่นๆ: () =>
-          row(
-            "อื่นๆ",
-            `<input class="form-input" type="text" name="pf_other" placeholder="ระบุรายละเอียดอื่นๆ">`,
-            "ตัวอย่าง: หมายเลขติดต่อ, กลุ่มภาควิชา, ข้อมูลเพิ่มเติม ฯลฯ",
-          ),
-      };
-
-      pfRoot.innerHTML = "";
-      if (!selected.length) {
-        pfRoot.innerHTML =
-          '<div class="form-note">- ไม่ได้เลือกฟิลด์ใดจากหน้าแบบฟอร์ม -</div>';
-      } else {
-        selected.forEach((label) => {
-          const make = renderers[label?.trim()];
-          if (make) pfRoot.appendChild(make());
-        });
-      }
-
-      //เงื่อนไขเลือกสาขาวิชา ตามที่เลือกสำนักวิชา//
-      (function setupFacultyMajor() {
-        const facultySelect = document.getElementById("pf_faculty");
-        const majorSelect = document.getElementById("pf_major");
-        if (!facultySelect || !majorSelect) return;
-
-        const facultyMajorMap = {
-          สำนักวิชาศิลปศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาภาษาอังกฤษ",
-            "สาขาวิชาภาษาไทยและวัฒนธรรมไทยสำหรับชาวต่างชาติ",
-            "สาขาวิชาภาษาอังกฤษเพื่อการพัฒนาวิชาชีพ",
-            "วิชาสังคมศาสตร์",
-          ],
-          สำนักวิชาวิทยาศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาเทคโนโลยรชีวภาพ",
-            "สาขาวิชาเคมีประยุกต์",
-            "สาขาวิชาวิศวกรรมวัสดุ",
-            "สาขาวิชาวิทยาการเชิงคำนวณ",
-            "สาขาวิชาวิทยาศาสตร์ชีวภาพ",
-            "สาขาวิชานวักรรมวัสดุ",
-            "สาขาวิชานวัตกรรมวัสดุเพื่อความยั่งยืน",
-          ],
-          สำนักวิชาการจัดการ: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาบริหารธุรกิจ",
-            "สาขาวิชาการจัดการการท่องเที่ยว",
-            "สาขาวิชาการจัดการอุตสาหกรรมการบริการ",
-            "สาขาวิชาการจัดการโลจิสติกส์ปละโซ่อุปทาน",
-            "สาขาวิชาเศรษฐศาสตร์",
-            "สาขาวิชาบัญชี",
-            "สาขาวิชาการจัดการโลจิสติกส์และโซ่อุปทานระหว่างประเทศ",
-            "สาขาวิชาธุรกิจการท่องเที่ยวและอีเว้นท์",
-            "สาขาวิชาการจัดการธุรกิจบริการ",
-          ],
-          สำนักวิชาเทคโนโลยีดิจิทัลประยุกต์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาวิศวกรรมคอมพิวเตอร์",
-            "สาขาวิชาวิศวกรรมการสื่อสารและสารสนเทศ",
-            "สาขาวิชาเทคโนโลยีสารสนเทศ",
-            "สาขาวิชาวิศวกรรมซอฟแวร์",
-            "สาขาวิชาวิทยาการคอมพิวเตอร์และนวัตกรรม",
-            "สาขาวิชาเทคโนโลยีมัลติมีเดียและการสร้างภาพเคลื่อนไหว",
-            "สาขาวิชาเทคโนโลยีดิจิทัลเพื่อนวัตกรรมทางธุรกิจ",
-            "สาขาวิชาวิศวกรรมดิจิทัลและการสื่อสาร",
-            "สาขาวิชาเทคโนโลยีการแปลงดิจิทัล",
-          ],
-          สำนักวิชาอุตสาหกรรมเกษตร: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาวิทยาศาสตร์และเทคโนโลยีการอาหาร",
-            "สาขาวิชาเทคโนโลยีหลังการเก็บเกี่ยวและโลจิสติกส์",
-            "สาขาวิชาเทคโนโลยีและนวัตกรรมหลังการเก็บเกี่ยว",
-            "สาขาวิชานวัตกรรมวิทยาศาสตร์และเทคโนโลยีอาหาร",
-          ],
-          สำนักวิชานิติศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชานิติศาสตร์",
-            "สาขาวิชากฎหมายธุรกิจและการสื่อสารด้วยภาษาจีน",
-          ],
-          สำนักวิชาวิทยาศาสตร์เครื่องสำอาง: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาวิทยาศาสตร์เครื่องสำอาง",
-            "สาขาวิชาเทคโนโลยีความงาม",
-            "สาขาวิชานวัตกรรมวิทยาศาสตร์เครื่องสำอางเชิงสร้างสรรค์",
-          ],
-          สำนักวิชาวิทยาสาสตร์สุขภาพ: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาสาธารณสุขศาสตร์",
-            "สาขาวิชาวิทยาศาสตร์การกีฬาและสูขภาพ",
-            "สาขาวิชาอนามัยสิ่งแวดล้อม",
-            "สาขาวิชาอาชีวอนามัยและความปลอดภัย",
-            "สาขาวิชาวิทยาการวิเคราะห์ทางสุขภาพและชีวการแพทย์",
-            "สาขาวิชาการจัดการสุขภาพชายแดน",
-            "สาขาวิชาเทคโนโลยีและการจัดการสิ่งแวดล้อมอย่างยั่งยืน",
-            "สาขาวิทยาศาสตร์และเทคโนโลยีการกีฬาประยุกต์",
-          ],
-          สำนักวิชาพยาบาลศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาพยาบาลสาสตร์",
-          ],
-          สำนักวิชาแพทยศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาแพทยศาสตร์",
-          ],
-          สำนักวิชานวัตกรรมสังคม: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาการพัฒนาระหว่างประเทศ",
-          ],
-          สำนักวิชาการแพทย์บูรณาการ: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาวิชาแพทย์แผนไทยประยุกต์",
-            "สาขาวิชากายภาพบำบัด",
-            "สาขาวิชาการแพทย์แผนจีน",
-            "สาขาวิชาการส่งเสริมสุขภาพด้วยการแพทย์บูรณาการ",
-          ],
-          สำนักวิชาเวชศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาเวชศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ",
-            "สาขาวิชาจิตวิทยา",
-            "สาขาวิชาวิทยาศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ",
-          ],
-          สำนักวิชาจีนวิทยา: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาขาจีนศึกษา",
-            "สาขาวิชาภาษาและวัฒนธรรมจีน",
-            "สาขาวิชาการสอนภาษาจีน",
-            "สาขาภาษาจีนธุรกิจ",
-          ],
-          สำนักวิชาทันตแพทยศาสตร์: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-            "สาชาวิชาทันตแพทยศาสตร์",
-          ],
-          "สมาชิกบุคคลากรภายนอก/นักศึกษาเก่า": [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ศูนย์เครื่องมือวิทยาสาสตร์และเทคโนโลยี: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ศูนย์บรรณสารและสื่อการศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์บริการเทคโนโลยีสารสนเทศ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์บริการวิชาการ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์ภาษาและวัมนธรรมจีนสิรินธร: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์กีฬามหาวิทยาลัยแม่ฟ้าหลวง: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          "ศูนย์หนังสือ M-Store": ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์ความเป็นเลิศทางด้านวิจัยเชื้อรา: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ศูนย์ความเป็นเลิศด้านนวัตกรรมผลิตภัณฑ์ธรรมชาติ: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ส่วนทะเบียนและประมวลผล: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          "ส่วนบริหารงานวิจัย สถาบันวิจัยและนวัตกรรม": [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ส่วนพัฒนานักศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนประกันคุณภาพการศึกษาและพัฒนาหลุกสูตร: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          ส่วนจัดหางานและฝึกงานของนักศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนพัฒนาความสัมพันธ์ระหว่างประเทศ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          "ส่วนสารบรรณ อำนวยการและนิติการ": ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนการเจ้าหน้าที่: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนประชาสัมพันธ์: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนพัสดุ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนการเงินและบัญชี: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนนโยบายและแผน: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ส่วนอาคารสถานที่: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์บริการที่พักวนาเวศน์: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          ศูนย์บริการอาหารเรือนริมน้ำ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          "สถาบันชาและกาแฟ แห่งมหาวิทยาลัยแม่ฟ้าหลวง": [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          "โครงการจัดตั้งความร่วมมือทางวิชาการฝรั่งเศส อนุภูมิภาคลุ่มน้ำโขง": [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          สถาบันศิลปวัฒนธรรมและอารยธรรมลุ่มน้ำโขง: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          หน่วยตรวจสอบภายใน: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          หน่วยจัดการสารสนเทศ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          สำนักงานจัดการทรัพย์สินและรายได้: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          "สำนักงานโครงการสวนพฤกศาสตร์มหาวิทยาลัยแม่ฟ้าหลวงเฉลิมพระเกียรติ 80 พรรษา":
-            ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          สำนักงานบัณฑิตศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          สำนักงานให้คำปรึกษาและช่วยเหลือนักศึกษา: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
-          สำนักงานส่งเสริมและพัมนาวิชาการ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          โรงพยาบาลมหาวิทยาลัยแม่ฟ้าหลวง: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          บุคคลภายนอก: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
-          โรงพยาบาลศูนย์การแพทย์มหาวิทยาลัยแม่ฟ้าหลวง: [
-            "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
-          ],
+            ),
+          อื่นๆ: () =>
+            row(
+              "อื่นๆ",
+              `<input class="form-input" type="text" name="pf_other" placeholder="ระบุรายละเอียดอื่นๆ">`,
+              "ตัวอย่าง: หมายเลขติดต่อ, กลุ่มภาควิชา, ข้อมูลเพิ่มเติม ฯลฯ",
+            ),
         };
 
-        function updateMajors() {
-          const fac = facultySelect.value;
-          const majors = facultyMajorMap[fac] || [];
-
-          majorSelect.innerHTML =
-            '<option value="" selected disabled>— เลือกสาขาวิชา —</option>';
-
-          majors.forEach((m) => {
-            const opt = document.createElement("option");
-            opt.value = m;
-            opt.textContent = m;
-            majorSelect.appendChild(opt);
+        pfRoot.innerHTML = "";
+        if (!selected.length) {
+          pfRoot.innerHTML =
+            '<div class="form-note">- ไม่ได้เลือกฟิลด์ใดจากหน้าแบบฟอร์ม -</div>';
+        } else {
+          selected.forEach((label) => {
+            const make = renderers[label?.trim()];
+            if (make) pfRoot.appendChild(make());
           });
-
-          majorSelect.disabled = majors.length === 0;
         }
 
-        facultySelect.addEventListener("change", updateMajors);
-        updateMajors();
-      })();
+        //เงื่อนไขเลือกสาขาวิชา ตามที่เลือกสำนักวิชา//
+        (function setupFacultyMajor() {
+          const facultySelect = document.getElementById("pf_faculty");
+          const majorSelect = document.getElementById("pf_major");
+          if (!facultySelect || !majorSelect) return;
 
-      /* ---------- ส่วนที่ 2: Rating Scale ---------- */
-      const ratingRoot = document.getElementById("ratingTables");
-      const section2Models = Array.isArray(data.section2_models)
-        ? data.section2_models
-        : [];
+          const facultyMajorMap = {
+            สำนักวิชาศิลปศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาภาษาอังกฤษ",
+              "สาขาวิชาภาษาไทยและวัฒนธรรมไทยสำหรับชาวต่างชาติ",
+              "สาขาวิชาภาษาอังกฤษเพื่อการพัฒนาวิชาชีพ",
+              "วิชาสังคมศาสตร์",
+            ],
+            สำนักวิชาวิทยาศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาเทคโนโลยรชีวภาพ",
+              "สาขาวิชาเคมีประยุกต์",
+              "สาขาวิชาวิศวกรรมวัสดุ",
+              "สาขาวิชาวิทยาการเชิงคำนวณ",
+              "สาขาวิชาวิทยาศาสตร์ชีวภาพ",
+              "สาขาวิชานวักรรมวัสดุ",
+              "สาขาวิชานวัตกรรมวัสดุเพื่อความยั่งยืน",
+            ],
+            สำนักวิชาการจัดการ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาบริหารธุรกิจ",
+              "สาขาวิชาการจัดการการท่องเที่ยว",
+              "สาขาวิชาการจัดการอุตสาหกรรมการบริการ",
+              "สาขาวิชาการจัดการโลจิสติกส์ปละโซ่อุปทาน",
+              "สาขาวิชาเศรษฐศาสตร์",
+              "สาขาวิชาบัญชี",
+              "สาขาวิชาการจัดการโลจิสติกส์และโซ่อุปทานระหว่างประเทศ",
+              "สาขาวิชาธุรกิจการท่องเที่ยวและอีเว้นท์",
+              "สาขาวิชาการจัดการธุรกิจบริการ",
+            ],
+            สำนักวิชาเทคโนโลยีดิจิทัลประยุกต์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาวิศวกรรมคอมพิวเตอร์",
+              "สาขาวิชาวิศวกรรมการสื่อสารและสารสนเทศ",
+              "สาขาวิชาเทคโนโลยีสารสนเทศ",
+              "สาขาวิชาวิศวกรรมซอฟแวร์",
+              "สาขาวิชาวิทยาการคอมพิวเตอร์และนวัตกรรม",
+              "สาขาวิชาเทคโนโลยีมัลติมีเดียและการสร้างภาพเคลื่อนไหว",
+              "สาขาวิชาเทคโนโลยีดิจิทัลเพื่อนวัตกรรมทางธุรกิจ",
+              "สาขาวิชาวิศวกรรมดิจิทัลและการสื่อสาร",
+              "สาขาวิชาเทคโนโลยีการแปลงดิจิทัล",
+            ],
+            สำนักวิชาอุตสาหกรรมเกษตร: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาวิทยาศาสตร์และเทคโนโลยีการอาหาร",
+              "สาขาวิชาเทคโนโลยีหลังการเก็บเกี่ยวและโลจิสติกส์",
+              "สาขาวิชาเทคโนโลยีและนวัตกรรมหลังการเก็บเกี่ยว",
+              "สาขาวิชานวัตกรรมวิทยาศาสตร์และเทคโนโลยีอาหาร",
+            ],
+            สำนักวิชานิติศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชานิติศาสตร์",
+              "สาขาวิชากฎหมายธุรกิจและการสื่อสารด้วยภาษาจีน",
+            ],
+            สำนักวิชาวิทยาศาสตร์เครื่องสำอาง: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาวิทยาศาสตร์เครื่องสำอาง",
+              "สาขาวิชาเทคโนโลยีความงาม",
+              "สาขาวิชานวัตกรรมวิทยาศาสตร์เครื่องสำอางเชิงสร้างสรรค์",
+            ],
+            สำนักวิชาวิทยาสาสตร์สุขภาพ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาสาธารณสุขศาสตร์",
+              "สาขาวิชาวิทยาศาสตร์การกีฬาและสูขภาพ",
+              "สาขาวิชาอนามัยสิ่งแวดล้อม",
+              "สาขาวิชาอาชีวอนามัยและความปลอดภัย",
+              "สาขาวิชาวิทยาการวิเคราะห์ทางสุขภาพและชีวการแพทย์",
+              "สาขาวิชาการจัดการสุขภาพชายแดน",
+              "สาขาวิชาเทคโนโลยีและการจัดการสิ่งแวดล้อมอย่างยั่งยืน",
+              "สาขาวิทยาศาสตร์และเทคโนโลยีการกีฬาประยุกต์",
+            ],
+            สำนักวิชาพยาบาลศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาพยาบาลสาสตร์",
+            ],
+            สำนักวิชาแพทยศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาแพทยศาสตร์",
+            ],
+            สำนักวิชานวัตกรรมสังคม: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาการพัฒนาระหว่างประเทศ",
+            ],
+            สำนักวิชาการแพทย์บูรณาการ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาวิชาแพทย์แผนไทยประยุกต์",
+              "สาขาวิชากายภาพบำบัด",
+              "สาขาวิชาการแพทย์แผนจีน",
+              "สาขาวิชาการส่งเสริมสุขภาพด้วยการแพทย์บูรณาการ",
+            ],
+            สำนักวิชาเวชศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาเวชศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ",
+              "สาขาวิชาจิตวิทยา",
+              "สาขาวิชาวิทยาศาสตร์ชะลอวัยและฟื้นฟูสุขภาพ",
+            ],
+            สำนักวิชาจีนวิทยา: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาขาจีนศึกษา",
+              "สาขาวิชาภาษาและวัฒนธรรมจีน",
+              "สาขาวิชาการสอนภาษาจีน",
+              "สาขาภาษาจีนธุรกิจ",
+            ],
+            สำนักวิชาทันตแพทยศาสตร์: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+              "สาชาวิชาทันตแพทยศาสตร์",
+            ],
+            "สมาชิกบุคคลากรภายนอก/นักศึกษาเก่า": [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ศูนย์เครื่องมือวิทยาสาสตร์และเทคโนโลยี: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ศูนย์บรรณสารและสื่อการศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์บริการเทคโนโลยีสารสนเทศ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์บริการวิชาการ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์ภาษาและวัมนธรรมจีนสิรินธร: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์กีฬามหาวิทยาลัยแม่ฟ้าหลวง: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            "ศูนย์หนังสือ M-Store": ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์ความเป็นเลิศทางด้านวิจัยเชื้อรา: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ศูนย์ความเป็นเลิศด้านนวัตกรรมผลิตภัณฑ์ธรรมชาติ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ส่วนทะเบียนและประมวลผล: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            "ส่วนบริหารงานวิจัย สถาบันวิจัยและนวัตกรรม": [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ส่วนพัฒนานักศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนประกันคุณภาพการศึกษาและพัฒนาหลุกสูตร: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            ส่วนจัดหางานและฝึกงานของนักศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนพัฒนาความสัมพันธ์ระหว่างประเทศ: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            "ส่วนสารบรรณ อำนวยการและนิติการ": ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนการเจ้าหน้าที่: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนประชาสัมพันธ์: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนพัสดุ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนการเงินและบัญชี: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนนโยบายและแผน: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ส่วนอาคารสถานที่: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์บริการที่พักวนาเวศน์: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            ศูนย์บริการอาหารเรือนริมน้ำ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            "สถาบันชาและกาแฟ แห่งมหาวิทยาลัยแม่ฟ้าหลวง": [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            "โครงการจัดตั้งความร่วมมือทางวิชาการฝรั่งเศส อนุภูมิภาคลุ่มน้ำโขง":
+              ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            สถาบันศิลปวัฒนธรรมและอารยธรรมลุ่มน้ำโขง: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            หน่วยตรวจสอบภายใน: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            หน่วยจัดการสารสนเทศ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            สำนักงานจัดการทรัพย์สินและรายได้: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            "สำนักงานโครงการสวนพฤกศาสตร์มหาวิทยาลัยแม่ฟ้าหลวงเฉลิมพระเกียรติ 80 พรรษา":
+              ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            สำนักงานบัณฑิตศึกษา: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            สำนักงานให้คำปรึกษาและช่วยเหลือนักศึกษา: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+            สำนักงานส่งเสริมและพัมนาวิชาการ: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            โรงพยาบาลมหาวิทยาลัยแม่ฟ้าหลวง: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            บุคคลภายนอก: ["--ไม่มีสาขาวิชา/บุคคลภายนอก--"],
+            โรงพยาบาลศูนย์การแพทย์มหาวิทยาลัยแม่ฟ้าหลวง: [
+              "--ไม่มีสาขาวิชา/บุคคลภายนอก--",
+            ],
+          };
 
-      function makeRatingTable(title, items, namePrefix) {
-        if (!items || !items.length) return null;
+          function updateMajors() {
+            const fac = facultySelect.value;
+            const majors = facultyMajorMap[fac] || [];
 
-        const wrap = document.createElement("div");
-        wrap.style.marginBottom = "18px";
-        
+            majorSelect.innerHTML =
+              '<option value="" selected disabled>— เลือกสาขาวิชา —</option>';
 
-        const tbl = document.createElement("table");
-        const thead = document.createElement("thead");
-        const tbody = document.createElement("tbody");
+            majors.forEach((m) => {
+              const opt = document.createElement("option");
+              opt.value = m;
+              opt.textContent = m;
+              majorSelect.appendChild(opt);
+            });
 
-        thead.innerHTML = `
+            majorSelect.disabled = majors.length === 0;
+          }
+
+          facultySelect.addEventListener("change", updateMajors);
+          updateMajors();
+        })();
+
+        /* ---------- ส่วนที่ 2: Rating Scale ---------- */
+        const ratingRoot = document.getElementById("ratingTables");
+        const section2Models = Array.isArray(data.section2_models)
+          ? data.section2_models
+          : [];
+
+        function makeRatingTable(title, items, namePrefix) {
+          if (!items || !items.length) return null;
+
+          const wrap = document.createElement("div");
+          wrap.style.marginBottom = "18px";
+
+          const tbl = document.createElement("table");
+          const thead = document.createElement("thead");
+          const tbody = document.createElement("tbody");
+
+          thead.innerHTML = `
     <tr>
       <th class="col-head">${title}</th>
       <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
     </tr>
   `;
 
-        const sub = document.createElement("tr");
-        sub.className = "q-head";
-        sub.innerHTML = `<td>หัวข้อประเมิน</td><td></td><td></td><td></td><td></td><td></td>`;
-        tbody.appendChild(sub);
+          const sub = document.createElement("tr");
+          sub.className = "q-head";
+          sub.innerHTML = `<td>หัวข้อประเมิน</td><td></td><td></td><td></td><td></td><td></td>`;
+          tbody.appendChild(sub);
 
-        items.forEach((q, idx) => {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+          items.forEach((q, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
       <td>${q || "-"}</td>
       ${[1, 2, 3, 4, 5]
         .map(
@@ -739,96 +739,97 @@
         )
         .join("")}
     `;
-          tbody.appendChild(tr);
-        });
-
-        tbl.appendChild(thead);
-        tbl.appendChild(tbody);
-        wrap.appendChild(tbl);
-
-        return wrap;
-      }
-
-      section2Models.forEach((model, modelIndex) => {
-        const box = document.createElement("div");
-        box.className = "section";
-
-        const head = document.createElement("div");
-        head.className = "title";
-        head.textContent = model.title || `หัวข้อ ${modelIndex + 1}`;
-        box.appendChild(head);
-
-        (model.dimensions || [])
-          .filter((dim) => dim.enabled !== false)
-          .forEach((dim, dimIndex) => {
-            const tbl = makeRatingTable(
-              dim.title || `ด้าน ${dimIndex + 1}`,
-              Array.isArray(dim.questions) ? dim.questions : [],
-              `m${modelIndex}_d${dimIndex}`,
-            );
-            if (tbl) box.appendChild(tbl);
+            tbody.appendChild(tr);
           });
 
-        ratingRoot.appendChild(box);
-      });
+          tbl.appendChild(thead);
+          tbl.appendChild(tbody);
+          wrap.appendChild(tbl);
 
-      const ratingExtra = Array.isArray(data.ratingExtra)
-        ? data.ratingExtra
-        : [];
-      ratingExtra.forEach((g, idx) => {
-        const title = (g.title || "").trim() || `หัวข้อด้านที่เพิ่ม ${idx + 1}`;
-        const items = Array.isArray(g.questions)
-          ? g.questions.map((s) => (s || "").trim()).filter(Boolean)
-          : [];
-        const table = makeRatingTable(title, items, `rextra${idx}`);
-        if (!table) return;
-        ratingRoot.appendChild(table);
-        const spacer = document.createElement("div");
-        spacer.style.height = "10px";
-        ratingRoot.appendChild(spacer);
-      });
-
-      /* ---------- ส่วนที่ 3: มี/ไม่มี + เหตุผล ---------- */
-      const dissWrap = document.getElementById("dissTableWrap");
-      const dissSource = Array.isArray(data.dissatisfied)
-        ? data.dissatisfied
-        : Array.isArray(data.q31)
-          ? data.q31
-          : Array.isArray(data.diss)
-            ? data.diss
-            : data.q31
-              ? [data.q31]
-              : [];
-
-      const dissArr = dissSource
-        .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
-        .map((s) => s.trim())
-        .filter(Boolean);
-      function makeDissTable(title, items, namePrefix) {
-        if (!items || !items.length) {
-          const empty = document.createElement("div");
-          empty.style.opacity = ".7";
-          empty.textContent = "- ไม่มีรายการ -";
-          return empty;
+          return wrap;
         }
-        const tbl = document.createElement("table"),
-          thead = document.createElement("thead"),
-          tbody = document.createElement("tbody");
-        thead.innerHTML = `
+
+        section2Models.forEach((model, modelIndex) => {
+          const box = document.createElement("div");
+          box.className = "section";
+
+          const head = document.createElement("div");
+          head.className = "title";
+          head.textContent = model.title || `หัวข้อ ${modelIndex + 1}`;
+          box.appendChild(head);
+
+          (model.dimensions || [])
+            .filter((dim) => dim.enabled !== false)
+            .forEach((dim, dimIndex) => {
+              const tbl = makeRatingTable(
+                dim.title || `ด้าน ${dimIndex + 1}`,
+                Array.isArray(dim.questions) ? dim.questions : [],
+                `m${modelIndex}_d${dimIndex}`,
+              );
+              if (tbl) box.appendChild(tbl);
+            });
+
+          ratingRoot.appendChild(box);
+        });
+
+        const ratingExtra = Array.isArray(data.ratingExtra)
+          ? data.ratingExtra
+          : [];
+        ratingExtra.forEach((g, idx) => {
+          const title =
+            (g.title || "").trim() || `หัวข้อด้านที่เพิ่ม ${idx + 1}`;
+          const items = Array.isArray(g.questions)
+            ? g.questions.map((s) => (s || "").trim()).filter(Boolean)
+            : [];
+          const table = makeRatingTable(title, items, `rextra${idx}`);
+          if (!table) return;
+          ratingRoot.appendChild(table);
+          const spacer = document.createElement("div");
+          spacer.style.height = "10px";
+          ratingRoot.appendChild(spacer);
+        });
+
+        /* ---------- ส่วนที่ 3: มี/ไม่มี + เหตุผล ---------- */
+        const dissWrap = document.getElementById("dissTableWrap");
+        const dissSource = Array.isArray(data.dissatisfied)
+          ? data.dissatisfied
+          : Array.isArray(data.q31)
+            ? data.q31
+            : Array.isArray(data.diss)
+              ? data.diss
+              : data.q31
+                ? [data.q31]
+                : [];
+
+        const dissArr = dissSource
+          .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
+          .map((s) => s.trim())
+          .filter(Boolean);
+        function makeDissTable(title, items, namePrefix) {
+          if (!items || !items.length) {
+            const empty = document.createElement("div");
+            empty.style.opacity = ".7";
+            empty.textContent = "- ไม่มีรายการ -";
+            return empty;
+          }
+          const tbl = document.createElement("table"),
+            thead = document.createElement("thead"),
+            tbody = document.createElement("tbody");
+          thead.innerHTML = `
         <tr>
           <th class="col-head">${title}</th>
           <th style="width:120px">ไม่มี</th>
           <th style="width:120px">มี</th>
         </tr>`;
-        const sub = document.createElement("tr");
-        sub.className = "q-head";
-        sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
-        tbody.appendChild(sub);
+          const sub = document.createElement("tr");
+          sub.className = "q-head";
+          sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
+          tbody.appendChild(sub);
 
-        items.forEach((q, idx) => {
-          const name = `${namePrefix}_${idx}`;
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+          items.forEach((q, idx) => {
+            const name = `${namePrefix}_${idx}`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
           <td>${q || "-"}</td>
           <td class="yn-cell">
             <input type="radio" name="${name}" value="no" id="${name}_no">
@@ -840,75 +841,77 @@
             <span class="reason"><input type="text" placeholder="เหตุผล..." name="${name}_reason"></span>
           </td>
         `;
-          tbody.appendChild(tr);
+            tbody.appendChild(tr);
 
-          const yes = tr.querySelector(`#${name}_yes`);
-          const no = tr.querySelector(`#${name}_no`);
-          const reason = tr.querySelector(".reason");
-          const inputReason = tr.querySelector(`input[name="${name}_reason"]`);
-          function sync() {
-            if (yes.checked) {
-              reason.style.display = "inline-block";
-            } else {
-              reason.style.display = "none";
-              inputReason.value = "";
+            const yes = tr.querySelector(`#${name}_yes`);
+            const no = tr.querySelector(`#${name}_no`);
+            const reason = tr.querySelector(".reason");
+            const inputReason = tr.querySelector(
+              `input[name="${name}_reason"]`,
+            );
+            function sync() {
+              if (yes.checked) {
+                reason.style.display = "inline-block";
+              } else {
+                reason.style.display = "none";
+                inputReason.value = "";
+              }
             }
-          }
-          yes.addEventListener("change", sync);
-          no.addEventListener("change", sync);
-          sync();
-        });
-        tbl.appendChild(thead);
-        tbl.appendChild(tbody);
-        return tbl;
-      }
-      dissWrap.appendChild(makeDissTable("ความไม่พึงพอใจ", dissArr, "diss"));
-
-      /* ---------- ส่วนที่ 4: ความผูกพัน → เพิ่มเหตุผลเมื่อเลือก "ใช่" ---------- */
-      const engWrap = document.getElementById("engTableWrap");
-      const engSource = Array.isArray(data.engagement)
-        ? data.engagement
-        : Array.isArray(data.q41)
-          ? data.q41
-          : data.q41
-            ? [data.q41]
-            : [];
-
-      const engArr = engSource
-        .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
-        .map((s) => s.trim())
-        .filter(Boolean);
-      function makeYNTableWithReason(
-        title,
-        items,
-        namePrefix,
-        leftText,
-        rightText,
-      ) {
-        if (!items || !items.length) {
-          const empty = document.createElement("div");
-          empty.style.opacity = ".7";
-          empty.textContent = "- ไม่มีรายการ -";
-          return empty;
+            yes.addEventListener("change", sync);
+            no.addEventListener("change", sync);
+            sync();
+          });
+          tbl.appendChild(thead);
+          tbl.appendChild(tbody);
+          return tbl;
         }
-        const tbl = document.createElement("table"),
-          thead = document.createElement("thead"),
-          tbody = document.createElement("tbody");
-        thead.innerHTML = `
+        dissWrap.appendChild(makeDissTable("ความไม่พึงพอใจ", dissArr, "diss"));
+
+        /* ---------- ส่วนที่ 4: ความผูกพัน → เพิ่มเหตุผลเมื่อเลือก "ใช่" ---------- */
+        const engWrap = document.getElementById("engTableWrap");
+        const engSource = Array.isArray(data.engagement)
+          ? data.engagement
+          : Array.isArray(data.q41)
+            ? data.q41
+            : data.q41
+              ? [data.q41]
+              : [];
+
+        const engArr = engSource
+          .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
+          .map((s) => s.trim())
+          .filter(Boolean);
+        function makeYNTableWithReason(
+          title,
+          items,
+          namePrefix,
+          leftText,
+          rightText,
+        ) {
+          if (!items || !items.length) {
+            const empty = document.createElement("div");
+            empty.style.opacity = ".7";
+            empty.textContent = "- ไม่มีรายการ -";
+            return empty;
+          }
+          const tbl = document.createElement("table"),
+            thead = document.createElement("thead"),
+            tbody = document.createElement("tbody");
+          thead.innerHTML = `
         <tr>
           <th class="col-head">${title}</th>
           <th style="width:120px">${leftText}</th>
           <th style="width:120px">${rightText}</th>
         </tr>`;
-        const sub = document.createElement("tr");
-        sub.className = "q-head";
-        sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
-        tbody.appendChild(sub);
+          const sub = document.createElement("tr");
+          sub.className = "q-head";
+          sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
+          tbody.appendChild(sub);
 
-        items.forEach((q, idx) => {
-          const name = `${namePrefix}_${idx}`;
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
+          items.forEach((q, idx) => {
+            const name = `${namePrefix}_${idx}`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
           <td>${q || "-"}</td>
           <td class="yn-cell">
             <input type="radio" name="${name}" value="no" id="${name}_no">
@@ -920,62 +923,64 @@
             <span class="reason"><input type="text" placeholder="เหตุผล..." name="${name}_reason"></span>
           </td>
         `;
-          tbody.appendChild(tr);
+            tbody.appendChild(tr);
 
-          const yes = tr.querySelector(`#${name}_yes`);
-          const no = tr.querySelector(`#${name}_no`);
-          const reason = tr.querySelector(".reason");
-          const inputReason = tr.querySelector(`input[name="${name}_reason"]`);
+            const yes = tr.querySelector(`#${name}_yes`);
+            const no = tr.querySelector(`#${name}_no`);
+            const reason = tr.querySelector(".reason");
+            const inputReason = tr.querySelector(
+              `input[name="${name}_reason"]`,
+            );
 
-          function sync() {
-            if (yes.checked) {
-              reason.style.display = "inline-block";
-            } else {
-              reason.style.display = "none";
-              inputReason.value = "";
+            function sync() {
+              if (yes.checked) {
+                reason.style.display = "inline-block";
+              } else {
+                reason.style.display = "none";
+                inputReason.value = "";
+              }
             }
-          }
-          yes.addEventListener("change", sync);
-          no.addEventListener("change", sync);
-          sync();
-        });
+            yes.addEventListener("change", sync);
+            no.addEventListener("change", sync);
+            sync();
+          });
 
-        tbl.appendChild(thead);
-        tbl.appendChild(tbody);
-        return tbl;
-      }
+          tbl.appendChild(thead);
+          tbl.appendChild(tbody);
+          return tbl;
+        }
 
-      engWrap.appendChild(
-        makeYNTableWithReason("ความผูกพัน", engArr, "eng", "ไม่มี", "มี "),
-      );
+        engWrap.appendChild(
+          makeYNTableWithReason("ความผูกพัน", engArr, "eng", "ไม่มี", "มี "),
+        );
 
-      /* ---------- ส่วนที่ 6+: หัวข้อด้านต่างๆ (ตอบเป็นกล่องข้อความ) ---------- */
-      const extraRoot = document.getElementById("extraSections");
-      const dims = Array.isArray(data.dimensions) ? data.dimensions : [];
+        /* ---------- ส่วนที่ 6+: หัวข้อด้านต่างๆ (ตอบเป็นกล่องข้อความ) ---------- */
+        const extraRoot = document.getElementById("extraSections");
+        const dims = Array.isArray(data.dimensions) ? data.dimensions : [];
 
-      if (extraRoot && dims.length) {
-        const base = 5;
+        if (extraRoot && dims.length) {
+          const base = 5;
 
-        dims.forEach((dim, idx) => {
-          const secNo = base + idx + 1;
-          const titleText =
-            (dim.title || "").trim() || `หัวข้อด้านที่ ${secNo}`;
-          const questions = Array.isArray(dim.questions) ? dim.questions : [];
+          dims.forEach((dim, idx) => {
+            const secNo = base + idx + 1;
+            const titleText =
+              (dim.title || "").trim() || `หัวข้อด้านที่ ${secNo}`;
+            const questions = Array.isArray(dim.questions) ? dim.questions : [];
 
-          const sec = document.createElement("div");
-          sec.className = "section";
+            const sec = document.createElement("div");
+            sec.className = "section";
 
-          const h = document.createElement("div");
-          h.className = "title";
-          h.textContent = `ส่วนที่ ${secNo}. ${titleText}`;
-          sec.appendChild(h);
+            const h = document.createElement("div");
+            h.className = "title";
+            h.textContent = `ส่วนที่ ${secNo}. ${titleText}`;
+            sec.appendChild(h);
 
-          if (questions.length) {
-            questions.forEach((q, i) => {
-              const wrap = document.createElement("div");
-              wrap.style.margin = "10px 0";
+            if (questions.length) {
+              questions.forEach((q, i) => {
+                const wrap = document.createElement("div");
+                wrap.style.margin = "10px 0";
 
-              wrap.innerHTML = `
+                wrap.innerHTML = `
               <div style="font-weight:600; margin-bottom:6px;">
                 ${i + 1}. ${q || "-"}
               </div>
@@ -994,18 +999,62 @@
               ></textarea>
             `;
 
-              sec.appendChild(wrap);
-            });
-          } else {
-            const empty = document.createElement("div");
-            empty.style.opacity = ".7";
-            empty.textContent = "- ไม่มีหัวข้อย่อย -";
-            sec.appendChild(empty);
-          }
+                sec.appendChild(wrap);
+              });
+            } else {
+              const empty = document.createElement("div");
+              empty.style.opacity = ".7";
+              empty.textContent = "- ไม่มีหัวข้อย่อย -";
+              sec.appendChild(empty);
+            }
 
-          extraRoot.appendChild(sec);
-        });
+            extraRoot.appendChild(sec);
+          });
+        }
       }
+
+      async function loadData() {
+        if (formId) {
+          try {
+            const res = await fetch(`/api/forms/${formId}`);
+            const json = await res.json();
+
+            if (!res.ok) throw new Error(json.error || "โหลดฟอร์มไม่สำเร็จ");
+
+            data = {
+              ...(json.form || {}),
+              form_title: json.form_title ?? json.form?.form_title ?? "",
+              form_desc: json.form_desc ?? json.form?.form_desc ?? "",
+              dept_name: json.dept_name ?? json.form?.dept_name ?? "",
+              uni_strategy: json.uni_strategy ?? json.form?.uni_strategy ?? "",
+              center_strategy:
+                json.center_strategy ?? json.form?.center_strategy ?? "",
+              center_mission:
+                json.center_mission ?? json.form?.center_mission ?? "",
+              goal_text: json.goal_text ?? json.form?.goal_text ?? "",
+              kpi_quantity: json.kpi_quantity ?? json.form?.kpi_quantity ?? "",
+              kpi_quality: json.kpi_quality ?? json.form?.kpi_quality ?? "",
+              start_date: json.start_date ?? json.form?.start_date ?? "",
+              end_date: json.end_date ?? json.form?.end_date ?? "",
+            };
+          } catch (err) {
+            console.error(err);
+            alert("โหลดฟอร์มไม่สำเร็จ: " + err.message);
+            data = {};
+          }
+        } else {
+          const raw = localStorage.getItem("surveyDraft");
+          try {
+            data = raw ? JSON.parse(raw) : {};
+          } catch (_) {
+            data = {};
+          }
+        }
+
+        renderPage();
+      }
+
+      loadData();
 
       /* ---------- ปุ่มควบคุม ---------- */
       document

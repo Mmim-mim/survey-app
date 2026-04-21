@@ -830,6 +830,7 @@
           </div>
         </div>
 
+        <!-- ------ ส่วนที่ 2 ----- -->
         <div class="section" data-sec="s2">
           <div class="head">
             <div class="left">
@@ -842,6 +843,7 @@
           <div id="mainModels"></div>
         </div>
 
+        <!-- ------ ส่วนที่ 3 ----- -->
         <div class="section" data-sec="s3">
           <div class="head">
             <div class="left">
@@ -884,6 +886,7 @@
           </div>
         </div>
 
+        <!-- ------ ส่วนที่ 4 ----- -->
         <div class="section" data-sec="s4">
           <div class="head">
             <div class="left">
@@ -990,6 +993,7 @@
           </div>
         </template>
       </form>
+       <!-- ------ หัวข้อ ส่วนที่ 2 ----- -->
       <template id="main-model-template">
         <div class="group main-model" data-main-model>
           <div class="ghead">
@@ -1225,13 +1229,9 @@
             addSubgroup(subgroupsRoot, dim, i < 3),
           );
         } else {
-          addSubgroup(subgroupsRoot, { title: "ด้านการให้บริการ" }, true);
-          addSubgroup(subgroupsRoot, { title: "ด้านความสะดวกสบาย" }, true);
-          addSubgroup(
-            subgroupsRoot,
-            { title: "ด้านเจ้าหน้าที่ผู้ให้บริการ" },
-            true,
-          );
+          addSubgroup(subgroupsRoot, { title: "ความรู้สึกที่มีต่อบริการ (Affect of Service)" }, true);
+          addSubgroup(subgroupsRoot, { title: "การควบคุมสารสนเทศ (Information Control)" }, true);
+          addSubgroup(subgroupsRoot, { title: "ลักษณะกายภาพของห้องสมุด (Library as Place)" }, true,);
         }
 
         toggle?.dispatchEvent(new Event("change"));

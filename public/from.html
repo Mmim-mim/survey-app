@@ -1178,6 +1178,7 @@
         const titleInput = group.querySelector(".subgroup-title");
         const stack = group.querySelector(".questions");
         const delBtn = group.querySelector(".remove-subgroup");
+        const questions = Array.isArray(data.questions) ? data.questions : [];
 
         titleInput.value = data.title || "";
 

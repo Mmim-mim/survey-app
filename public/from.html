@@ -1137,6 +1137,29 @@
         ) {
           return "serviceInteractionSuggestions";
         }
+        
+        // SITEQUAL
+        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
+          return "easeOfUseSuggestions";
+        }
+        if (
+          t.includes("aesthetic design") ||
+          t.includes("การออกแบบที่สวยงาม")
+        ) {
+          return "aestheticDesignSuggestions";
+        }
+        if (
+          t.includes("processing speed") ||
+          t.includes("ความเร็วในการประมวลผล")
+        ) {
+          return "processingSpeedSuggestions";
+        }
+        if (
+          t.includes("interactive responsiveness") ||
+          t.includes("การตอบสนอง")
+        ) {
+          return "interactiveResponsivenessSuggestions";
+        }
         return "questionSuggestions";
       }
 
@@ -2096,6 +2119,42 @@
     </datalist>
 
     <!-- ----- ส่วนที่ 2 หัวข้อ 4 ----- -->
+    <datalist id="easeOfUseSuggestions">
+      <option
+        value="เว็บไซต์มีความสะดวกต่อการใช้งาน (This site is convenient to use)"
+      ></option>
+      <option
+        value="เว็บไซต์ง่ายต่อการสืบค้นข้อมูล (It is easy to search)"
+      ></option>
+    </datalist>
+
+    <datalist id="aestheticDesignSuggestions">
+      <option value="เว็บไซต์มีสีสันสวยงาม (This site is colorful)"></option>
+      <option
+        value="เว็บไซต์มีแนวความคิดสร้างสรรค์ (This site is creative)"
+      ></option>
+      <option
+        value="เว็บไซต์แสดงรูปภาพของสินค้าและผลิตภัณฑ์ได้เป็นอย่างดี (This site shows goods pictures of the products)"
+      ></option>
+    </datalist>
+
+    <datalist id="processingSpeedSuggestions">
+      <option
+        value="เว็บไซต์ความง่ายต่อการเข้าถึงและแสดงผล (It is easy to access the results)"
+      ></option>
+      <option
+        value="เว็บไซต์ประมวลผลได้อย่างรวดเร็ว (This site has quick process)"
+      ></option>
+    </datalist>
+
+    <datalist id="interactiveResponsivenessSuggestions">
+      <option
+        value="เว็บไซต์นี้มีความปลอดภัยต่อผู้ใช้ (This site ensure me of security)"
+      ></option>
+      <option
+        value="ผู้ใช้บริการมั่นใจในความปลอดภัยของเว็บไซต์นี้ (I am confident of security with this site)"
+      ></option>
+    </datalist>
 
     <!-- ----- ส่วนที่ 3 ----- -->
     <datalist id="serviceSuggestions">

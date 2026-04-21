@@ -1119,6 +1119,24 @@
         if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
           return "assuranceSuggestions";
         }
+
+        // WEBQUAL
+        if (t.includes("usability") || t.includes("การใช้งาน")) {
+          return "usabilitySuggestions";
+        }
+        if (
+          t.includes("infomation quality") ||
+          t.includes("information quality") ||
+          t.includes("คุณภาพของข้อมูล")
+        ) {
+          return "informationQualitySuggestions";
+        }
+        if (
+          t.includes("service interaction") ||
+          t.includes("การตอบสนองต่อการบริการ")
+        ) {
+          return "serviceInteractionSuggestions";
+        }
         return "questionSuggestions";
       }
 
@@ -2013,6 +2031,69 @@
     </datalist>
 
     <!-- ----- ส่วนที่ 2 หัวข้อ 3 ----- -->
+    <datalist id="usabilitySuggestions">
+      <option
+        value="The site easy to learn to operate -ง่ายต่อการเรียนรู้การใช้งาน"
+      ></option>
+      <option
+        value="Interaction of the site is clear and understandable - การโต้ตอบมีความชัดเจนและเข้าใจได้"
+      ></option>
+      <option value="The site easy to navigate - มีระบบนำทางง่าย"></option>
+      <option value="The site easy to use - มีการใช้งานง่าย"></option>
+      <option
+        value="The site has an attractive appearance - มีรูปลักษณ์ที่น่าดึงดูด"
+      ></option>
+      <option
+        value="The design is appropriate to the type of site - มีการออกแบบที่เหมาะสมตามประเภท"
+      ></option>
+      <option
+        value="The site conveys a sense of competency - ศักยภาพของเว็บไซต์"
+      ></option>
+      <option
+        value="The site creates a positive experience - เว็บไซต์สร้างประสบการณ์เชิงบวก"
+      ></option>
+    </datalist>
+
+    <datalist id="informationQualitySuggestions">
+      <option
+        value="Provides accurate information - ให้ข้อมูลที่ถูกต้อง"
+      ></option>
+      <option
+        value="Provides believable information - ให้ข้อมูลที่เชื่อถือได้"
+      ></option>
+      <option value="Provides timely information - ให้ข้อมูลทันเวลา"></option>
+      <option
+        value="Provides relevant information - ให้ข้อมูลที่เกี่ยวข้อง"
+      ></option>
+      <option
+        value="Provides easy to understand information - ให้ข้อมูลที่เข้าใจง่าย"
+      ></option>
+      <option
+        value="Provides information at the right level of detail - ให้ข้อมูลละเอียด"
+      ></option>
+      <option
+        value="Presents the information in appropriate format - นำเสนอข้อมูลในรูปแบบที่เหมาะสม"
+      ></option>
+    </datalist>
+
+    <datalist id="serviceInteractionSuggestions">
+      <option value="Has a good reputation - มีชื่อเสียงที่ดี"></option>
+      <option
+        value="It feels safe to complete transaction - ให้ความรู้สึกมั่นใจ"
+      ></option>
+      <option
+        value="My personal information feels secure - ให้ความรู้สึกปลอดภัย"
+      ></option>
+      <option
+        value="Creates a sense of personalization - สร้างความรู้สึกเป็นส่วนตัว"
+      ></option>
+      <option
+        value="Convey a sense of community - พื้นที่ร่วมของชุมชน"
+      ></option>
+      <option
+        value="Makes it easy to communicate with the organization - ง่ายต่อการสื่อสารกับองค์กร"
+      ></option>
+    </datalist>
 
     <!-- ----- ส่วนที่ 2 หัวข้อ 4 ----- -->
 

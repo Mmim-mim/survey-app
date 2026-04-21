@@ -1095,6 +1095,16 @@
         }
       }
 
+      function getSuggestionListIdBySubgroupTitle(title = "") {
+        const t = title.toLowerCase();
+
+        if (t.includes("affect")) return "affectOfServiceSuggestions";
+        if (t.includes("information")) return "informationControlSuggestions";
+        if (t.includes("library")) return "libraryAsPlaceSuggestions";
+
+        return "questionSuggestions";
+      }
+
       function addQuestion(
         stack,
         value = "",
@@ -1128,7 +1138,12 @@
         const toggle = group.querySelector(".subtoggle");
 
         addBtn.addEventListener("click", () => {
-          addQuestion(stack, "", "questionSuggestions", false);
+          const titleText =
+            group.querySelector(".subgroup-title")?.value?.trim() || "";
+
+          const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
+
+          addQuestion(stack, "", subgroupListId, false);
         });
 
         if (delBtn) {
@@ -1173,15 +1188,17 @@
         subgroupsRoot.appendChild(group);
         bindSubgroup(group);
 
-        const questions = Array.isArray(data.questions) ? data.questions : [];
+        const subgroupListId = getSuggestionListIdBySubgroupTitle(
+          data.title || "",
+        );
 
         if (questions.length) {
           questions.forEach((q, i) => {
-            addQuestion(stack, q, "questionSuggestions", i < 2);
+            addQuestion(stack, q, subgroupListId, i < 2);
           });
         } else {
-          addQuestion(stack, "", "questionSuggestions", true);
-          addQuestion(stack, "", "questionSuggestions", true);
+          addQuestion(stack, "", subgroupListId, true);
+          addQuestion(stack, "", subgroupListId, true);
         }
 
         if (data.enabled === false) {
@@ -1854,6 +1871,67 @@
           }
         });
     </script>
+    <datalist id="affectOfServiceSuggestions">
+      <option
+        value="บุคลากรห้องสมุดสร้างความเชื่อมั่นให้กับผู้ใช้บริการ"
+      ></option>
+      <option value="บุคลากรห้องสมุดให้บริการอย่างรวดเร็วและทันท่วงที"></option>
+      <option value="บุคลากรห้องสมุดมีมารยาท มีความสุภาพสม่ำเสมอ"></option>
+      <option value="บุคลากรห้องสมุดมีความพร้อมในการตอบคำถาม"></option>
+      <option value="บุคลากรห้องสมุดมีความรู้ในการตอบคำถาม"></option>
+      <option value="บุคลากรห้องสมุดเอาใจใส่ดูแลผู้ใช้บริการ"></option>
+      <option value="บุคลากรห้องสมุดเข้าใจความต้องการของผู้ใช้บริการ"></option>
+      <option
+        value="บุคลากรห้องสมุดเต็มใจที่จะให้ความช่วยเหลือผู้ใช้บริการ"
+      ></option>
+      <option
+        value="บุคลากรห้องสมุดมีความสามารถในการจัดการปัญหาในการบริการ"
+      ></option>
+    </datalist>
+
+    <datalist id="informationControlSuggestions">
+      <option
+        value="ผู้ใช้บริการเข้าถึงทรัพยากรสารสนเทศอิเล็กทรอนิกส์ได้จากสถานที่ต่าง ๆ เช่น ที่บ้าน ที่ทำงาน"
+      ></option>
+      <option
+        value="เว็บไซต์ของห้องสมุดช่วยให้ค้นหาข้อมูลได้ด้วยตนเอง"
+      ></option>
+      <option
+        value="ห้องสมุดมีทรัพยากรสารสนเทศประเภทสื่อสิ่งพิมพ์ตรงกับความต้องการของผู้ใช้บริการ"
+      ></option>
+      <option
+        value="ห้องสมุดมีทรัพยากรสารสนเทศประเภทสื่ออิเล็กทรอนิกส์ตรงกับความต้องการของผู้ใช้บริการ"
+      ></option>
+      <option
+        value="ห้องสมุดมีวารสารในรูปสิ่งพิมพ์และ/หรือวารสารอิเล็กทรอนิกส์ที่ผู้ใช้บริการต้องการ"
+      ></option>
+      <option
+        value="มีเครื่องมือ (Tools) เพื่อการเข้าถึงที่ใช้งานได้ง่ายช่วยให้ค้นหาสิ่งที่ต้องการได้ด้วยตนเอง เช่น WebOPAC ป้ายแนะนำต่าง ๆ"
+      ></option>
+      <option
+        value="มีอุปกรณ์ที่ทันสมัยทำให้เข้าถึงสารสนเทศที่ต้องการได้โดยง่าย เช่น เครื่องคอมพิวเตอร์ Notebook"
+      ></option>
+      <option
+        value="ห้องสมุดจัดการสารสนเทศให้ผู้ใช้สามารถเข้าถึงได้โดยง่าย"
+      ></option>
+    </datalist>
+
+    <datalist id="libraryAsPlaceSuggestions">
+      <option
+        value="พื้นที่ห้องสมุดสร้างแรงบันดาลใจในการศึกษาและการเรียนรู้"
+      ></option>
+      <option
+        value="ห้องสมุดมีบริเวณที่เงียบสำหรับการศึกษาค้นคว้าเฉพาะบุคคล"
+      ></option>
+      <option
+        value="ห้องสมุดมีความสะดวกสบายและสถานที่ตั้งน่าใช้บริการ"
+      ></option>
+      <option value="ห้องสมุดเป็นแหล่งค้นคว้า การเรียนรู้ และการวิจัย"></option>
+      <option
+        value="ห้องสมุดมีพื้นที่ชุมชนเพื่อการเรียนรู้เป็นกลุ่มและการศึกษาแบบกลุ่ม"
+      ></option>
+    </datalist>
+
     <datalist id="serviceSuggestions">
       <option value="ได้รับบริการอย่างรวดเร็ว"></option>
       <option value="ขั้นตอนการให้บริการสะดวก"></option>

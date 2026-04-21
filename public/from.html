@@ -1103,23 +1103,7 @@
         if (t.includes("information")) return "informationControlSuggestions";
         if (t.includes("library")) return "libraryAsPlaceSuggestions";
 
-        // SERVQUAL
-        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
-          return "tangiblesSuggestions";
-        }
-        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
-          return "reliabilitySuggestions";
-        }
-        if (t.includes("responsiveness") || t.includes("การตอบสนอง")) {
-          return "responsivenessSuggestions";
-        }
-        if (t.includes("empathy") || t.includes("การเอาใจใส่")) {
-          return "empathySuggestions";
-        }
-        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
-          return "assuranceSuggestions";
-        }
-
+        
         // WEBQUAL
         if (t.includes("usability") || t.includes("การใช้งาน")) {
           return "usabilitySuggestions";
@@ -1137,7 +1121,25 @@
         ) {
           return "serviceInteractionSuggestions";
         }
-        
+
+        // SERVQUAL
+        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
+          return "tangiblesSuggestions";
+        }
+        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
+          return "reliabilitySuggestions";
+        }
+        if (t.includes("responsiveness") || t.includes("การตอบสนอง")) {
+          return "responsivenessSuggestions";
+        }
+        if (t.includes("empathy") || t.includes("การเอาใจใส่")) {
+          return "empathySuggestions";
+        }
+        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
+          return "assuranceSuggestions";
+        }
+
+
         // SITEQUAL
         if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
           return "easeOfUseSuggestions";

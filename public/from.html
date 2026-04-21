@@ -1103,9 +1103,8 @@
         if (t.includes("information")) return "informationControlSuggestions";
         if (t.includes("library")) return "libraryAsPlaceSuggestions";
 
-        
         // WEBQUAL
-        if (t.includes("usability") || t.includes("การใช้งาน")) {
+        if (t.includes("usability")) {
           return "usabilitySuggestions";
         }
         if (
@@ -1139,17 +1138,14 @@
           return "assuranceSuggestions";
         }
 
-
         // SITEQUAL
-        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
-          return "easeOfUseSuggestions";
-        }
-        if (
-          t.includes("aesthetic design") ||
-          t.includes("การออกแบบที่สวยงาม")
-        ) {
-          return "aestheticDesignSuggestions";
-        }
+        if (t.includes("ease of use") || t.includes("การใช้งานง่าย"))
+          if (
+            t.includes("aesthetic design") ||
+            t.includes("การออกแบบที่สวยงาม")
+          ) {
+            return "aestheticDesignSuggestions";
+          }
         if (
           t.includes("processing speed") ||
           t.includes("ความเร็วในการประมวลผล")

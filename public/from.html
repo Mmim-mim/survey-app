@@ -993,7 +993,7 @@
           </div>
         </template>
       </form>
-       <!-- ------ หัวข้อ ส่วนที่ 2 ----- -->
+      <!-- ------ หัวข้อ ส่วนที่ 2 ----- -->
       <template id="main-model-template">
         <div class="group main-model" data-main-model>
           <div class="ghead">
@@ -1226,23 +1226,60 @@
 
         if (Array.isArray(data.dimensions) && data.dimensions.length) {
           data.dimensions.forEach((dim, i) =>
-            addSubgroup(subgroupsRoot, dim, i < 3),
+            addSubgroup(subgroupsRoot, dim, i < data.dimensions.length),
           );
         } else {
-          addSubgroup(subgroupsRoot, { title: "ความรู้สึกที่มีต่อบริการ (Affect of Service)" }, true);
-          addSubgroup(subgroupsRoot, { title: "การควบคุมสารสนเทศ (Information Control)" }, true);
-          addSubgroup(subgroupsRoot, { title: "ลักษณะกายภาพของห้องสมุด (Library as Place)" }, true,);
+          addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 1" }, true);
+          addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 2" }, true);
         }
 
         toggle?.dispatchEvent(new Event("change"));
       }
 
       const defaultMainModels = [
-        { title: "LibQUAL+TM" },
-        { title: "SERVQUAL" },
-        { title: "WEBQUAL" },
-        { title: "SiteQUAL" },
-        { title: "ESQUAL" },
+        {
+          title: "LibQUAL+TM",
+          dimensions: [
+            { title: "ความรู้สึกที่มีต่อบริการ (Affect of Service)" },
+            { title: "การควบคุมสารสนเทศ (Information Control)" },
+            { title: "ลักษณะกายภาพของห้องสมุด (Library as Place)" },
+          ],
+        },
+        {
+          title: "SERVQUAL",
+          dimensions: [
+            { title: "ความเป็นรูปธรรมของบริการ (Tangibles)" },
+            { title: "ความน่าเชื่อถือ (Reliability)" },
+            { title: "การตอบสนองต่อผู้ใช้บริการ (Responsiveness)" },
+            { title: "ความมั่นใจ (Assurance)" },
+            { title: "ความเอาใจใส่ (Empathy)" },
+          ],
+        },
+        {
+          title: "WEBQUAL",
+          dimensions: [
+            { title: "ประโยชน์ใช้สอย (Usability)" },
+            { title: "คุณภาพของข้อมูล (Information Quality)" },
+            { title: "คุณภาพการโต้ตอบกับระบบ (Interaction Quality)" },
+          ],
+        },
+        {
+          title: "SiteQUAL",
+          dimensions: [
+            { title: "ความสะดวกในการใช้งาน" },
+            { title: "การออกแบบเว็บไซต์" },
+            { title: "ความปลอดภัย/ความเชื่อมั่น" },
+          ],
+        },
+        {
+          title: "ESQUAL",
+          dimensions: [
+            { title: "ประสิทธิภาพ (Efficiency)" },
+            { title: "ความพร้อมของระบบ (System Availability)" },
+            { title: "การปฏิบัติตามสัญญา (Fulfillment)" },
+            { title: "ความเป็นส่วนตัว (Privacy)" },
+          ],
+        },
       ];
 
       let savedDraft = {};

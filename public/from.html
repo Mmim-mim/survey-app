@@ -1098,10 +1098,27 @@
       function getSuggestionListIdBySubgroupTitle(title = "") {
         const t = title.toLowerCase();
 
+        // LibQUAL+TM
         if (t.includes("affect")) return "affectOfServiceSuggestions";
         if (t.includes("information")) return "informationControlSuggestions";
         if (t.includes("library")) return "libraryAsPlaceSuggestions";
 
+        // SERVQUAL
+        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
+          return "tangiblesSuggestions";
+        }
+        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
+          return "reliabilitySuggestions";
+        }
+        if (t.includes("responsiveness") || t.includes("การตอบสนอง")) {
+          return "responsivenessSuggestions";
+        }
+        if (t.includes("empathy") || t.includes("การเอาใจใส่")) {
+          return "empathySuggestions";
+        }
+        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
+          return "assuranceSuggestions";
+        }
         return "questionSuggestions";
       }
 
@@ -1872,6 +1889,8 @@
           }
         });
     </script>
+
+    <!-- ----- ส่วนที่ 2 หัวข้อ 1 ----- -->
     <datalist id="affectOfServiceSuggestions">
       <option
         value="บุคลากรห้องสมุดสร้างความเชื่อมั่นให้กับผู้ใช้บริการ"
@@ -1933,6 +1952,71 @@
       ></option>
     </datalist>
 
+    <!-- ----- ส่วนที่ 2 หัวข้อ 2 ----- -->
+
+    <datalist id="tangiblesSuggestions">
+      <option
+        value="สถานที่ให้บริการมีความสะอาด เรียบร้อย พร้อมสำหรับการให้บริการ"
+      ></option>
+      <option value="ความพร้อมของอุปกรณ์ เครื่องมือในการให้บริการ"></option>
+      <option
+        value="ความชัดเจนของป้ายบอกที่ตั้งของหน่วยงานและป้ายแสดงรายการการบริการ"
+      ></option>
+    </datalist>
+
+    <datalist id="reliabilitySuggestions">
+      <option
+        value="มีการให้บริการตามขั้นตอน/กระบวนการ และให้บริการตามลำดับก่อน-หลัง"
+      ></option>
+      <option
+        value="ขั้นตอน/กระบวนการให้บริการสามารถเสร็จสิ้นภายในระยะเวลาที่กำหนด"
+      ></option>
+      <option
+        value="ผู้ให้บริการมีความรู้ ทักษะ และความเชี่ยวชาญที่ถูกต้องและเป็นไปตามมาตรฐาน"
+      ></option>
+    </datalist>
+
+    <datalist id="responsivenessSuggestions">
+      <option
+        value="บุคลากรห้องสมุดมีความพร้อมในการให้บริการ ความกระตือรือร้น และเต็มใจให้บริการในทันที"
+      ></option>
+      <option
+        value="บุคลากรห้องสมุดตอบความรวดเร็วในการให้บริการ (กรณีขอรับบริการทาง โทรศัพท์ e-Mail หรือ Social Media)"
+      ></option>
+      <option
+        value="การตอบสนองต่อการขอใช้บริการผ่านระบบสารสนเทศ (กรณีการขอใช้บริการผ่านแบบฟอร์มออนไลน์)"
+      ></option>
+    </datalist>
+
+    <datalist id="empathySuggestions">
+      <option
+        value="บุคลากรห้องสมุดให้บริการด้วยกิริยาสุภาพ เป็นมิตร อัธยาศัยดี รู้จักกาลเทศะ"
+      ></option>
+      <option
+        value="บุคลากรห้องสมุดแสดงออกถึงความใส่ใจในการสอบถาม เพื่อให้ทราบถึงความต้องการ/ปัญหา/ข้อสงสัยของผู้รับบริการ"
+      ></option>
+      <option
+        value="บุคลากรห้องสมุดสามารถแก้ไขปัญหาและอุปสรรคของผู้รับบริการแต่ละรายได้อย่างเหมาะสม"
+      ></option>
+    </datalist>
+
+    <datalist id="assuranceSuggestions">
+      <option
+        value="ผลลัพธ์จากการให้บริการเป็นไปตามความต้องการของผู้ใช้บริการ"
+      ></option>
+      <option
+        value="ผลลัพธ์จากการให้บริการมีความถูกต้องเป็นไปตามมาตรฐาน"
+      ></option>
+      <option
+        value="ผลลัพธ์จากการให้บริการมีความน่าเชื่อถือ สามารถนำไปใช้ประโยชน์ หรือใช้อ้างอิงได้"
+      ></option>
+    </datalist>
+
+    <!-- ----- ส่วนที่ 2 หัวข้อ 3 ----- -->
+
+    <!-- ----- ส่วนที่ 2 หัวข้อ 4 ----- -->
+
+    <!-- ----- ส่วนที่ 3 ----- -->
     <datalist id="serviceSuggestions">
       <option value="ได้รับบริการอย่างรวดเร็ว"></option>
       <option value="ขั้นตอนการให้บริการสะดวก"></option>

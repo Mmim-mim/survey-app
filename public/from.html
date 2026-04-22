@@ -1139,19 +1139,24 @@
         }
 
         // SITEQUAL
-        if (t.includes("ease of use") || t.includes("การใช้งานง่าย"))
-          if (
-            t.includes("aesthetic design") ||
-            t.includes("การออกแบบที่สวยงาม")
-          ) {
-            return "aestheticDesignSuggestions";
-          }
+        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
+          return "easeOfUseSuggestions";
+        }
+
+        if (
+          t.includes("aesthetic design") ||
+          t.includes("การออกแบบที่สวยงาม")
+        ) {
+          return "aestheticDesignSuggestions";
+        }
+
         if (
           t.includes("processing speed") ||
           t.includes("ความเร็วในการประมวลผล")
         ) {
           return "processingSpeedSuggestions";
         }
+
         if (
           t.includes("interactive responsiveness") ||
           t.includes("การตอบสนอง")

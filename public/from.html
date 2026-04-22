@@ -1096,74 +1096,52 @@
       }
 
       function getSuggestionListIdBySubgroupTitle(title = "") {
-        const t = title.toLowerCase();
+        const t = String(title || "")
+          .trim()
+          .toLowerCase();
 
-        // LibQUAL+TM
-        if (t.includes("affect")) return "affectOfServiceSuggestions";
-        if (t.includes("information")) return "informationControlSuggestions";
-        if (t.includes("library")) return "libraryAsPlaceSuggestions";
+        const map = {
+          // LibQUAL+TM
+          "ความรู้สึกที่มีต่อบริการ (affect of service)":
+            "affectOfServiceSuggestions",
+          "การควบคุมสารสนเทศ (information control)":
+            "informationControlSuggestions",
+          "ลักษณะกายภาพของห้องสมุด (library as place)":
+            "libraryAsPlaceSuggestions",
 
-        // WEBQUAL
-        if (t.includes("usability")) {
-          return "usabilitySuggestions";
-        }
-        if (
-          t.includes("infomation quality") ||
-          t.includes("information quality") ||
-          t.includes("คุณภาพของข้อมูล")
-        ) {
-          return "informationQualitySuggestions";
-        }
-        if (
-          t.includes("service interaction") ||
-          t.includes("การตอบสนองต่อการบริการ")
-        ) {
-          return "serviceInteractionSuggestions";
-        }
+          // SERVQUAL
+          "สิ่งที่สัมผัสได้ (tangibles)": "tangiblesSuggestions",
+          "ความน่าเชื่อถือ (reliability)": "reliabilitySuggestions",
+          "การตอบสนองของพนักงาน (responsiveness)": "responsivenessSuggestions",
+          "การเอาใจใส่จากพนักงาน (empathy)": "empathySuggestions",
+          "ความไว้วางใจ (assurance)": "assuranceSuggestions",
 
-        // SERVQUAL
-        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
-          return "tangiblesSuggestions";
-        }
-        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
-          return "reliabilitySuggestions";
-        }
-        if (t.includes("responsiveness") || t.includes("การตอบสนอง")) {
-          return "responsivenessSuggestions";
-        }
-        if (t.includes("empathy") || t.includes("การเอาใจใส่")) {
-          return "empathySuggestions";
-        }
-        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
-          return "assuranceSuggestions";
-        }
+          // WEBQUAL
+          "การใช้งาน (usability)": "usabilitySuggestions",
+          "คุณภาพของข้อมูล (infomation quality)":
+            "informationQualitySuggestions",
+          "คุณภาพของข้อมูล (information quality)":
+            "informationQualitySuggestions",
+          "การตอบสนองต่อการบริการ (service interaction)":
+            "serviceInteractionSuggestions",
 
-        // SITEQUAL
-        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
-          return "easeOfUseSuggestions";
-        }
+          // SITEQUAL
+          "การใช้งานง่าย (ease of use)": "easeOfUseSuggestions",
+          "การออกแบบที่สวยงาม (aesthetic design)": "aestheticDesignSuggestions",
+          "ความเร็วในการประมวลผล (processing speed)":
+            "processingSpeedSuggestions",
+          "การตอบสนองของเว็บไซต์ (interactive responsiveness)":
+            "interactiveResponsivenessSuggestions",
 
-        if (
-          t.includes("aesthetic design") ||
-          t.includes("การออกแบบที่สวยงาม")
-        ) {
-          return "aestheticDesignSuggestions";
-        }
+          // ESQUAL
+          "ประสิทธิภาพ (efficiency)": "efficiencySuggestions",
+          "ความพร้อมของระบบ (system availability)":
+            "systemAvailabilitySuggestions",
+          "การปฏิบัติตามสัญญา (fulfillment)": "fulfillmentSuggestions",
+          "ความเป็นส่วนตัว (privacy)": "privacySuggestions",
+        };
 
-        if (
-          t.includes("processing speed") ||
-          t.includes("ความเร็วในการประมวลผล")
-        ) {
-          return "processingSpeedSuggestions";
-        }
-
-        if (
-          t.includes("interactive responsiveness") ||
-          t.includes("การตอบสนองของเว็บไซต์")
-        ) {
-          return "interactiveResponsivenessSuggestions";
-        }
-        return "questionSuggestions";
+        return map[t] || "questionSuggestions";
       }
 
       function addQuestion(

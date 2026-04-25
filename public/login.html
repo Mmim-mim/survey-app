@@ -4,101 +4,248 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>login</title>
+
     <style>
       :root {
-        --bg: #fff8f2;
-        --card: #ffffff;
-        --input: #ead8c8;
+        --mfu-red: #9b1c1c;
+        --mfu-dark-red: #7a1414;
+        --mfu-gold: #c9a34e;
+        --cream: #fff8f2;
+        --ink: #2a1a1a;
+        --muted: #7a5c5c;
       }
+
       * {
         box-sizing: border-box;
         font-family:
+          "Noto Sans Thai",
           system-ui,
           -apple-system,
           Segoe UI,
-          Roboto,
           Arial,
           sans-serif;
       }
+
       html,
       body {
         height: 100%;
       }
+
       body {
         margin: 0;
-        background: var(--bg);
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
         padding: 24px;
+        background:
+          radial-gradient(circle at 18% 30%, rgba(201, 163, 78, 0.38), transparent 20%),
+          radial-gradient(circle at 78% 20%, rgba(155, 28, 28, 0.22), transparent 24%),
+          radial-gradient(circle at 80% 82%, rgba(201, 163, 78, 0.28), transparent 22%),
+          linear-gradient(135deg, #fff8f2 0%, #fff1e6 45%, #f7dfd5 100%);
+        overflow: hidden;
       }
-      .card {
-        width: min(920px, 92vw);
-        height: min(360px, 80vh);
-        background: var(--card);
-        border-radius: 2px;
-        display: grid;
-        place-items: center;
+
+      .blob {
+        position: fixed;
+        border-radius: 999px;
+        filter: blur(2px);
+        opacity: 0.65;
+        pointer-events: none;
+      }
+
+      .blob.one {
+        width: 230px;
+        height: 230px;
+        background: linear-gradient(135deg, #9b1c1c, #c9a34e);
+        top: -60px;
+        right: 18%;
+      }
+
+      .blob.two {
+        width: 180px;
+        height: 180px;
+        background: linear-gradient(135deg, #c9a34e, #fff3cf);
+        bottom: -40px;
+        left: 20%;
+      }
+
+      .login-card {
+        width: min(760px, 94vw);
+        min-height: 430px;
+        padding: 54px 70px;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.58);
+        border: 1px solid rgba(255, 255, 255, 0.75);
+        box-shadow:
+          0 24px 70px rgba(122, 20, 20, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
         position: relative;
+        z-index: 1;
       }
+
       .corner {
         position: absolute;
-        left: 12px;
-        top: 8px;
-        color: #bcbcbc;
-        font-size: 12px;
+        top: 18px;
+        left: 24px;
+        font-size: 13px;
+        color: var(--muted);
       }
+
       .wrap {
-        width: 520px;
-        max-width: 90%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 14px;
+        max-width: 430px;
+        margin: 0 auto;
       }
+
       h1 {
-        margin: 0 0 8px;
-        font-weight: 500;
-        font-size: 48px;
-        color: #000;
+        margin: 0 0 30px;
+        text-align: center;
+        letter-spacing: 8px;
+        font-size: 42px;
+        font-weight: 700;
+        color: var(--mfu-dark-red);
       }
+
+      .field-label {
+        display: block;
+        margin: 16px 0 8px;
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
       .field {
-        width: 240px;
-        padding: 10px 14px;
-        border: none;
+        width: 100%;
+        height: 48px;
+        padding: 0 18px;
+        border: 1px solid rgba(234, 216, 200, 0.9);
+        border-radius: 16px;
         outline: none;
-        background: var(--input);
-        color: var(--on);
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+        font-size: 15px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        transition: 0.18s ease;
+      }
+
+      .field:focus {
+        border-color: var(--mfu-gold);
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
+      }
+
+      .password-wrap {
+        position: relative;
+      }
+
+      .eye-btn {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 17px;
+        color: var(--muted);
+      }
+
+      .row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin: 14px 0 30px;
+        color: var(--muted);
         font-size: 14px;
       }
-      ::placeholder {
-        color: var(--on);
-        opacity: 0.95;
+
+      .remember {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
       }
+
+      .remember input {
+        width: 18px;
+        height: 18px;
+        accent-color: var(--mfu-red);
+      }
+
+      .forgot {
+        color: var(--muted);
+        text-decoration: none;
+      }
+
+      .forgot:hover {
+        color: var(--mfu-red);
+      }
+
       .btn {
-        padding: 6px 16px;
-        font-size: 12px;
+        display: block;
+        width: 230px;
+        height: 56px;
+        margin: 0 auto;
         border: none;
-        outline: none;
+        border-radius: 999px;
         cursor: pointer;
-        background: linear-gradient(90deg, #9b1c1c, #c9a34e);
         color: #fff;
-        border-radius: 6px;
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 4px;
+        background: linear-gradient(90deg, var(--mfu-red), var(--mfu-gold));
+        box-shadow: 0 14px 28px rgba(155, 28, 28, 0.25);
+        transition: 0.18s ease;
       }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 34px rgba(155, 28, 28, 0.32);
+      }
+
       .error {
-        min-height: 16px;
-        font-size: 12px;
-        color: #c62828;
+        min-height: 20px;
+        margin-top: 16px;
+        text-align: center;
+        font-size: 13px;
+        color: #b91c1c;
+        font-weight: 600;
+      }
+
+      @media (max-width: 640px) {
+        .login-card {
+          padding: 46px 26px;
+        }
+
+        h1 {
+          font-size: 34px;
+          letter-spacing: 5px;
+        }
+
+        .row {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .btn {
+          width: 100%;
+        }
       }
     </style>
   </head>
+
   <body>
-    <div class="card">
+    <div class="blob one"></div>
+    <div class="blob two"></div>
+
+    <div class="login-card">
       <div class="corner">login</div>
 
       <form class="wrap" id="loginForm">
-        <h1>Survey</h1>
+        <h1>LOGIN</h1>
+
+        <label class="field-label" for="username">Username</label>
         <input
           class="field"
           type="text"
@@ -106,14 +253,29 @@
           placeholder="username"
           required
         />
-        <input
-          class="field"
-          type="password"
-          id="password"
-          placeholder="password"
-          required
-        />
-        <button class="btn" type="submit">login</button>
+
+        <label class="field-label" for="password">Password</label>
+        <div class="password-wrap">
+          <input
+            class="field"
+            type="password"
+            id="password"
+            placeholder="password"
+            required
+          />
+          <button class="eye-btn" type="button" id="togglePassword">👁</button>
+        </div>
+
+        <div class="row">
+          <label class="remember">
+            <input type="checkbox" id="rememberMe" />
+            Remember me
+          </label>
+
+          <a class="forgot" href="#">Forgot password?</a>
+        </div>
+
+        <button class="btn" type="submit">SIGN IN</button>
         <div class="error" id="err"></div>
       </form>
     </div>
@@ -121,6 +283,11 @@
     <script>
       const form = document.getElementById("loginForm");
       const err = document.getElementById("err");
+
+      document.getElementById("togglePassword").addEventListener("click", () => {
+        const password = document.getElementById("password");
+        password.type = password.type === "password" ? "text" : "password";
+      });
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -144,13 +311,11 @@
             return;
           }
 
-          // ล็อกอินสำเร็จ
           localStorage.setItem("isLoggedIn", "1");
           localStorage.setItem("user", data.user?.username || u);
           localStorage.setItem("displayName", data.user?.display_name || "");
           localStorage.setItem("role", data.user?.role || "staff");
 
-          // ไปหน้า index
           window.location.href = "index.html";
         } catch (e2) {
           err.textContent = "Server error: " + e2.message;

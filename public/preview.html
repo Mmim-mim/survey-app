@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
       :root {
-        --bg: #f7f7f8;
-        --card: #fff;
-        --line: #e5e7eb;
-        --ink: #0f172a;
-        --muted: #6b7280;
-        --primary: #111827;
-        --shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        --bg: #fff8f2;
+        --card: #ffffff;
+        --line: #ead8c8;
+        --ink: #2a1a1a;
+        --muted: #7a5c5c;
+        --primary: #9b1c1c;
+        --accent: #c9a34e;
+        --shadow: 0 8px 22px rgba(155, 28, 28, 0.08);
       }
 
       * {
@@ -21,7 +22,18 @@
 
       body {
         margin: 0;
-        background: var(--bg);
+        background:
+          radial-gradient(
+            1000px 500px at 10% -10%,
+            rgba(155, 28, 28, 0.1),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 500px at 100% 0%,
+            rgba(201, 163, 78, 0.18),
+            transparent 55%
+          ),
+          linear-gradient(135deg, #fff8f2 0%, #fff1e6 100%);
         color: var(--ink);
         font-family:
           "Noto Sans Thai",
@@ -224,6 +236,80 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+      }
+
+      /* ===== MFU THEME: preview.html ===== */
+
+      .hero {
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          #fff5ec 55%,
+          #fff0d6 100%
+        );
+        border-color: #ead8c8;
+        box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+      }
+
+      .hero h1 {
+        color: #7a1414;
+      }
+
+      .section {
+        border-color: #ead8c8;
+        box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+      }
+
+      .title {
+        color: #7a1414;
+      }
+
+      .hint {
+        color: #7a5c5c;
+      }
+
+      thead th {
+        background: #fff1e6;
+        color: #7a1414;
+      }
+
+      th,
+      td {
+        border-bottom-color: #ead8c8;
+      }
+
+      .q-head {
+        background: #fff8f2;
+        color: #7a1414;
+      }
+
+      .pill {
+        border-color: #ead8c8;
+        background: #fffaf4;
+      }
+
+      .form-input,
+      .reason input,
+      #suggestAnswer {
+        border-color: #e0c6b5 !important;
+      }
+
+      .form-input:focus,
+      .reason input:focus,
+      #suggestAnswer:focus {
+        outline: none;
+        border-color: #c9a34e !important;
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.2);
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, #9b1c1c, #c9a34e);
+        border-color: transparent;
+      }
+
+      .btn:hover {
+        border-color: #c9a34e;
+        box-shadow: 0 8px 16px rgba(155, 28, 28, 0.12);
       }
     </style>
   </head>

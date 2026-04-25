@@ -6,20 +6,21 @@
     <title>แบบฟอร์มการประเมินทั้งหมด</title>
     <style>
       :root {
-        --sheet: #f3f4f6;
-        --card: #fff;
-        --line: #e5e7eb;
-        --ink: #0f172a;
-        --muted: #6b7280;
-        --green: #16a34a;
-        --green-ink: #fff;
+        --bg: #fff8f2;
+        --card: #ffffff;
+        --line: #ead8c8;
+        --ink: #2a1a1a;
+        --muted: #7a5c5c;
+
+        --primary: #9b1c1c;
+        --accent: #c9a34e;
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        background: #0f172a;
+        background: linear-gradient(135deg, #fff8f2, #fff1e6);
         font-family:
           "Noto Sans Thai",
           system-ui,
@@ -170,6 +171,15 @@
         background: var(--green);
         color: var(--green-ink);
         border-color: #12873c;
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, #9b1c1c, #c9a34e);
+        color: white;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
       }
 
       /* Avatar + dropdown */

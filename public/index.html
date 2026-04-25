@@ -6,14 +6,14 @@
     <title>แบบฟอร์มการประเมินทั้งหมด</title>
     <style>
       :root {
-        --bg: #fff8f2;
+        --sheet: #fff8f2;
         --card: #ffffff;
         --line: #ead8c8;
         --ink: #2a1a1a;
         --muted: #7a5c5c;
-
-        --primary: #9b1c1c;
-        --accent: #c9a34e;
+        --green: #9b1c1c;
+        --green-ink: #fff;
+        --gold: #c9a34e;
       }
       * {
         box-sizing: border-box;
@@ -87,7 +87,8 @@
       }
 
       .app {
-        background: #e5e7eb;
+        background: linear-gradient(135deg, #fff8f2, #fff1e6);
+        border: 1px solid #ead8c8;
         border-radius: 12px;
         padding: 14px;
       }
@@ -336,6 +337,51 @@
 
       .icon-btn:hover {
         background: #f3f4f6;
+      }
+
+      /* ===== MFU THEME: index.html ===== */
+
+      .topbar {
+        background: linear-gradient(135deg, #ffffff, #fff5ec);
+        border-color: #ead8c8;
+        box-shadow: 0 8px 20px rgba(155, 28, 28, 0.08);
+      }
+
+      .title {
+        color: #7a1414;
+      }
+
+      .card {
+        border-color: #ead8c8;
+        box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+      }
+
+      .table-wrap {
+        border-color: #ead8c8;
+        background: #fffaf4;
+      }
+
+      thead th {
+        background: #fff1e6;
+        color: #7a1414;
+        border-bottom-color: #ead8c8;
+      }
+
+      tbody td {
+        background: #fffdf9;
+        border-top-color: #f0e0d6;
+      }
+
+      .btn.green {
+        background: linear-gradient(90deg, #9b1c1c, #c9a34e);
+        color: #fff;
+        border-color: transparent;
+      }
+
+      .btn:hover,
+      .icon-btn:hover {
+        border-color: #c9a34e;
+        box-shadow: 0 8px 16px rgba(155, 28, 28, 0.12);
       }
     </style>
   </head>

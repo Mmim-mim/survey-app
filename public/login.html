@@ -39,9 +39,21 @@
         justify-content: center;
         padding: 24px;
         background:
-          radial-gradient(circle at 18% 30%, rgba(201, 163, 78, 0.38), transparent 20%),
-          radial-gradient(circle at 78% 20%, rgba(155, 28, 28, 0.22), transparent 24%),
-          radial-gradient(circle at 80% 82%, rgba(201, 163, 78, 0.28), transparent 22%),
+          radial-gradient(
+            circle at 18% 30%,
+            rgba(201, 163, 78, 0.38),
+            transparent 20%
+          ),
+          radial-gradient(
+            circle at 78% 20%,
+            rgba(155, 28, 28, 0.22),
+            transparent 24%
+          ),
+          radial-gradient(
+            circle at 80% 82%,
+            rgba(201, 163, 78, 0.28),
+            transparent 22%
+          ),
           linear-gradient(135deg, #fff8f2 0%, #fff1e6 45%, #f7dfd5 100%);
         overflow: hidden;
       }
@@ -232,6 +244,16 @@
           width: 100%;
         }
       }
+
+      /* แก้สี autofill (Chrome, Edge) */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover,
+      input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.72) inset !important;
+        box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.72) inset !important;
+        -webkit-text-fill-color: #2a1a1a !important;
+        transition: background-color 5000s ease-in-out 0s;
+      }
     </style>
   </head>
 
@@ -284,10 +306,12 @@
       const form = document.getElementById("loginForm");
       const err = document.getElementById("err");
 
-      document.getElementById("togglePassword").addEventListener("click", () => {
-        const password = document.getElementById("password");
-        password.type = password.type === "password" ? "text" : "password";
-      });
+      document
+        .getElementById("togglePassword")
+        .addEventListener("click", () => {
+          const password = document.getElementById("password");
+          password.type = password.type === "password" ? "text" : "password";
+        });
 
       form.addEventListener("submit", async (e) => {
         e.preventDefault();

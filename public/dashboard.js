@@ -51,18 +51,30 @@ function buildCharts() {
     type: "pie",
     data: {
       labels: ["พึงพอใจ", "ควรปรับปรุง"],
-      datasets: [{
-        data: [0, 0],
-        backgroundColor: ["#2563eb", "#ef4444"],
-        borderColor: "#ffffff",
-        borderWidth: 2
-      }]
+      datasets: [
+        {
+          data: [0, 0],
+          backgroundColor: ["#9b1c1c", "#c9a34e"],
+          borderColor: "#ffffff",
+          borderWidth: 2,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: "bottom" } }
-    }
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            color: "#2a1a1a",
+            font: {
+              family: "Noto Sans Thai",
+            },
+          },
+        },
+      },
+    },
   });
 
   barChart = new Chart(document.getElementById("barChart"), {
@@ -70,17 +82,54 @@ function buildCharts() {
     data: {
       labels: [],
       datasets: [
-        { label: "พึงพอใจ", data: [], backgroundColor: "#2563eb" },
-        { label: "ควรปรับปรุง", data: [], backgroundColor: "#ef4444" }
-      ]
+        {
+          label: "พึงพอใจ",
+          data: [],
+          backgroundColor: "#9b1c1c",
+          borderRadius: 6,
+        },
+        {
+          label: "ควรปรับปรุง",
+          data: [],
+          backgroundColor: "#c9a34e",
+          borderRadius: 6,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: "#2a1a1a",
+            font: {
+              family: "Noto Sans Thai",
+            },
+          },
+        },
+      },
       scales: {
-        y: { beginAtZero: true, ticks: { precision: 0 } }
-      }
-    }
+        x: {
+          ticks: {
+            color: "#7a5c5c",
+          },
+          grid: {
+            color: "rgba(234, 216, 200, 0.7)",
+          },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            precision: 0,
+            color: "#7a5c5c",
+          },
+          grid: {
+            color: "rgba(234, 216, 200, 0.7)",
+          },
+        },
+      },
+    },
   });
 }
 

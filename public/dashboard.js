@@ -313,7 +313,7 @@ async function refreshDashboard() {
     await loadOptions();
     await refreshDashboard();
 
-    [fForm, fDept, fUniStrategy, fCenterStrategy, fDateFrom, fDateTo].forEach((el) => {
+    [fForm, fDept, fDateFrom, fDateTo].forEach((el) => {
   el.addEventListener("change", refreshDashboard);
 });
     btnRefresh.addEventListener("click", refreshDashboard);

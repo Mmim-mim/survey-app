@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard ยุทธศาสตร์</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root {
+      --red: #8b1515;
+      --red2: #b21f1f;
+      --gold: #c9a34e;
+      --bg: #fff7ef;
+      --card: #ffffff;
+      --line: #ead8c8;
+      --text: #241414;
+      --muted: #7b6b6b;
+      --shadow: 0 12px 30px rgba(139, 21, 21, 0.1);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139, 21, 21, 0.12), transparent 32%),
+        radial-gradient(circle at top right, rgba(201, 163, 78, 0.22), transparent 34%),
+        linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1500px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--red);
+      font-size: 34px;
+      font-weight: 800;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--red);
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      color: white;
+      border-color: transparent;
+    }
+
+    .filter-box {
+      background: rgba(255,255,255,.85);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 1.2fr 1.2fr 1fr 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 7px;
+      font-weight: 700;
+    }
+
+    .field select,
+    .field input {
+      width: 100%;
+      height: 46px;
+      border: 1px solid #e2c8b5;
+      border-radius: 14px;
+      padding: 0 14px;
+      background: white;
+      font: inherit;
+      outline: none;
+    }
+
+    .field select:focus,
+    .field input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      color: var(--red);
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h3 {
+      margin: 0 0 14px;
+      color: var(--red);
+      font-size: 17px;
+    }
+
+    .chart-wrap {
+      height: 320px;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1.4fr .9fr;
+      gap: 16px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #f0dfd0;
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 850px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0dfd0;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #fff1e6;
+      color: var(--red);
+      font-weight: 800;
+    }
+
+    td {
+      background: #fffdf9;
+    }
+
+    .comment-list {
+      display: grid;
+      gap: 10px;
+      max-height: 420px;
+      overflow: auto;
+    }
+
+    .comment-item {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      background: #fffaf4;
+    }
+
+    .comment-meta {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    @media (max-width: 1100px) {
+      .filter-box,
+      .cards,
+      .grid,
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <h1>Dashboard ยุทธศาสตร์</h1>
+        <div class="sub">วิเคราะห์ผลการประเมินตามยุทธศาสตร์มหาวิทยาลัยและยุทธศาสตร์ศูนย์บรรณสาร</div>
+      </div>
+
+      <div class="top-actions">
+        <a href="dashboard.html" class="btn">กลับไป Dashboard หลัก</a>
+        <button id="btnRefresh" class="btn primary">ค้นหา</button>
+      </div>
+    </div>
+
+    <div class="filter-box">
+      <div class="field">
+        <label>ยุทธศาสตร์มหาวิทยาลัย</label>
+        <select id="fUniStrategy"></select>
+      </div>
+
+      <div class="field">
+        <label>ยุทธศาสตร์ศูนย์บรรณสาร</label>
+        <select id="fCenterStrategy"></select>
+      </div>
+
+      <div class="field">
+        <label>ปีงบประมาณ</label>
+        <select id="fFiscalYear"></select>
+      </div>
+
+      <div class="field">
+        <label>วันที่เริ่ม</label>
+        <input id="fDateFrom" type="date" />
+      </div>
+
+      <div class="field">
+        <label>วันที่สิ้นสุด</label>
+        <input id="fDateTo" type="date" />
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="kpi-label">จำนวนฟอร์มในยุทธศาสตร์</div>
+        <div class="kpi-value" id="kpiForms">0</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">จำนวนผู้ตอบทั้งหมด</div>
+        <div class="kpi-value" id="kpiRespondents">0</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">ค่าเฉลี่ยความพึงพอใจรวม</div>
+        <div class="kpi-value" id="kpiAvg">0.00</div>
+      </div>
+
+      <div class="card">
+        <div class="kpi-label">จำนวนข้อเสนอแนะ</div>
+        <div class="kpi-value" id="kpiComments">0</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>แนวโน้มคะแนนความพึงพอใจรายปี</h3>
+        <div class="chart-wrap">
+          <canvas id="yearTrendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>เปรียบเทียบค่าเฉลี่ยตามยุทธศาสตร์มหาวิทยาลัย</h3>
+        <div class="chart-wrap">
+          <canvas id="uniStrategyChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h3>เปรียบเทียบค่าเฉลี่ยตามยุทธศาสตร์ศูนย์บรรณสาร</h3>
+        <div class="chart-wrap">
+          <canvas id="centerStrategyChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>สรุปฟอร์มตามปีงบประมาณ</h3>
+        <div class="chart-wrap">
+          <canvas id="formsByYearChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="panel">
+        <h3>รายการฟอร์มในยุทธศาสตร์</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:70px;">ลำดับ</th>
+                <th>ชื่อฟอร์ม</th>
+                <th>ยุทธศาสตร์มหาวิทยาลัย</th>
+                <th>ยุทธศาสตร์ศูนย์</th>
+                <th>ปี</th>
+                <th>ค่าเฉลี่ย</th>
+                <th>ผู้ตอบ</th>
+              </tr>
+            </thead>
+            <tbody id="strategyTableBody">
+              <tr>
+                <td colspan="7" class="empty">ยังไม่มีข้อมูล</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>ข้อเสนอแนะล่าสุด</h3>
+        <div id="commentList" class="comment-list">
+          <div class="empty">ยังไม่มีข้อเสนอแนะ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="strategy-dashboard.js"></script>
+</body>
+</html>

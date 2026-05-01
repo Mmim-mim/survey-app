@@ -385,7 +385,16 @@
           <h1>Dashboard ผลการประเมิน</h1>
           <div class="sub">สรุปผลแบบสอบถาม, คะแนน, กราฟ และข้อเสนอแนะ</div>
         </div>
-        <button id="btnRefresh" class="refresh-btn">รีเฟรช</button>
+        <div style="display: flex; gap: 10px; align-items: center">
+          <a
+            href="strategy-dashboard.html"
+            class="refresh-btn"
+            style="text-decoration: none"
+          >
+            Dashboard ยุทธศาสตร์
+          </a>
+          <button id="btnRefresh" class="refresh-btn">รีเฟรช</button>
+        </div>
       </div>
 
       <div class="filters">
@@ -414,16 +423,6 @@
         <div class="field">
           <label>หน่วยงาน</label>
           <select id="fDept"></select>
-        </div>
-
-        <div class="field">
-          <label>ยุทธศาสตร์มหาวิทยาลัย</label>
-          <select id="fUniStrategy"></select>
-        </div>
-
-        <div class="field">
-          <label>ยุทธศาสตร์ศูนย์บรรณสาร</label>
-          <select id="fCenterStrategy"></select>
         </div>
         <div class="field">
           <label>วันที่เริ่ม</label>

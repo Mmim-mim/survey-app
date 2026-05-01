@@ -239,8 +239,8 @@ async function loadSummary() {
   const qs = new URLSearchParams({
     username,
     role,
-    uni_strategy: fUniStrategy.value,
-    center_strategy: fCenterStrategy.value,
+    uni_strategies: selectedUniStrategies.join(","),
+    center_strategies: selectedCenterStrategies.join(","),
     fiscal_year: fFiscalYear.value,
     date_from: fDateFrom.value,
     date_to: fDateTo.value,

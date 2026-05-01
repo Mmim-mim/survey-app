@@ -223,13 +223,13 @@ setSelectOptions(
   json.uniStrategies || [
     "แหล่งเรียนรู้ทางวิชาการที่ทันสมัย",
     "มาตรฐานคุณภาพการให้บริการระดับสากล",
-    "ภายใต้การพัฒนาที่ยั่งยืน"
+    "ภายใต้การพัฒนาที่ยั่งยืน",
   ],
   true,
   "ทั้งหมด"
 );
 
-// ⭐ ยุทธศาสตร์ศูนย์
+
 setSelectOptions(
   fCenterStrategy,
   json.centerStrategies || [
@@ -238,7 +238,7 @@ setSelectOptions(
     "ยุทธศาสตร์ที่ 3",
     "ยุทธศาสตร์ที่ 4",
     "ยุทธศาสตร์ที่ 5",
-    "ยุทธศาสตร์ที่ 6"
+    "ยุทธศาสตร์ที่ 6",
   ],
   true,
   "ทั้งหมด"
@@ -296,7 +296,8 @@ async function loadSummary() {
   form_title: fForm.value,
   fiscal_years: getFiscalYearsParam(),
   dept: fDept.value,
-  strategy: fStrategy.value,
+  uni_strategy: fUniStrategy.value,
+center_strategy: fCenterStrategy.value,
   date_from: fDateFrom.value,
   date_to: fDateTo.value
 });
@@ -339,10 +340,9 @@ async function refreshDashboard() {
     await loadOptions();
     await refreshDashboard();
 
-    [fForm, fDept, fStrategy, fDateFrom, fDateTo].forEach((el) => {
+    [fForm, fDept, fUniStrategy, fCenterStrategy, fDateFrom, fDateTo].forEach((el) => {
   el.addEventListener("change", refreshDashboard);
 });
-
     btnRefresh.addEventListener("click", refreshDashboard);
   } catch (err) {
     console.error(err);

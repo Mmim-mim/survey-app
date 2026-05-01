@@ -1,6 +1,7 @@
 const fForm = document.getElementById("fForm");
 const fDept = document.getElementById("fDept");
-const fStrategy = document.getElementById("fStrategy");
+const fUniStrategy = document.getElementById("fUniStrategy");
+const fCenterStrategy = document.getElementById("fCenterStrategy");
 
 const yearMulti = document.getElementById("yearMulti");
 const yearMultiBtn = document.getElementById("yearMultiBtn");
@@ -216,12 +217,28 @@ async function loadOptions() {
 renderYearOptions((json.fiscalYears || []).map(String));
 setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
 
+// ⭐ ยุทธศาสตร์มหาวิทยาลัย
 setSelectOptions(
-  fStrategy,
-  json.strategies || [
+  fUniStrategy,
+  json.uniStrategies || [
     "แหล่งเรียนรู้ทางวิชาการที่ทันสมัย",
     "มาตรฐานคุณภาพการให้บริการระดับสากล",
-    "ภายใต้การพัฒนาที่ยั่งยืน",
+    "ภายใต้การพัฒนาที่ยั่งยืน"
+  ],
+  true,
+  "ทั้งหมด"
+);
+
+// ⭐ ยุทธศาสตร์ศูนย์
+setSelectOptions(
+  fCenterStrategy,
+  json.centerStrategies || [
+    "ยุทธศาสตร์ที่ 1",
+    "ยุทธศาสตร์ที่ 2",
+    "ยุทธศาสตร์ที่ 3",
+    "ยุทธศาสตร์ที่ 4",
+    "ยุทธศาสตร์ที่ 5",
+    "ยุทธศาสตร์ที่ 6"
   ],
   true,
   "ทั้งหมด"

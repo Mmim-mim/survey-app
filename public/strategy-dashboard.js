@@ -10,8 +10,6 @@ const centerStrategyAll = document.getElementById("centerStrategyAll");
 const uniStrategyMulti = document.getElementById("uniStrategyMulti");
 const centerStrategyMulti = document.getElementById("centerStrategyMulti");
 
-let selectedUniStrategies = [];
-let selectedCenterStrategies = [];
 const fFiscalYear = document.getElementById("fFiscalYear");
 const fDateFrom = document.getElementById("fDateFrom");
 const fDateTo = document.getElementById("fDateTo");
@@ -27,6 +25,14 @@ const commentList = document.getElementById("commentList");
 
 const username = (localStorage.getItem("user") || "").trim();
 const role = (localStorage.getItem("role") || "staff").trim();
+
+let selectedUniStrategies = [];
+let selectedCenterStrategies = [];
+
+let yearTrendChart;
+let uniStrategyChart;
+let centerStrategyChart;
+let formsByYearChart;
 
 function esc(s) {
   return String(s ?? "")
@@ -46,80 +52,66 @@ function setSelectOptions(selectEl, items, includeAll = true, allText = "ทั�
   selectEl.innerHTML = list.join("");
 }
 
-let yearTrendChart;
-let uniStrategyChart;
-let centerStrategyChart;
-let formsByYearChart;
+function updateMultiButtonText(btnEl, selectedArr) {
+  if (!selectedArr.length) {
+    btnEl.textContent = "ทั้งหมด";
+  } else if (selectedArr.length === 1) {
+    btnEl.textContent = selectedArr[0];
+  } else {
+    btnEl.textContent = `เลือกแล้ว ${selectedArr.length} รายการ`;
+  }
+}
 
-function buildCharts() {
-  yearTrendChart = new Chart(document.getElementById("yearTrendChart"), {
-    type: "line",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "ค่าเฉลี่ยความพึงพอใจ",
-          data: [],
-          borderColor: "#9b1c1c",
-          backgroundColor: "rgba(155, 28, 28, 0.12)",
-          tension: 0.35,
-          pointRadius: 4,
-          pointBackgroundColor: "#9b1c1c",
-        },
-      ],
-    },
-    options: chartOptions(),
+function setupMultiDropdown(multiEl, btnEl, allEl, optionsEl, selectedArr) {
+  btnEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    multiEl.classList.toggle("open");
   });
 
-  uniStrategyChart = new Chart(document.getElementById("uniStrategyChart"), {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "ค่าเฉลี่ย",
-          data: [],
-          backgroundColor: "#9b1c1c",
-          borderRadius: 10,
-          borderSkipped: false,
-        },
-      ],
-    },
-    options: chartOptions(true),
+  multiEl.addEventListener("click", (e) => {
+    e.stopPropagation();
   });
 
-  centerStrategyChart = new Chart(document.getElementById("centerStrategyChart"), {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "ค่าเฉลี่ย",
-          data: [],
-          backgroundColor: "#c9a34e",
-          borderRadius: 10,
-          borderSkipped: false,
-        },
-      ],
-    },
-    options: chartOptions(true),
+  document.addEventListener("click", () => {
+    multiEl.classList.remove("open");
   });
 
-  formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "จำนวนฟอร์ม",
-          data: [],
-          backgroundColor: "#9b1c1c",
-          borderRadius: 10,
-          borderSkipped: false,
-        },
-      ],
-    },
-    options: chartOptions(),
+  allEl.addEventListener("change", () => {
+    if (allEl.checked) {
+      selectedArr.length = 0;
+      optionsEl.querySelectorAll("input").forEach((cb) => {
+        cb.checked = false;
+      });
+      updateMultiButtonText(btnEl, selectedArr);
+      refreshDashboard();
+    }
+  });
+}
+
+function renderMultiOptions(container, items, selectedArr, btnEl, allEl) {
+  container.innerHTML = (items || [])
+    .map(
+      (item) => `
+      <label class="multi-option">
+        <input type="checkbox" value="${esc(item)}" />
+        <span>${esc(item)}</span>
+      </label>
+    `
+    )
+    .join("");
+
+  container.querySelectorAll("input").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      selectedArr.length = 0;
+
+      container.querySelectorAll("input:checked").forEach((c) => {
+        selectedArr.push(c.value);
+      });
+
+      allEl.checked = selectedArr.length === 0;
+      updateMultiButtonText(btnEl, selectedArr);
+      refreshDashboard();
+    });
   });
 }
 
@@ -151,33 +143,67 @@ function chartOptions(indexAxisY = false) {
   };
 }
 
-async function loadOptions() {
-  const qs = new URLSearchParams({ username, role });
-  const res = await fetch("/api/strategy-dashboard/options?" + qs.toString());
-  const json = await res.json();
+function buildCharts() {
+  yearTrendChart = new Chart(document.getElementById("yearTrendChart"), {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "ค่าเฉลี่ยความพึงพอใจ",
+        data: [],
+        borderColor: "#9b1c1c",
+        backgroundColor: "rgba(155, 28, 28, 0.12)",
+        tension: 0.35,
+        pointRadius: 4,
+        pointBackgroundColor: "#9b1c1c",
+      }],
+    },
+    options: chartOptions(),
+  });
 
-  if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
+  uniStrategyChart = new Chart(document.getElementById("uniStrategyChart"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "ค่าเฉลี่ย",
+        data: [],
+        backgroundColor: "#9b1c1c",
+        borderRadius: 10,
+        borderSkipped: false,
+      }],
+    },
+    options: chartOptions(true),
+  });
 
- function renderMultiOptions(container, items, selectedArr) {
-  container.innerHTML = items
-    .map(
-      (item) => `
-      <label class="multi-option">
-        <input type="checkbox" value="${esc(item)}" />
-        <span>${esc(item)}</span>
-      </label>
-    `
-    )
-    .join("");
+  centerStrategyChart = new Chart(document.getElementById("centerStrategyChart"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "ค่าเฉลี่ย",
+        data: [],
+        backgroundColor: "#c9a34e",
+        borderRadius: 10,
+        borderSkipped: false,
+      }],
+    },
+    options: chartOptions(true),
+  });
 
-  container.querySelectorAll("input").forEach((cb) => {
-    cb.addEventListener("change", () => {
-      selectedArr.length = 0;
-      container.querySelectorAll("input:checked").forEach((c) => {
-        selectedArr.push(c.value);
-      });
-      refreshDashboard();
-    });
+  formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "จำนวนฟอร์ม",
+        data: [],
+        backgroundColor: "#9b1c1c",
+        borderRadius: 10,
+        borderSkipped: false,
+      }],
+    },
+    options: chartOptions(),
   });
 }
 
@@ -191,17 +217,18 @@ async function loadOptions() {
   renderMultiOptions(
     uniStrategyOptions,
     json.uniStrategies || [],
-    selectedUniStrategies
+    selectedUniStrategies,
+    uniStrategyBtn,
+    uniStrategyAll
   );
 
   renderMultiOptions(
     centerStrategyOptions,
     json.centerStrategies || [],
-    selectedCenterStrategies
+    selectedCenterStrategies,
+    centerStrategyBtn,
+    centerStrategyAll
   );
-
-  setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
-}
 
   setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
 }
@@ -212,21 +239,17 @@ function renderTable(rows) {
     return;
   }
 
-  strategyTableBody.innerHTML = rows
-    .map(
-      (r, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td>${esc(r.form_title || "-")}</td>
-        <td>${esc(r.uni_strategy || "-")}</td>
-        <td>${esc(r.center_strategy || "-")}</td>
-        <td>${esc(r.fiscal_year || "-")}</td>
-        <td>${Number(r.avg || 0).toFixed(2)}</td>
-        <td>${r.respondents || 0}</td>
-      </tr>
-    `
-    )
-    .join("");
+  strategyTableBody.innerHTML = rows.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${esc(r.form_title || "-")}</td>
+      <td>${esc(r.uni_strategy || "-")}</td>
+      <td>${esc(r.center_strategy || "-")}</td>
+      <td>${esc(r.fiscal_year || "-")}</td>
+      <td>${Number(r.avg || 0).toFixed(2)}</td>
+      <td>${r.respondents || 0}</td>
+    </tr>
+  `).join("");
 }
 
 function renderComments(rows) {
@@ -235,18 +258,14 @@ function renderComments(rows) {
     return;
   }
 
-  commentList.innerHTML = rows
-    .map(
-      (c) => `
-      <div class="comment-item">
-        <div class="comment-meta">
-          ${esc(c.created_by || "-")} • ${esc(c.form_title || "-")} • ${new Date(c.created_at).toLocaleString("th-TH")}
-        </div>
-        <div>${esc(c.text || "-")}</div>
+  commentList.innerHTML = rows.map((c) => `
+    <div class="comment-item">
+      <div class="comment-meta">
+        ${esc(c.created_by || "-")} • ${esc(c.form_title || "-")} • ${new Date(c.created_at).toLocaleString("th-TH")}
       </div>
-    `
-    )
-    .join("");
+      <div>${esc(c.text || "-")}</div>
+    </div>
+  `).join("");
 }
 
 function updateCharts(charts) {
@@ -306,6 +325,23 @@ async function refreshDashboard() {
 (async function boot() {
   try {
     buildCharts();
+
+    setupMultiDropdown(
+      uniStrategyMulti,
+      uniStrategyBtn,
+      uniStrategyAll,
+      uniStrategyOptions,
+      selectedUniStrategies
+    );
+
+    setupMultiDropdown(
+      centerStrategyMulti,
+      centerStrategyBtn,
+      centerStrategyAll,
+      centerStrategyOptions,
+      selectedCenterStrategies
+    );
+
     await loadOptions();
     await refreshDashboard();
 

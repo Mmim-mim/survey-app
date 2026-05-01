@@ -1,6 +1,12 @@
 const fForm = document.getElementById("fForm");
-const fFiscalYear = document.getElementById("fFiscalYear");
 const fDept = document.getElementById("fDept");
+const fStrategy = document.getElementById("fStrategy");
+
+const yearMulti = document.getElementById("yearMulti");
+const yearMultiBtn = document.getElementById("yearMultiBtn");
+const yearMultiMenu = document.getElementById("yearMultiMenu");
+const yearAll = document.getElementById("yearAll");
+const yearOptions = document.getElementById("yearOptions");
 const fDateFrom = document.getElementById("fDateFrom");
 const fDateTo = document.getElementById("fDateTo");
 const fRoleView = document.getElementById("fRoleView");
@@ -42,6 +48,72 @@ function setSelectOptions(selectEl, items, includeAll = true, allText = "ทั�
   }
   selectEl.innerHTML = list.join("");
 }
+
+let selectedYears = [];
+
+function renderYearOptions(years) {
+  yearOptions.innerHTML = (years || [])
+    .map(
+      (year) => `
+        <label class="multi-option">
+          <input type="checkbox" class="year-check" value="${esc(year)}" />
+          <span>${esc(year)}</span>
+        </label>
+      `
+    )
+    .join("");
+
+  selectedYears = [];
+  yearAll.checked = true;
+  updateYearButtonText();
+}
+
+function updateYearButtonText() {
+  if (!selectedYears.length) {
+    yearMultiBtn.textContent = "ทั้งหมด";
+  } else if (selectedYears.length === 1) {
+    yearMultiBtn.textContent = selectedYears[0];
+  } else {
+    yearMultiBtn.textContent = selectedYears.join(", ");
+  }
+}
+
+function getFiscalYearsParam() {
+  return selectedYears.join(",");
+}
+
+yearMultiBtn.addEventListener("click", () => {
+  yearMulti.classList.toggle("open");
+});
+
+document.addEventListener("click", (e) => {
+  if (!yearMulti.contains(e.target)) {
+    yearMulti.classList.remove("open");
+  }
+});
+
+yearAll.addEventListener("change", () => {
+  const checks = yearOptions.querySelectorAll(".year-check");
+
+  if (yearAll.checked) {
+    selectedYears = [];
+    checks.forEach((c) => (c.checked = false));
+  }
+
+  updateYearButtonText();
+  refreshDashboard();
+});
+
+yearOptions.addEventListener("change", () => {
+  const checks = [...yearOptions.querySelectorAll(".year-check")];
+
+  selectedYears = checks.filter((c) => c.checked).map((c) => c.value);
+
+  yearAll.checked = selectedYears.length === 0;
+
+  updateYearButtonText();
+  refreshDashboard();
+});
 
 let pieChart;
 let barChart;
@@ -141,8 +213,19 @@ async function loadOptions() {
   if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
 
   setSelectOptions(fForm, json.forms || [], true, "ทั้งหมด");
-  setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
-  setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
+renderYearOptions((json.fiscalYears || []).map(String));
+setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
+
+setSelectOptions(
+  fStrategy,
+  json.strategies || [
+    "แหล่งเรียนรู้ทางวิชาการที่ทันสมัย",
+    "มาตรฐานคุณภาพการให้บริการระดับสากล",
+    "ภายใต้การพัฒนาที่ยั่งยืน",
+  ],
+  true,
+  "ทั้งหมด"
+);
 }
 
 function renderTable(rows) {
@@ -191,15 +274,15 @@ function updateCharts(charts) {
 
 async function loadSummary() {
   const qs = new URLSearchParams({
-    username,
-    role,
-    form_title: fForm.value,
-    fiscal_year: fFiscalYear.value,
-    dept: fDept.value,
-    date_from: fDateFrom.value,
-    date_to: fDateTo.value
-  });
-
+  username,
+  role,
+  form_title: fForm.value,
+  fiscal_years: getFiscalYearsParam(),
+  dept: fDept.value,
+  strategy: fStrategy.value,
+  date_from: fDateFrom.value,
+  date_to: fDateTo.value
+});
   const res = await fetch("/api/dashboard/summary?" + qs.toString());
   const json = await res.json();
 
@@ -210,7 +293,7 @@ async function loadSummary() {
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
   sForm.textContent = fForm.value || "ทั้งหมด";
-  sYear.textContent = fFiscalYear.value || "ทั้งหมด";
+  sYear.textContent = selectedYears.length ? selectedYears.join(", ") : "ทั้งหมด";
   sDept.textContent = fDept.value || "ทั้งหมด";
   sDate.textContent = (fDateFrom.value || fDateTo.value)
     ? `${fDateFrom.value || "-"} ถึง ${fDateTo.value || "-"}`
@@ -239,9 +322,9 @@ async function refreshDashboard() {
     await loadOptions();
     await refreshDashboard();
 
-    [fForm, fFiscalYear, fDept, fDateFrom, fDateTo].forEach((el) => {
-      el.addEventListener("change", refreshDashboard);
-    });
+    [fForm, fDept, fStrategy, fDateFrom, fDateTo].forEach((el) => {
+  el.addEventListener("change", refreshDashboard);
+});
 
     btnRefresh.addEventListener("click", refreshDashboard);
   } catch (err) {

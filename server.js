@@ -687,14 +687,24 @@ app.get("/api/strategy-dashboard/options", async (req, res) => {
 app.get("/api/strategy-dashboard/summary", async (req, res) => {
   try {
     const {
-      username,
-      role,
-      uni_strategy,
-      center_strategy,
-      fiscal_year,
-      date_from,
-      date_to
-    } = req.query;
+  username,
+  role,
+  uni_strategies,
+  center_strategies,
+  fiscal_year,
+  date_from,
+  date_to
+} = req.query;
+
+const uniList = String(uni_strategies || "")
+  .split(",")
+  .map((x) => x.trim())
+  .filter(Boolean);
+
+const centerList = String(center_strategies || "")
+  .split(",")
+  .map((x) => x.trim())
+  .filter(Boolean);
 
     let sql = `
       SELECT s.*, f.uni_strategy, f.center_strategy
@@ -711,15 +721,15 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
       params.push(username);
     }
 
-    if (uni_strategy) {
-      sql += ` AND f.uni_strategy = ? `;
-      params.push(uni_strategy);
-    }
+    if (uniList.length > 0) {
+  sql += ` AND f.uni_strategy IN (${uniList.map(() => "?").join(",")}) `;
+  params.push(...uniList);
+}
 
-    if (center_strategy) {
-      sql += ` AND f.center_strategy = ? `;
-      params.push(center_strategy);
-    }
+if (centerList.length > 0) {
+  sql += ` AND f.center_strategy IN (${centerList.map(() => "?").join(",")}) `;
+  params.push(...centerList);
+}
 
     if (date_from) {
       sql += ` AND DATE(s.created_at) >= ? `;
@@ -796,6 +806,26 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
       yearValues.push(avg(arr));
     }
 
+
+    const uniMap = new Map();
+const centerMap = new Map();
+
+for (const r of filtered) {
+  for (const rating of r.ratings) {
+    const value = Number(rating.value);
+    if (!Number.isFinite(value)) continue;
+
+    if (r.uni_strategy) {
+      if (!uniMap.has(r.uni_strategy)) uniMap.set(r.uni_strategy, []);
+      uniMap.get(r.uni_strategy).push(value);
+    }
+
+    if (r.center_strategy) {
+      if (!centerMap.has(r.center_strategy)) centerMap.set(r.center_strategy, []);
+      centerMap.get(r.center_strategy).push(value);
+    }
+  }
+}
     res.json({
       kpi: {
         forms: new Set(filtered.map(r => r.form_title)).size,
@@ -810,8 +840,15 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
           labels: yearLabels,
           values: yearValues
         },
-        uniStrategy: { labels: [], values: [] },
-        centerStrategy: { labels: [], values: [] },
+        uniStrategy: {
+  labels: Array.from(uniMap.keys()),
+  values: Array.from(uniMap.values()).map(v => avg(v))
+},
+
+centerStrategy: {
+  labels: Array.from(centerMap.keys()),
+  values: Array.from(centerMap.values()).map(v => avg(v))
+},
         formsByYear: {
           labels: yearLabels,
           values: yearValues

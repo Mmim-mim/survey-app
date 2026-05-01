@@ -651,6 +651,179 @@ app.put("/api/forms/:id", async (req, res) => {
   }
 });
 
+/** -----------------------------
+ *  STRATEGY DASHBOARD
+ * ----------------------------- */
+
+// 1) OPTIONS
+app.get("/api/strategy-dashboard/options", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT uni_strategy, center_strategy
+      FROM survey_forms
+    `);
+
+    const uniSet = new Set();
+    const centerSet = new Set();
+
+    for (const r of rows) {
+      if (r.uni_strategy) uniSet.add(String(r.uni_strategy).trim());
+      if (r.center_strategy) centerSet.add(String(r.center_strategy).trim());
+    }
+
+    res.json({
+      uniStrategies: Array.from(uniSet),
+      centerStrategies: Array.from(centerSet),
+      fiscalYears: [2566, 2567, 2568, 2569]
+    });
+
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// 2) SUMMARY
+app.get("/api/strategy-dashboard/summary", async (req, res) => {
+  try {
+    const {
+      username,
+      role,
+      uni_strategy,
+      center_strategy,
+      fiscal_year,
+      date_from,
+      date_to
+    } = req.query;
+
+    let sql = `
+      SELECT s.*, f.uni_strategy, f.center_strategy
+      FROM submissions s
+      LEFT JOIN survey_forms f ON s.form_title = f.form_title
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    // 🔒 role filter
+    if (role !== "manager") {
+      sql += ` AND f.created_by_username = ? `;
+      params.push(username);
+    }
+
+    if (uni_strategy) {
+      sql += ` AND f.uni_strategy = ? `;
+      params.push(uni_strategy);
+    }
+
+    if (center_strategy) {
+      sql += ` AND f.center_strategy = ? `;
+      params.push(center_strategy);
+    }
+
+    if (date_from) {
+      sql += ` AND DATE(s.created_at) >= ? `;
+      params.push(date_from);
+    }
+
+    if (date_to) {
+      sql += ` AND DATE(s.created_at) <= ? `;
+      params.push(date_to);
+    }
+
+    const [rows] = await pool.execute(sql, params);
+
+    // ===== parse =====
+    const parsed = rows.map(r => {
+      const p = safeJsonParse(r.payload_json) || {};
+      return {
+        ...r,
+        fiscal_year: Number(p.fiscal_year),
+        ratings: p.ratings || [],
+        comments: p.comments || []
+      };
+    });
+
+    // filter year
+    const filtered = fiscal_year
+      ? parsed.filter(r => r.fiscal_year == fiscal_year)
+      : parsed;
+
+    const respondents = filtered.length;
+
+    let totalScore = [];
+    let comments = [];
+
+    for (const r of filtered) {
+      for (const rating of r.ratings) {
+        if (Number.isFinite(rating.value)) {
+          totalScore.push(Number(rating.value));
+        }
+      }
+
+      for (const c of r.comments || []) {
+        if (c) comments.push({
+          text: c,
+          created_at: r.created_at,
+          form_title: r.form_title
+        });
+      }
+    }
+
+    const avgScore = totalScore.length
+      ? totalScore.reduce((a,b)=>a+b,0) / totalScore.length
+      : 0;
+
+    // ===== charts =====
+    const yearMap = new Map();
+
+    for (const r of filtered) {
+      if (!yearMap.has(r.fiscal_year)) {
+        yearMap.set(r.fiscal_year, []);
+      }
+      for (const rating of r.ratings) {
+        if (Number.isFinite(rating.value)) {
+          yearMap.get(r.fiscal_year).push(rating.value);
+        }
+      }
+    }
+
+    const yearLabels = [];
+    const yearValues = [];
+
+    for (const [y, arr] of yearMap.entries()) {
+      yearLabels.push(y);
+      yearValues.push(avg(arr));
+    }
+
+    res.json({
+      kpi: {
+        forms: new Set(filtered.map(r => r.form_title)).size,
+        respondents,
+        avgSatisfaction: Number(avgScore.toFixed(2)),
+        totalComments: comments.length
+      },
+      table: filtered.slice(0, 50),
+      comments: comments.slice(0, 20),
+      charts: {
+        yearTrend: {
+          labels: yearLabels,
+          values: yearValues
+        },
+        uniStrategy: { labels: [], values: [] },
+        centerStrategy: { labels: [], values: [] },
+        formsByYear: {
+          labels: yearLabels,
+          values: yearValues
+        }
+      }
+    });
+
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

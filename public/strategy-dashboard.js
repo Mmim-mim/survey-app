@@ -1,5 +1,17 @@
-const fUniStrategy = document.getElementById("fUniStrategy");
-const fCenterStrategy = document.getElementById("fCenterStrategy");
+const uniStrategyOptions = document.getElementById("uniStrategyOptions");
+const centerStrategyOptions = document.getElementById("centerStrategyOptions");
+
+const uniStrategyBtn = document.getElementById("uniStrategyBtn");
+const centerStrategyBtn = document.getElementById("centerStrategyBtn");
+
+const uniStrategyAll = document.getElementById("uniStrategyAll");
+const centerStrategyAll = document.getElementById("centerStrategyAll");
+
+const uniStrategyMulti = document.getElementById("uniStrategyMulti");
+const centerStrategyMulti = document.getElementById("centerStrategyMulti");
+
+let selectedUniStrategies = [];
+let selectedCenterStrategies = [];
 const fFiscalYear = document.getElementById("fFiscalYear");
 const fDateFrom = document.getElementById("fDateFrom");
 const fDateTo = document.getElementById("fDateTo");
@@ -146,30 +158,50 @@ async function loadOptions() {
 
   if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
 
-  setSelectOptions(
-    fUniStrategy,
-    json.uniStrategies || [
-      "แหล่งเรียนรู้ทางวิชาการที่ทันสมัย",
-      "มาตรฐานคุณภาพการให้บริการระดับสากล",
-      "ภายใต้การพัฒนาที่ยั่งยืน",
-    ],
-    true,
-    "ทั้งหมด"
+ function renderMultiOptions(container, items, selectedArr) {
+  container.innerHTML = items
+    .map(
+      (item) => `
+      <label class="multi-option">
+        <input type="checkbox" value="${esc(item)}" />
+        <span>${esc(item)}</span>
+      </label>
+    `
+    )
+    .join("");
+
+  container.querySelectorAll("input").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      selectedArr.length = 0;
+      container.querySelectorAll("input:checked").forEach((c) => {
+        selectedArr.push(c.value);
+      });
+      refreshDashboard();
+    });
+  });
+}
+
+async function loadOptions() {
+  const qs = new URLSearchParams({ username, role });
+  const res = await fetch("/api/strategy-dashboard/options?" + qs.toString());
+  const json = await res.json();
+
+  if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
+
+  renderMultiOptions(
+    uniStrategyOptions,
+    json.uniStrategies || [],
+    selectedUniStrategies
   );
 
-  setSelectOptions(
-    fCenterStrategy,
-    json.centerStrategies || [
-      "ยุทธศาสตร์ที่ 1",
-      "ยุทธศาสตร์ที่ 2",
-      "ยุทธศาสตร์ที่ 3",
-      "ยุทธศาสตร์ที่ 4",
-      "ยุทธศาสตร์ที่ 5",
-      "ยุทธศาสตร์ที่ 6",
-    ],
-    true,
-    "ทั้งหมด"
+  renderMultiOptions(
+    centerStrategyOptions,
+    json.centerStrategies || [],
+    selectedCenterStrategies
   );
+
+  setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
+}
 
   setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
 }
@@ -277,7 +309,7 @@ async function refreshDashboard() {
     await loadOptions();
     await refreshDashboard();
 
-    [fUniStrategy, fCenterStrategy, fFiscalYear, fDateFrom, fDateTo].forEach((el) => {
+    [fFiscalYear, fDateFrom, fDateTo].forEach((el) => {
       el.addEventListener("change", refreshDashboard);
     });
 

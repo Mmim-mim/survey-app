@@ -764,8 +764,15 @@ if (centerList.length > 0) {
 
     // filter year
     const filtered = yearList.length
-  ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
+  ? parsed.filter((r) => {
+      const y = Number(r.fiscal_year || r.year || r.budget_year);
+      return yearList.includes(y);
+    })
   : parsed;
+
+console.log("yearList:", yearList);
+console.log("sample row:", parsed[0]);
+console.log("after filter:", filtered.length);
 
   console.log("after filter:", filtered.length);
 

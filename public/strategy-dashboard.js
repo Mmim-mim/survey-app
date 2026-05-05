@@ -223,7 +223,7 @@ function buildCharts() {
           size: 14
         },
         formatter: function(value) {
-          return value; // 👈 แสดงเลข เช่น 13
+          return value + " รายการ"; // 👈 แสดงเลข เช่น 13
         }
       }
     }

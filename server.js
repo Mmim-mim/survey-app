@@ -715,7 +715,7 @@ const yearList = String(fiscal_years || "")
       SELECT s.*, f.uni_strategy, f.center_strategy
       FROM submissions s
       LEFT JOIN survey_forms f 
-      ON TRIM(s.form_title) = TRIM(f.form_title)
+      ON LOWER(TRIM(s.form_title)) = LOWER(TRIM(f.form_title))
       WHERE 1=1
     `;
 
@@ -749,6 +749,8 @@ if (centerList.length > 0) {
 
     const [rows] = await pool.execute(sql, params);
 
+    console.log("rows from DB:", rows.length);
+
     // ===== parse =====
     const parsed = rows.map(r => {
       const p = safeJsonParse(r.payload_json) || {};
@@ -764,6 +766,8 @@ if (centerList.length > 0) {
     const filtered = yearList.length
   ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
   : parsed;
+
+  console.log("after filter:", filtered.length);
 
     const respondents = filtered.length;
 

@@ -772,9 +772,10 @@ if (centerList.length > 0) {
 
     for (const r of filtered) {
       for (const rating of r.ratings) {
-        if (Number.isFinite(rating.value)) {
-          totalScore.push(Number(rating.value));
-        }
+        const value = Number(rating.value);
+if (Number.isFinite(value)) {
+  totalScore.push(value);
+}
       }
 
       for (const c of r.comments || []) {
@@ -798,9 +799,10 @@ if (centerList.length > 0) {
         yearMap.set(r.fiscal_year, []);
       }
       for (const rating of r.ratings) {
-        if (Number.isFinite(rating.value)) {
-          yearMap.get(r.fiscal_year).push(rating.value);
-        }
+        const value = Number(rating.value);
+if (Number.isFinite(value)) {
+  yearMap.get(r.fiscal_year).push(value);
+}
       }
     }
 

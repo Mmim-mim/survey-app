@@ -24,7 +24,7 @@ const strategyTableBody = document.getElementById("strategyTableBody");
 const commentList = document.getElementById("commentList");
 
 const username = (localStorage.getItem("user") || "").trim();
-const role = (localStorage.getItem("role") || "staff").trim();
+const role = (localStorage.getItem("role") || "manager").trim();
 
 const yearOptions = document.getElementById("yearOptions");
 const yearBtn = document.getElementById("yearBtn");

@@ -704,58 +704,96 @@ res.json({
 
 
 // 2) SUMMARY
+// 2) SUMMARY
 app.get("/api/strategy-dashboard/summary", async (req, res) => {
   try {
     const {
-  username,
-  role,
-  uni_strategies,
-  center_strategies,
-  fiscal_years,
-  date_from,
-  date_to
-} = req.query;
+      username,
+      role,
+      uni_strategies,
+      center_strategies,
+      fiscal_years,
+      date_from,
+      date_to
+    } = req.query;
 
-const uniList = String(uni_strategies || "")
-  .split(",")
-  .map((x) => x.trim())
-  .filter(Boolean);
+    const toList = (value) =>
+      String(value || "")
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
 
-const centerList = String(center_strategies || "")
-  .split(",")
-  .map((x) => x.trim())
-  .filter(Boolean);
+    const normalizeText = (value) =>
+      String(value || "").trim().replace(/\s+/g, " ");
 
-const yearList = String(fiscal_years || "")
-  .split(",")
-  .map((x) => Number(x.trim()))
-  .filter(Number.isFinite);
+    const getFiscalYear = (payloadJson, createdAt) => {
+      const p = safeJsonParse(payloadJson) || {};
+
+      let rawYear = p.fiscal_year;
+
+      // รองรับกรณีเป็นข้อความ เช่น "2569" หรือ "ปีงบประมาณ 2569"
+      let year = Number(String(rawYear || "").match(/\d{4}/)?.[0]);
+
+      // ถ้าไม่มีปีใน payload ให้ใช้ created_at
+      if (!Number.isFinite(year) || !year) {
+        const d = new Date(createdAt);
+        if (!isNaN(d)) year = d.getFullYear();
+      }
+
+      // ถ้าเป็น ค.ศ. เช่น 2026 ให้แปลงเป็น พ.ศ. 2569
+      if (Number.isFinite(year) && year < 2400) {
+        year += 543;
+      }
+
+      return Number.isFinite(year) ? year : null;
+    };
+
+    const uniList = toList(uni_strategies).map(normalizeText);
+    const centerList = toList(center_strategies).map(normalizeText);
+
+    const yearList = toList(fiscal_years)
+      .map((x) => {
+        let y = Number(String(x).match(/\d{4}/)?.[0]);
+        if (Number.isFinite(y) && y < 2400) y += 543;
+        return y;
+      })
+      .filter(Number.isFinite);
 
     let sql = `
-      SELECT s.*, f.uni_strategy, f.center_strategy
+      SELECT 
+        s.id,
+        s.created_at,
+        s.created_by,
+        s.form_title,
+        s.payload_json,
+        f.id AS form_id,
+        f.created_by_username,
+        f.uni_strategy,
+        f.center_strategy
       FROM submissions s
-      LEFT JOIN survey_forms f 
-      ON LOWER(TRIM(s.form_title)) = LOWER(TRIM(f.form_title))
+      LEFT JOIN survey_forms f
+        ON LOWER(TRIM(s.form_title)) = LOWER(TRIM(f.form_title))
       WHERE 1=1
     `;
 
     const params = [];
 
-    // 🔒 role filter
+    // staff เห็นเฉพาะฟอร์มตัวเอง / manager เห็นทั้งหมด
     if (role !== "manager") {
       sql += ` AND f.created_by_username = ? `;
       params.push(username);
     }
 
+    // filter strategy แบบ multi-select
     if (uniList.length > 0) {
-  sql += ` AND f.uni_strategy IN (${uniList.map(() => "?").join(",")}) `;
-  params.push(...uniList);
-}
+      sql += ` AND TRIM(f.uni_strategy) IN (${uniList.map(() => "?").join(",")}) `;
+      params.push(...uniList);
+    }
 
-if (centerList.length > 0) {
-  sql += ` AND f.center_strategy IN (${centerList.map(() => "?").join(",")}) `;
-  params.push(...centerList);
-}
+    if (centerList.length > 0) {
+      sql += ` AND TRIM(f.center_strategy) IN (${centerList.map(() => "?").join(",")}) `;
+      params.push(...centerList);
+    }
 
     if (date_from) {
       sql += ` AND DATE(s.created_at) >= ? `;
@@ -767,148 +805,168 @@ if (centerList.length > 0) {
       params.push(date_to);
     }
 
+    sql += ` ORDER BY s.created_at DESC LIMIT 5000`;
+
     const [rows] = await pool.execute(sql, params);
 
-    console.log("rows from DB:", rows.length);
-
-    // ===== parse =====
     const parsed = rows.map((r) => {
-  const p = safeJsonParse(r.payload_json) || {};
+      const p = safeJsonParse(r.payload_json) || {};
 
-  let fiscalYear = Number(p.fiscal_year);
+      const comments = Array.isArray(p.comments)
+        ? p.comments
+        : Array.isArray(p.suggestions)
+          ? p.suggestions
+          : typeof p.suggestion === "string" && p.suggestion.trim()
+            ? [p.suggestion.trim()]
+            : [];
 
-  if (!Number.isFinite(fiscalYear) || !fiscalYear) {
-    const d = new Date(r.created_at);
-    if (!isNaN(d)) fiscalYear = d.getFullYear() + 543;
-  }
+      return {
+        ...r,
+        fiscal_year: getFiscalYear(r.payload_json, r.created_at),
+        uni_strategy: normalizeText(r.uni_strategy),
+        center_strategy: normalizeText(r.center_strategy),
+        ratings: Array.isArray(p.ratings) ? p.ratings : [],
+        comments
+      };
+    });
 
-  return {
-    ...r,
-    fiscal_year: fiscalYear,
-    ratings: Array.isArray(p.ratings) ? p.ratings : [],
-    comments: Array.isArray(p.comments)
-      ? p.comments
-      : typeof p.suggestion === "string" && p.suggestion.trim()
-        ? [p.suggestion.trim()]
-        : []
-  };
-});
-
-    // filter year
     const filtered = yearList.length
-  ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
-  : parsed;
+      ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
+      : parsed;
 
-console.log("yearList:", yearList);
-console.log("sample row:", parsed[0]);
-console.log("after filter:", filtered.length);
+    // ===== DEBUG สำคัญ =====
+    console.log("===== STRATEGY DASHBOARD DEBUG =====");
+    console.log("query:", req.query);
+    console.log("uniList:", uniList);
+    console.log("centerList:", centerList);
+    console.log("yearList:", yearList);
+    console.log("rows from DB:", rows.length);
+    console.log("years in rows:", [...new Set(parsed.map((r) => r.fiscal_year))]);
+    console.log("sample parsed:", parsed[0]);
+    console.log("after filter:", filtered.length);
+    console.log("====================================");
 
-  console.log("after filter:", filtered.length);
+    const allScores = [];
+    const comments = [];
 
-    const respondents = filtered.length;
-
-    let totalScore = [];
-    let comments = [];
+    const yearScoreMap = new Map();
+    const uniMap = new Map();
+    const centerMap = new Map();
+    const tableMap = new Map();
+    const formsByYearMap = new Map();
 
     for (const r of filtered) {
+      const formTitle = r.form_title || "-";
+      const year = r.fiscal_year || "-";
+      const uni = r.uni_strategy || "-";
+      const center = r.center_strategy || "-";
+
+      const tableKey = `${formTitle}__${uni}__${center}__${year}`;
+
+      if (!tableMap.has(tableKey)) {
+        tableMap.set(tableKey, {
+          form_title: formTitle,
+          uni_strategy: uni,
+          center_strategy: center,
+          fiscal_year: year,
+          scores: [],
+          respondents: 0
+        });
+      }
+
+      tableMap.get(tableKey).respondents += 1;
+
+      formsByYearMap.set(year, (formsByYearMap.get(year) || 0) + 1);
+
       for (const rating of r.ratings) {
         const value = Number(rating.value);
-if (Number.isFinite(value)) {
-  totalScore.push(value);
-}
+        if (!Number.isFinite(value)) continue;
+
+        allScores.push(value);
+        tableMap.get(tableKey).scores.push(value);
+
+        if (!yearScoreMap.has(year)) yearScoreMap.set(year, []);
+        yearScoreMap.get(year).push(value);
+
+        if (uni && uni !== "-") {
+          if (!uniMap.has(uni)) uniMap.set(uni, []);
+          uniMap.get(uni).push(value);
+        }
+
+        if (center && center !== "-") {
+          if (!centerMap.has(center)) centerMap.set(center, []);
+          centerMap.get(center).push(value);
+        }
       }
 
       for (const c of r.comments || []) {
-        if (c) comments.push({
-          text: c,
+        const text =
+          typeof c === "string"
+            ? c.trim()
+            : String(c.text || c.comment || c.message || "").trim();
+
+        if (!text) continue;
+
+        comments.push({
+          text,
           created_at: r.created_at,
+          created_by: r.created_by,
           form_title: r.form_title
         });
       }
     }
 
-    const avgScore = totalScore.length
-      ? totalScore.reduce((a,b)=>a+b,0) / totalScore.length
-      : 0;
+    const avgNum = (arr) => {
+      const nums = arr.map(Number).filter(Number.isFinite);
+      if (!nums.length) return 0;
+      return nums.reduce((a, b) => a + b, 0) / nums.length;
+    };
 
-    // ===== charts =====
-    const yearMap = new Map();
+    const table = Array.from(tableMap.values()).map((row) => ({
+      form_title: row.form_title,
+      uni_strategy: row.uni_strategy,
+      center_strategy: row.center_strategy,
+      fiscal_year: row.fiscal_year,
+      avg: Number(avgNum(row.scores).toFixed(2)),
+      respondents: row.respondents
+    }));
 
-    for (const r of filtered) {
-      if (!yearMap.has(r.fiscal_year)) {
-        yearMap.set(r.fiscal_year, []);
-      }
-      for (const rating of r.ratings) {
-        const value = Number(rating.value);
-if (Number.isFinite(value)) {
-  yearMap.get(r.fiscal_year).push(value);
-}
-      }
-    }
+    const yearLabels = Array.from(yearScoreMap.keys()).sort((a, b) => Number(a) - Number(b));
 
-    const yearLabels = [];
-    const yearValues = [];
+    comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    for (const [y, arr] of yearMap.entries()) {
-      yearLabels.push(y);
-      yearValues.push(avg(arr));
-    }
-
-
-    const uniMap = new Map();
-const centerMap = new Map();
-
-for (const r of filtered) {
-  for (const rating of r.ratings) {
-    const value = Number(rating.value);
-    if (!Number.isFinite(value)) continue;
-
-    if (r.uni_strategy) {
-      if (!uniMap.has(r.uni_strategy)) uniMap.set(r.uni_strategy, []);
-      uniMap.get(r.uni_strategy).push(value);
-    }
-
-    if (r.center_strategy) {
-      if (!centerMap.has(r.center_strategy)) centerMap.set(r.center_strategy, []);
-      centerMap.get(r.center_strategy).push(value);
-    }
-  }
-}
     res.json({
       kpi: {
-        forms: new Set(filtered.map(r => r.form_title)).size,
-        respondents,
-        avgSatisfaction: Number(avgScore.toFixed(2)),
+        forms: new Set(filtered.map((r) => r.form_title)).size,
+        respondents: filtered.length,
+        avgSatisfaction: Number(avgNum(allScores).toFixed(2)),
         totalComments: comments.length
       },
-      table: filtered.slice(0, 50),
-      comments: comments.slice(0, 20),
+      table,
+      comments: comments.slice(0, 50),
       charts: {
         yearTrend: {
           labels: yearLabels,
-          values: yearValues
+          values: yearLabels.map((y) => Number(avgNum(yearScoreMap.get(y)).toFixed(2)))
         },
         uniStrategy: {
-  labels: Array.from(uniMap.keys()),
-  values: Array.from(uniMap.values()).map(v => avg(v))
-},
-
-centerStrategy: {
-  labels: Array.from(centerMap.keys()),
-  values: Array.from(centerMap.values()).map(v => avg(v))
-},
+          labels: Array.from(uniMap.keys()),
+          values: Array.from(uniMap.values()).map((v) => Number(avgNum(v).toFixed(2)))
+        },
+        centerStrategy: {
+          labels: Array.from(centerMap.keys()),
+          values: Array.from(centerMap.values()).map((v) => Number(avgNum(v).toFixed(2)))
+        },
         formsByYear: {
-          labels: yearLabels,
-          values: yearValues
+          labels: Array.from(formsByYearMap.keys()).sort((a, b) => Number(a) - Number(b)),
+          values: Array.from(formsByYearMap.keys())
+            .sort((a, b) => Number(a) - Number(b))
+            .map((y) => formsByYearMap.get(y))
         }
       }
     });
 
   } catch (e) {
+    console.error("strategy-dashboard summary error:", e);
     res.status(500).json({ error: e.message });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  }});

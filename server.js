@@ -671,11 +671,31 @@ app.get("/api/strategy-dashboard/options", async (req, res) => {
       if (r.center_strategy) centerSet.add(String(r.center_strategy).trim());
     }
 
-    res.json({
-      uniStrategies: Array.from(uniSet),
-      centerStrategies: Array.from(centerSet),
-      fiscalYears: [2566, 2567, 2568, 2569]
-    });
+    const [submissionRows] = await pool.execute(`
+  SELECT payload_json, created_at
+  FROM submissions
+  ORDER BY created_at DESC
+`);
+
+const yearSet = new Set();
+
+for (const s of submissionRows) {
+  const p = safeJsonParse(s.payload_json) || {};
+  let year = Number(p.fiscal_year);
+
+  if (!Number.isFinite(year) || !year) {
+    const d = new Date(s.created_at);
+    if (!isNaN(d)) year = d.getFullYear() + 543;
+  }
+
+  if (year) yearSet.add(year);
+}
+
+res.json({
+  uniStrategies: Array.from(uniSet),
+  centerStrategies: Array.from(centerSet),
+  fiscalYears: Array.from(yearSet).sort((a, b) => b - a)
+});
 
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -752,22 +772,31 @@ if (centerList.length > 0) {
     console.log("rows from DB:", rows.length);
 
     // ===== parse =====
-    const parsed = rows.map(r => {
-      const p = safeJsonParse(r.payload_json) || {};
-      return {
-        ...r,
-        fiscal_year: Number(p.fiscal_year),
-        ratings: p.ratings || [],
-        comments: p.comments || []
-      };
-    });
+    const parsed = rows.map((r) => {
+  const p = safeJsonParse(r.payload_json) || {};
+
+  let fiscalYear = Number(p.fiscal_year);
+
+  if (!Number.isFinite(fiscalYear) || !fiscalYear) {
+    const d = new Date(r.created_at);
+    if (!isNaN(d)) fiscalYear = d.getFullYear() + 543;
+  }
+
+  return {
+    ...r,
+    fiscal_year: fiscalYear,
+    ratings: Array.isArray(p.ratings) ? p.ratings : [],
+    comments: Array.isArray(p.comments)
+      ? p.comments
+      : typeof p.suggestion === "string" && p.suggestion.trim()
+        ? [p.suggestion.trim()]
+        : []
+  };
+});
 
     // filter year
     const filtered = yearList.length
-  ? parsed.filter((r) => {
-      const y = Number(r.fiscal_year || r.year || r.budget_year);
-      return yearList.includes(y);
-    })
+  ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
   : parsed;
 
 console.log("yearList:", yearList);

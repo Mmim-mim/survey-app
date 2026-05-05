@@ -704,7 +704,6 @@ res.json({
 
 
 // 2) SUMMARY
-// 2) SUMMARY
 app.get("/api/strategy-dashboard/summary", async (req, res) => {
   try {
     const {
@@ -965,8 +964,13 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         }
       }
     });
-
+    
   } catch (e) {
     console.error("strategy-dashboard summary error:", e);
     res.status(500).json({ error: e.message });
-  }});
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

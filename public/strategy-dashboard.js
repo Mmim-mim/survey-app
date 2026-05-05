@@ -198,20 +198,38 @@ function buildCharts() {
     options: chartOptions(true),
   });
 
-  formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [{
-        label: "จำนวนฟอร์ม",
-        data: [],
-        backgroundColor: "#9b1c1c",
-        borderRadius: 10,
-        borderSkipped: false,
-      }],
-    },
-    options: chartOptions(),
-  });
+ formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
+  type: "bar",
+  data: {
+    labels: [],
+    datasets: [{
+      label: "จำนวนฟอร์ม",
+      data: [],
+      backgroundColor: "#9b1c1c",
+      borderRadius: 10,
+      borderSkipped: false,
+    }],
+  },
+  options: {
+    ...chartOptions(), // 👈 เอาของเดิมมาใช้ด้วย
+    plugins: {
+      ...chartOptions().plugins, // 👈 กันของเดิมหาย
+      datalabels: {
+        anchor: "end",
+        align: "top",
+        color: "#111",
+        font: {
+          weight: "bold",
+          size: 14
+        },
+        formatter: function(value) {
+          return value; // 👈 แสดงเลข เช่น 13
+        }
+      }
+    }
+  },
+  plugins: [ChartDataLabels] // 👈 สำคัญมาก
+});
 }
 
 async function loadOptions() {

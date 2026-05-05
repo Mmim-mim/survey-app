@@ -10,7 +10,7 @@ const centerStrategyAll = document.getElementById("centerStrategyAll");
 const uniStrategyMulti = document.getElementById("uniStrategyMulti");
 const centerStrategyMulti = document.getElementById("centerStrategyMulti");
 
-const fFiscalYear = document.getElementById("fFiscalYear");
+
 const fDateFrom = document.getElementById("fDateFrom");
 const fDateTo = document.getElementById("fDateTo");
 const btnRefresh = document.getElementById("btnRefresh");

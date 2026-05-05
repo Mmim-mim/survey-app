@@ -714,7 +714,8 @@ const yearList = String(fiscal_years || "")
     let sql = `
       SELECT s.*, f.uni_strategy, f.center_strategy
       FROM submissions s
-      LEFT JOIN survey_forms f ON s.form_title = f.form_title
+      LEFT JOIN survey_forms f 
+      ON TRIM(s.form_title) = TRIM(f.form_title)
       WHERE 1=1
     `;
 

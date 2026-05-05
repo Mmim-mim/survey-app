@@ -381,8 +381,19 @@
         </div>
 
         <div class="field">
-          <label>ปีงบประมาณ</label>
-          <select id="fFiscalYear"></select>
+          <label>ปีงบประมาณ (เลือกได้หลายปี)</label>
+          <div class="multi-select" id="yearMulti">
+            <button type="button" class="multi-btn" id="yearBtn">
+              ทั้งหมด
+            </button>
+            <div class="multi-menu" id="yearMenu">
+              <label class="multi-option">
+                <input type="checkbox" id="yearAll" checked />
+                <span>ทั้งหมด</span>
+              </label>
+              <div id="yearOptions"></div>
+            </div>
+          </div>
         </div>
 
         <div class="field">

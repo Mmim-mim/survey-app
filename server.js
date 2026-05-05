@@ -691,7 +691,7 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
   role,
   uni_strategies,
   center_strategies,
-  fiscal_year,
+  fiscal_years,
   date_from,
   date_to
 } = req.query;
@@ -705,6 +705,11 @@ const centerList = String(center_strategies || "")
   .split(",")
   .map((x) => x.trim())
   .filter(Boolean);
+
+const yearList = String(fiscal_years || "")
+  .split(",")
+  .map((x) => Number(x.trim()))
+  .filter(Number.isFinite);
 
     let sql = `
       SELECT s.*, f.uni_strategy, f.center_strategy
@@ -755,9 +760,9 @@ if (centerList.length > 0) {
     });
 
     // filter year
-    const filtered = fiscal_year
-      ? parsed.filter(r => r.fiscal_year == fiscal_year)
-      : parsed;
+    const filtered = yearList.length
+  ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
+  : parsed;
 
     const respondents = filtered.length;
 

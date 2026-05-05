@@ -26,6 +26,13 @@ const commentList = document.getElementById("commentList");
 const username = (localStorage.getItem("user") || "").trim();
 const role = (localStorage.getItem("role") || "staff").trim();
 
+const yearOptions = document.getElementById("yearOptions");
+const yearBtn = document.getElementById("yearBtn");
+const yearAll = document.getElementById("yearAll");
+const yearMulti = document.getElementById("yearMulti");
+
+let selectedYears = [];
+
 let selectedUniStrategies = [];
 let selectedCenterStrategies = [];
 
@@ -230,7 +237,13 @@ async function loadOptions() {
     centerStrategyAll
   );
 
-  setSelectOptions(fFiscalYear, (json.fiscalYears || []).map(String), true, "ทั้งหมด");
+  renderMultiOptions(
+  yearOptions,
+  (json.fiscalYears || []).map(String),
+  selectedYears,
+  yearBtn,
+  yearAll
+);
 }
 
 function renderTable(rows) {
@@ -292,7 +305,7 @@ async function loadSummary() {
     role,
     uni_strategies: selectedUniStrategies.join(","),
     center_strategies: selectedCenterStrategies.join(","),
-    fiscal_year: fFiscalYear.value,
+    fiscal_years: selectedYears.join(","),
     date_from: fDateFrom.value,
     date_to: fDateTo.value,
   });
@@ -341,13 +354,21 @@ async function refreshDashboard() {
       centerStrategyOptions,
       selectedCenterStrategies
     );
+    
+    setupMultiDropdown(
+  yearMulti,
+  yearBtn,
+  yearAll,
+  yearOptions,
+  selectedYears
+);
 
     await loadOptions();
     await refreshDashboard();
 
-    [fFiscalYear, fDateFrom, fDateTo].forEach((el) => {
-      el.addEventListener("change", refreshDashboard);
-    });
+    [fDateFrom, fDateTo].forEach((el) => {
+  el.addEventListener("change", refreshDashboard);
+});
 
     btnRefresh.addEventListener("click", refreshDashboard);
   } catch (err) {

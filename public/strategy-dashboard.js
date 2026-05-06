@@ -268,7 +268,6 @@ async function loadOptions() {
   yearAll
 );
 }
-
 function avgRows(rows) {
   const nums = (rows || [])
     .map((r) => Number(r.avg))
@@ -299,6 +298,11 @@ function groupRowsBy(rows, key) {
   return map;
 }
 
+function shortText(text, max = 46) {
+  const s = String(text || "-").trim();
+  return s.length > max ? s.slice(0, max) + "..." : s;
+}
+
 function renderStrategySplit(rows) {
   renderStrategyGroup({
     rows,
@@ -306,7 +310,7 @@ function renderStrategySplit(rows) {
     wrapper: uniStrategyCards,
     badge: uniGroupCount,
     type: "uni",
-    titlePrefix: "ยุทธศาสตร์มหาวิทยาลัย"
+    title: "ยุทธศาสตร์มหาวิทยาลัย"
   });
 
   renderStrategyGroup({
@@ -315,11 +319,11 @@ function renderStrategySplit(rows) {
     wrapper: centerStrategyCards,
     badge: centerGroupCount,
     type: "center",
-    titlePrefix: "ยุทธศาสตร์ศูนย์บรรณสาร"
+    title: "ยุทธศาสตร์ศูนย์บรรณสาร"
   });
 }
 
-function renderStrategyGroup({ rows, key, wrapper, badge, type, titlePrefix }) {
+function renderStrategyGroup({ rows, key, wrapper, badge, type, title }) {
   if (!wrapper) return;
 
   const cleanRows = (rows || []).filter((r) => {
@@ -327,24 +331,23 @@ function renderStrategyGroup({ rows, key, wrapper, badge, type, titlePrefix }) {
     return value && value !== "-";
   });
 
-  const groups = groupRowsBy(cleanRows, key);
-  const groupEntries = Array.from(groups.entries());
+  const groups = Array.from(groupRowsBy(cleanRows, key).entries());
 
   if (badge) {
     badge.textContent = `${cleanRows.length} ฟอร์ม`;
   }
 
-  if (!groupEntries.length) {
-    wrapper.innerHTML = `<div class="empty">ยังไม่มีข้อมูล${esc(titlePrefix)}</div>`;
+  if (!groups.length) {
+    wrapper.innerHTML = `<div class="empty">ยังไม่มีข้อมูล${esc(title)}</div>`;
     return;
   }
 
-  wrapper.innerHTML = groupEntries
+  wrapper.innerHTML = groups
     .map(([strategyName, groupRows], index) => {
       const formCount = groupRows.length;
       const respondentCount = sumRows(groupRows, "respondents");
       const avgScore = avgRows(groupRows);
-      const totalComments = 0;
+      const barWidth = Math.max(3, Math.min(100, (avgScore / 5) * 100));
 
       const tableRows = groupRows
         .map(
@@ -361,54 +364,84 @@ function renderStrategyGroup({ rows, key, wrapper, badge, type, titlePrefix }) {
         .join("");
 
       return `
-        <div class="strategy-group" style="margin-top:${index === 0 ? "0" : "16px"};">
-          <div class="strategy-group-head">
+        <div class="strategy-topic-card ${type}">
+          <div class="strategy-topic-head">
             <div>
-              <h3 class="strategy-group-title" style="font-size:18px;">
+              <h3 class="strategy-topic-title">
                 ${type === "uni" ? "🏫" : "📚"} ${index + 1}. ${esc(strategyName)}
               </h3>
-              <div class="strategy-group-sub">${esc(titlePrefix)}</div>
+              <div class="strategy-topic-sub">${esc(title)}</div>
             </div>
-            <div class="strategy-badge">${formCount} ฟอร์ม</div>
+            <div class="strategy-main-badge">${formCount} ฟอร์ม</div>
           </div>
 
-          <div class="strategy-card-grid">
-            <div class="mini-kpi">
-              <div class="mini-kpi-label">จำนวนฟอร์ม</div>
-              <div class="mini-kpi-value">${formCount}</div>
+          <div class="strategy-kpi-grid">
+            <div class="strategy-mini-kpi">
+              <div class="strategy-mini-label">จำนวนฟอร์ม</div>
+              <div class="strategy-mini-value">${formCount}</div>
+              <div>ฟอร์ม</div>
             </div>
 
-            <div class="mini-kpi">
-              <div class="mini-kpi-label">ผู้ตอบทั้งหมด</div>
-              <div class="mini-kpi-value">${respondentCount}</div>
+            <div class="strategy-mini-kpi">
+              <div class="strategy-mini-label">ผู้ตอบทั้งหมด</div>
+              <div class="strategy-mini-value">${respondentCount}</div>
+              <div>คน</div>
             </div>
 
-            <div class="mini-kpi">
-              <div class="mini-kpi-label">ค่าเฉลี่ยความพึงพอใจ</div>
-              <div class="mini-kpi-value">${avgScore.toFixed(2)}</div>
+            <div class="strategy-mini-kpi">
+              <div class="strategy-mini-label">ค่าเฉลี่ยความพึงพอใจ</div>
+              <div class="strategy-mini-value">${avgScore.toFixed(2)}</div>
+              <div>คะแนน</div>
             </div>
 
-            <div class="mini-kpi">
-              <div class="mini-kpi-label">ข้อเสนอแนะ</div>
-              <div class="mini-kpi-value">${totalComments}</div>
+            <div class="strategy-mini-kpi">
+              <div class="strategy-mini-label">จำนวนหัวข้อ</div>
+              <div class="strategy-mini-value">${groupRows.length}</div>
+              <div>รายการ</div>
             </div>
           </div>
 
-          <div class="strategy-form-table">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:70px">ลำดับ</th>
-                  <th>ชื่อฟอร์ม</th>
-                  <th style="width:120px">ปี</th>
-                  <th style="width:120px">ค่าเฉลี่ย</th>
-                  <th style="width:120px">ผู้ตอบ</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-            </table>
+          <div class="strategy-content-grid">
+            <div class="strategy-chart-box">
+              <div class="strategy-box-title">แนวโน้มคะแนนความพึงพอใจรายปี</div>
+              <div class="fake-chart">
+                <div class="fake-dot" title="${avgScore.toFixed(2)}"></div>
+              </div>
+              <div style="text-align:center; color:var(--muted); margin-top:6px;">
+                ${esc(groupRows[0]?.fiscal_year || "-")}
+              </div>
+            </div>
+
+            <div class="strategy-chart-box">
+              <div class="strategy-box-title">เปรียบเทียบค่าเฉลี่ย</div>
+              <div class="fake-bar-wrap">
+                <div class="fake-bar-label">${esc(shortText(strategyName, 34))}</div>
+                <div class="fake-bar-track">
+                  <div class="fake-bar" style="width:${barWidth}%"></div>
+                </div>
+              </div>
+              <div style="text-align:center; font-weight:800; color:var(--red);">
+                ${avgScore.toFixed(2)}
+              </div>
+            </div>
+
+            <div class="strategy-table-box">
+              <div class="strategy-box-title">รายการฟอร์มใน${esc(title)}</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:60px;">ลำดับ</th>
+                    <th>ชื่อฟอร์ม</th>
+                    <th style="width:90px;">ปี</th>
+                    <th style="width:95px;">ค่าเฉลี่ย</th>
+                    <th style="width:80px;">ผู้ตอบ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRows}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;

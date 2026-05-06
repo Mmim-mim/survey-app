@@ -330,6 +330,278 @@
         accent-color: #9b1c1c;
       }
 
+            /* ===== Strategy Split Mockup Style ===== */
+      .strategy-split {
+        margin: 18px 0;
+        display: grid;
+        gap: 24px;
+      }
+
+      .strategy-block {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .strategy-block.uni {
+        border-color: #bfdbfe;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.08);
+      }
+
+      .strategy-block.center {
+        border-color: #bbf7d0;
+        box-shadow: 0 12px 30px rgba(22, 163, 74, 0.08);
+      }
+
+      .strategy-main-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .strategy-main-title {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .strategy-block.uni .strategy-main-title {
+        color: #1d4ed8;
+      }
+
+      .strategy-block.center .strategy-main-title {
+        color: #15803d;
+      }
+
+      .strategy-main-sub {
+        color: var(--muted);
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .strategy-main-badge {
+        padding: 9px 14px;
+        border-radius: 14px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .strategy-block.uni .strategy-main-badge {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .strategy-block.center .strategy-main-badge {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .strategy-topic-card {
+        border: 1px solid #f0dfd0;
+        border-radius: 20px;
+        padding: 16px;
+        background: #fffdf9;
+        margin-top: 16px;
+      }
+
+      .strategy-topic-card.uni {
+        border-color: #bfdbfe;
+        background: linear-gradient(180deg, #ffffff 0%, #eff6ff 100%);
+      }
+
+      .strategy-topic-card.center {
+        border-color: #bbf7d0;
+        background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+      }
+
+      .strategy-topic-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .strategy-topic-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
+      .strategy-topic-card.uni .strategy-topic-title {
+        color: #1d4ed8;
+      }
+
+      .strategy-topic-card.center .strategy-topic-title {
+        color: #15803d;
+      }
+
+      .strategy-topic-sub {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .strategy-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .strategy-mini-kpi {
+        border: 1px solid #ead8c8;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.82);
+        padding: 14px;
+        text-align: center;
+      }
+
+      .strategy-mini-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      .strategy-mini-value {
+        color: var(--red);
+        font-size: 28px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .strategy-content-grid {
+        display: grid;
+        grid-template-columns: 0.75fr 0.75fr 1.5fr;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .strategy-chart-box,
+      .strategy-table-box {
+        border: 1px solid #ead8c8;
+        border-radius: 16px;
+        background: #ffffff;
+        padding: 12px;
+        min-height: 210px;
+      }
+
+      .strategy-box-title {
+        font-weight: 900;
+        color: var(--red);
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .fake-chart {
+        height: 150px;
+        border-left: 1px solid #ead8c8;
+        border-bottom: 1px solid #ead8c8;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 12px;
+      }
+
+      .fake-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--red);
+        position: absolute;
+        bottom: 70%;
+      }
+
+      .fake-bar-wrap {
+        height: 150px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .fake-bar-label {
+        width: 42%;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .fake-bar-track {
+        flex: 1;
+        height: 42px;
+        background: #fff1e6;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .fake-bar {
+        height: 100%;
+        border-radius: 12px;
+        background: linear-gradient(90deg, #9b1c1c, #c9a34e);
+      }
+
+      .strategy-topic-card.uni .fake-bar,
+      .strategy-topic-card.uni .fake-dot {
+        background: #2563eb;
+      }
+
+      .strategy-topic-card.center .fake-bar,
+      .strategy-topic-card.center .fake-dot {
+        background: #16a34a;
+      }
+
+      .strategy-table-box {
+        overflow: auto;
+      }
+
+      .strategy-table-box table {
+        min-width: 520px;
+      }
+
+      .strategy-table-box th {
+        background: #fff1e6;
+        color: var(--red);
+      }
+
+      .strategy-topic-card.uni .strategy-table-box th {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .strategy-topic-card.center .strategy-table-box th {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      @media (max-width: 1200px) {
+        .strategy-content-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .strategy-kpi-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .strategy-main-head,
+        .strategy-topic-head {
+          flex-direction: column;
+        }
+
+        .strategy-kpi-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
             /* ===== Strategy Split Section ===== */
       .strategy-split {
         margin: 18px 0;
@@ -584,30 +856,31 @@
       </div>
 
             <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
+           <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
       <div class="strategy-split">
-        <section class="strategy-group uni">
-          <div class="strategy-group-head">
+        <section class="strategy-block uni">
+          <div class="strategy-main-head">
             <div>
-              <h2 class="strategy-group-title">🏫 ยุทธศาสตร์มหาวิทยาลัย</h2>
-              <div class="strategy-group-sub">
+              <h2 class="strategy-main-title">🏫 ยุทธศาสตร์มหาวิทยาลัย</h2>
+              <div class="strategy-main-sub">
                 แยกข้อมูลตามหัวข้อยุทธศาสตร์มหาวิทยาลัย
               </div>
             </div>
-            <div class="strategy-badge" id="uniGroupCount">0 ฟอร์ม</div>
+            <div class="strategy-main-badge" id="uniGroupCount">0 ฟอร์ม</div>
           </div>
 
           <div id="uniStrategyCards"></div>
         </section>
 
-        <section class="strategy-group center">
-          <div class="strategy-group-head">
+        <section class="strategy-block center">
+          <div class="strategy-main-head">
             <div>
-              <h2 class="strategy-group-title">📚 ยุทธศาสตร์ศูนย์บรรณสาร</h2>
-              <div class="strategy-group-sub">
+              <h2 class="strategy-main-title">📚 ยุทธศาสตร์ศูนย์บรรณสาร</h2>
+              <div class="strategy-main-sub">
                 แยกข้อมูลตามหัวข้อยุทธศาสตร์ศูนย์บรรณสาร
               </div>
             </div>
-            <div class="strategy-badge" id="centerGroupCount">0 ฟอร์ม</div>
+            <div class="strategy-main-badge" id="centerGroupCount">0 ฟอร์ม</div>
           </div>
 
           <div id="centerStrategyCards"></div>

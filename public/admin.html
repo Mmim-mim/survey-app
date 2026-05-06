@@ -51,18 +51,18 @@
       }
 
       .sidebar {
-        position: fixed;
-        top: 0;
-        left: -280px;
-        width: 280px;
-        height: 100vh;
-        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-        padding: 22px;
-        color: white;
-        z-index: 2000;
-        transition: left 0.28s ease;
-        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-      }
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+  padding: 86px 22px 22px;
+  color: white;
+  z-index: 2000;
+  transition: left 0.28s ease;
+  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
+}
 
       body.sidebar-open .sidebar {
         left: 0;
@@ -283,9 +283,7 @@
         .layout {
           grid-template-columns: 1fr;
         }
-        .sidebar {
-          display: none;
-        }
+        
         .cards,
         .grid,
         .form-row {
@@ -293,43 +291,6 @@
         }
       }
 
-      .menu-toggle {
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        z-index: 2000;
-
-        width: 48px;
-        height: 48px;
-
-        border: none;
-        border-radius: 12px;
-
-        background: linear-gradient(135deg, #8b0000, #c9a227);
-        color: white;
-
-        font-size: 24px;
-        cursor: pointer;
-
-        display: none;
-
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
-
-      @media (max-width: 900px) {
-        .menu-toggle {
-          display: block;
-        }
-
-        .sidebar {
-          transform: translateX(-100%);
-          transition: 0.3s;
-        }
-
-        .sidebar.show {
-          transform: translateX(0);
-        }
-      }
     </style>
   </head>
 

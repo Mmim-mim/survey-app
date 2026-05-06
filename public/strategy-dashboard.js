@@ -23,6 +23,11 @@ const kpiComments = document.getElementById("kpiComments");
 const strategyTableBody = document.getElementById("strategyTableBody");
 const commentList = document.getElementById("commentList");
 
+const uniStrategyCards = document.getElementById("uniStrategyCards");
+const centerStrategyCards = document.getElementById("centerStrategyCards");
+const uniGroupCount = document.getElementById("uniGroupCount");
+const centerGroupCount = document.getElementById("centerGroupCount");
+
 const username = (localStorage.getItem("user") || "").trim();
 const role = (localStorage.getItem("role") || "manager").trim();
 
@@ -264,6 +269,153 @@ async function loadOptions() {
 );
 }
 
+function avgRows(rows) {
+  const nums = (rows || [])
+    .map((r) => Number(r.avg))
+    .filter(Number.isFinite);
+
+  if (!nums.length) return 0;
+
+  return nums.reduce((sum, n) => sum + n, 0) / nums.length;
+}
+
+function sumRows(rows, field) {
+  return (rows || []).reduce((sum, r) => sum + Number(r[field] || 0), 0);
+}
+
+function groupRowsBy(rows, key) {
+  const map = new Map();
+
+  (rows || []).forEach((row) => {
+    const name = String(row[key] || "-").trim() || "-";
+
+    if (!map.has(name)) {
+      map.set(name, []);
+    }
+
+    map.get(name).push(row);
+  });
+
+  return map;
+}
+
+function renderStrategySplit(rows) {
+  renderStrategyGroup({
+    rows,
+    key: "uni_strategy",
+    wrapper: uniStrategyCards,
+    badge: uniGroupCount,
+    type: "uni",
+    titlePrefix: "ยุทธศาสตร์มหาวิทยาลัย"
+  });
+
+  renderStrategyGroup({
+    rows,
+    key: "center_strategy",
+    wrapper: centerStrategyCards,
+    badge: centerGroupCount,
+    type: "center",
+    titlePrefix: "ยุทธศาสตร์ศูนย์บรรณสาร"
+  });
+}
+
+function renderStrategyGroup({ rows, key, wrapper, badge, type, titlePrefix }) {
+  if (!wrapper) return;
+
+  const cleanRows = (rows || []).filter((r) => {
+    const value = String(r[key] || "").trim();
+    return value && value !== "-";
+  });
+
+  const groups = groupRowsBy(cleanRows, key);
+  const groupEntries = Array.from(groups.entries());
+
+  if (badge) {
+    badge.textContent = `${cleanRows.length} ฟอร์ม`;
+  }
+
+  if (!groupEntries.length) {
+    wrapper.innerHTML = `<div class="empty">ยังไม่มีข้อมูล${esc(titlePrefix)}</div>`;
+    return;
+  }
+
+  wrapper.innerHTML = groupEntries
+    .map(([strategyName, groupRows], index) => {
+      const formCount = groupRows.length;
+      const respondentCount = sumRows(groupRows, "respondents");
+      const avgScore = avgRows(groupRows);
+      const totalComments = 0;
+
+      const tableRows = groupRows
+        .map(
+          (r, i) => `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${esc(r.form_title || "-")}</td>
+              <td>${esc(r.fiscal_year || "-")}</td>
+              <td>${Number(r.avg || 0).toFixed(2)}</td>
+              <td>${r.respondents || 0}</td>
+            </tr>
+          `
+        )
+        .join("");
+
+      return `
+        <div class="strategy-group" style="margin-top:${index === 0 ? "0" : "16px"};">
+          <div class="strategy-group-head">
+            <div>
+              <h3 class="strategy-group-title" style="font-size:18px;">
+                ${type === "uni" ? "🏫" : "📚"} ${index + 1}. ${esc(strategyName)}
+              </h3>
+              <div class="strategy-group-sub">${esc(titlePrefix)}</div>
+            </div>
+            <div class="strategy-badge">${formCount} ฟอร์ม</div>
+          </div>
+
+          <div class="strategy-card-grid">
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">จำนวนฟอร์ม</div>
+              <div class="mini-kpi-value">${formCount}</div>
+            </div>
+
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">ผู้ตอบทั้งหมด</div>
+              <div class="mini-kpi-value">${respondentCount}</div>
+            </div>
+
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">ค่าเฉลี่ยความพึงพอใจ</div>
+              <div class="mini-kpi-value">${avgScore.toFixed(2)}</div>
+            </div>
+
+            <div class="mini-kpi">
+              <div class="mini-kpi-label">ข้อเสนอแนะ</div>
+              <div class="mini-kpi-value">${totalComments}</div>
+            </div>
+          </div>
+
+          <div class="strategy-form-table">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:70px">ลำดับ</th>
+                  <th>ชื่อฟอร์ม</th>
+                  <th style="width:120px">ปี</th>
+                  <th style="width:120px">ค่าเฉลี่ย</th>
+                  <th style="width:120px">ผู้ตอบ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 function renderTable(rows) {
   if (!Array.isArray(rows) || rows.length === 0) {
     strategyTableBody.innerHTML = `<tr><td colspan="7" class="empty">ยังไม่มีข้อมูล</td></tr>`;
@@ -338,9 +490,10 @@ async function loadSummary() {
   kpiAvg.textContent = Number(json.kpi?.avgSatisfaction || 0).toFixed(2);
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
-  renderTable(json.table || []);
-  renderComments(json.comments || []);
-  updateCharts(json.charts || {});
+    renderStrategySplit(json.table || []);
+    renderTable(json.table || []);
+    renderComments(json.comments || []);
+    updateCharts(json.charts || {});
 }
 
 async function refreshDashboard() {

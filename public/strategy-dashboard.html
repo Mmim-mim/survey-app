@@ -329,6 +329,127 @@
         height: 16px;
         accent-color: #9b1c1c;
       }
+
+            /* ===== Strategy Split Section ===== */
+      .strategy-split {
+        margin: 18px 0;
+        display: grid;
+        gap: 22px;
+      }
+
+      .strategy-group {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+      }
+
+      .strategy-group.uni {
+        border-color: #bfdbfe;
+      }
+
+      .strategy-group.center {
+        border-color: #bbf7d0;
+      }
+
+      .strategy-group-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .strategy-group-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .strategy-group.uni .strategy-group-title {
+        color: #1d4ed8;
+      }
+
+      .strategy-group.center .strategy-group-title {
+        color: #15803d;
+      }
+
+      .strategy-group-sub {
+        color: var(--muted);
+        font-weight: 700;
+        margin-top: 4px;
+      }
+
+      .strategy-badge {
+        padding: 8px 12px;
+        border-radius: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .strategy-group.uni .strategy-badge {
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .strategy-group.center .strategy-badge {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .strategy-card-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .mini-kpi {
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+        padding: 14px;
+        background: #fffdf9;
+      }
+
+      .mini-kpi-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        margin-bottom: 6px;
+      }
+
+      .mini-kpi-value {
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--red);
+      }
+
+      .strategy-form-table {
+        overflow: auto;
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+      }
+
+      .strategy-form-table table {
+        min-width: 760px;
+      }
+
+      @media (max-width: 1100px) {
+        .strategy-card-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .strategy-card-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .strategy-group-head {
+          flex-direction: column;
+        }
+      }
     </style>
   </head>
 
@@ -460,6 +581,37 @@
             <canvas id="formsByYearChart"></canvas>
           </div>
         </div>
+      </div>
+
+            <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
+      <div class="strategy-split">
+        <section class="strategy-group uni">
+          <div class="strategy-group-head">
+            <div>
+              <h2 class="strategy-group-title">🏫 ยุทธศาสตร์มหาวิทยาลัย</h2>
+              <div class="strategy-group-sub">
+                แยกข้อมูลตามหัวข้อยุทธศาสตร์มหาวิทยาลัย
+              </div>
+            </div>
+            <div class="strategy-badge" id="uniGroupCount">0 ฟอร์ม</div>
+          </div>
+
+          <div id="uniStrategyCards"></div>
+        </section>
+
+        <section class="strategy-group center">
+          <div class="strategy-group-head">
+            <div>
+              <h2 class="strategy-group-title">📚 ยุทธศาสตร์ศูนย์บรรณสาร</h2>
+              <div class="strategy-group-sub">
+                แยกข้อมูลตามหัวข้อยุทธศาสตร์ศูนย์บรรณสาร
+              </div>
+            </div>
+            <div class="strategy-badge" id="centerGroupCount">0 ฟอร์ม</div>
+          </div>
+
+          <div id="centerStrategyCards"></div>
+        </section>
       </div>
 
       <div class="bottom-grid">

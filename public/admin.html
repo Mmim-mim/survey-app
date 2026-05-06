@@ -51,18 +51,48 @@
       }
 
       .sidebar {
-  position: fixed;
-  top: 0;
-  left: -280px;
-  width: 280px;
-  height: 100vh;
-  background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-  padding: 86px 22px 22px;
-  color: white;
-  z-index: 2000;
-  transition: left 0.28s ease;
-  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-}
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+        padding: 86px 22px 22px;
+        color: white;
+        z-index: 2000;
+        transition: left 0.28s ease;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
+      }
+
+      .brand {
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 24px;
+        color: #fff;
+      }
+
+      .nav {
+        display: grid;
+        gap: 10px;
+      }
+
+      .nav a {
+        display: block;
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-weight: 800;
+      }
+
+      .nav a:hover,
+      .nav a.active {
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .sidebar-overlay {
+        background: rgba(0, 0, 0, 0.18);
+      }
 
       body.sidebar-open .sidebar {
         left: 0;
@@ -283,14 +313,13 @@
         .layout {
           grid-template-columns: 1fr;
         }
-        
+
         .cards,
         .grid,
         .form-row {
           grid-template-columns: 1fr;
         }
       }
-
     </style>
   </head>
 
@@ -417,6 +446,8 @@
     </div>
 
     <script>
+      document.body.classList.remove("sidebar-open");
+
       const hamburgerBtn = document.getElementById("hamburgerBtn");
       const sidebarOverlay = document.getElementById("sidebarOverlay");
 
@@ -426,6 +457,12 @@
 
       sidebarOverlay.addEventListener("click", () => {
         document.body.classList.remove("sidebar-open");
+      });
+
+      document.querySelectorAll(".sidebar a").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.body.classList.remove("sidebar-open");
+        });
       });
 
       document.addEventListener("keydown", (e) => {

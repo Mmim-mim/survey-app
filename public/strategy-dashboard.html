@@ -509,6 +509,23 @@
         align-items: flex-end;
         justify-content: center;
         padding: 12px;
+        background: linear-gradient(to top, #ead8c8 1px, transparent 1px) 0 0 /
+          100% 30px;
+      }
+
+      .fake-chart::before {
+        content: "5\A4\A3\A2\A1\A0";
+        white-space: pre;
+        position: absolute;
+        left: -22px;
+        top: -4px;
+        height: 150px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        color: #7b6b6b;
+        font-size: 11px;
+        line-height: 1;
       }
 
       .fake-dot {
@@ -721,7 +738,6 @@
         .strategy-group-head {
           flex-direction: column;
         }
-        
       }
     </style>
   </head>
@@ -840,14 +856,13 @@
         </div>
       </div>
 
-           <div class="grid">
+      <div class="grid">
         <div class="panel">
           <h3>เปรียบเทียบค่าเฉลี่ยตามยุทธศาสตร์ศูนย์บรรณสาร</h3>
           <div class="chart-wrap">
             <canvas id="centerStrategyChart"></canvas>
           </div>
         </div>
-
 
         <div class="panel">
           <h3>สรุปฟอร์มตามปีงบประมาณ</h3>

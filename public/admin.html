@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --red: #8b1515;
+      --gold: #c9a34e;
+      --card: #ffffff;
+      --line: #ead8c8;
+      --text: #241414;
+      --muted: #7b6b6b;
+      --shadow: 0 12px 30px rgba(139, 21, 21, 0.1);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139, 21, 21, 0.12), transparent 32%),
+        radial-gradient(circle at top right, rgba(201, 163, 78, 0.22), transparent 34%),
+        linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
+      color: var(--text);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+      padding: 22px;
+      color: white;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 24px;
+    }
+
+    .nav a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 12px 14px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .page {
+      padding: 28px;
+      max-width: 1500px;
+      width: 100%;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--red);
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .sub {
+      color: var(--muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--red);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      color: white;
+      border-color: transparent;
+    }
+
+    .btn.danger {
+      color: #b91c1c;
+      border-color: #fecaca;
+      background: #fff5f5;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card, .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 20px;
+    }
+
+    .kpi-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .kpi-value {
+      color: var(--red);
+      font-size: 34px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      color: var(--red);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 140px auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    input, select {
+      height: 44px;
+      border: 1px solid #e2c8b5;
+      border-radius: 14px;
+      padding: 0 12px;
+      background: white;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border: 1px solid #f0dfd0;
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0dfd0;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #fff1e6;
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    td {
+      background: #fffdf9;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #fff1e6;
+      color: var(--red);
+    }
+
+    @media (max-width: 1100px) {
+      .layout { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .cards, .grid, .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">👑 Admin</div>
+      <nav class="nav">
+        <a href="admin.html" class="active">Dashboard</a>
+        <a href="dashboard.html">Dashboard หลัก</a>
+        <a href="strategy-dashboard.html">Strategy Dashboard</a>
+        <a href="index.html">รายการฟอร์ม</a>
+        <a href="login.html">ออกจากระบบ</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <div class="header">
+        <div>
+          <h1>Admin Dashboard</h1>
+          <div class="sub">ศูนย์ควบคุมระบบ Survey: ผู้ใช้ ฟอร์ม และข้อมูลภาพรวม</div>
+        </div>
+
+        <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
+      </div>
+
+      <div class="cards">
+        <div class="card">
+          <div class="kpi-label">จำนวนผู้ใช้</div>
+          <div class="kpi-value" id="kpiUsers">0</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">จำนวนฟอร์ม</div>
+          <div class="kpi-value" id="kpiForms">0</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">จำนวนคำตอบ</div>
+          <div class="kpi-value" id="kpiSubmissions">0</div>
+        </div>
+        <div class="card">
+          <div class="kpi-label">จำนวน Admin</div>
+          <div class="kpi-value" id="kpiAdmins">0</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>👤 จัดการผู้ใช้</h2>
+          </div>
+
+          <div class="form-row">
+            <input id="newUsername" placeholder="username" />
+            <input id="newPassword" placeholder="password" type="password" />
+            <select id="newRole">
+              <option value="staff">staff</option>
+              <option value="manager">manager</option>
+              <option value="admin">admin</option>
+            </select>
+            <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Role</th>
+                  <th>เปลี่ยน Role</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="userTableBody">
+                <tr><td colspan="4" class="empty">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>📄 จัดการฟอร์ม</h2>
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อฟอร์ม</th>
+                  <th>เจ้าของ</th>
+                  <th>ยุทธศาสตร์</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="formTableBody">
+                <tr><td colspan="4" class="empty">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>📚 Question Bank / คำถามกลาง</h2>
+          <span class="badge">Prototype</span>
+        </div>
+
+        <div class="sub">
+          ส่วนนี้เตรียมไว้สำหรับจัดการ “หมวดคำถาม” และ “คำถามกลาง” เช่น เพิ่ม/ลบคำถามมาตรฐานในแต่ละหัวข้อ
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -36,13 +36,18 @@
         left: -260px;
         width: 260px;
         height: 100vh;
-        background: linear-gradient(180deg, #b22b2b 0%, #e07a66 50%, #f7d9bd 100%);
+        background: linear-gradient(
+          180deg,
+          #b22b2b 0%,
+          #e07a66 50%,
+          #f7d9bd 100%
+        );
         color: #fff;
         border-right: 1px solid #d1d5db;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
         transition: left 0.3s ease;
         z-index: 2000;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
       }
       .sidebar-header {
         font-weight: 700;
@@ -50,21 +55,21 @@
         border-bottom: 1px solid #e5e7eb;
       }
       .sidebar a {
-      display: block;
-      padding: 12px 20px;
-      color: #fff;
-      text-decoration: none;
-      border-bottom: none;
+        display: block;
+        padding: 12px 20px;
+        color: #fff;
+        text-decoration: none;
+        border-bottom: none;
       }
 
       .sidebar a:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
       }
 
       .sidebar a.active {
-      background: rgba(255, 255, 255, 0.18); 
-      font-weight: bold;
+        background: rgba(255, 255, 255, 0.18);
+        font-weight: bold;
       }
 
       .overlay {
@@ -405,6 +410,8 @@
       <a href="from.html">เพิ่มข้อมูล</a>
       <a href="manage.html">จัดการแบบฟอร์ม</a>
       <a href="dashboard.html">Dashboard</a>
+      <a href="strategy-dashboard.html">Strategy Dashboard</a>
+      <a href="admin.html" id="adminMenu">👑 Admin</a>
 
       <!-- ออกจากระบบ/ไปหน้า login -->
       <a href="login.html">ออกจากระบบ</a>
@@ -538,6 +545,7 @@
       });
       // ===== Show logged-in user name =====
       const userLabelEl = document.getElementById("userLabel");
+      const role = (localStorage.getItem("role") || "").trim();
 
       // displayName จะมาจาก DB (login.html เซ็ตไว้แล้ว), ถ้าไม่มีให้ fallback ไปที่ user
       const displayName = (localStorage.getItem("displayName") || "").trim();
@@ -763,6 +771,12 @@
         }
 
         return `${s} - ${e}`;
+      }
+
+      const adminMenu = document.getElementById("adminMenu");
+
+      if (role !== "admin") {
+        adminMenu.style.display = "none";
       }
 
       // เรียกตอนเปิดหน้า

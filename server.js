@@ -964,9 +964,183 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         }
       }
     });
-    
+
   } catch (e) {
     console.error("strategy-dashboard summary error:", e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+/** -----------------------------
+ *  ADMIN API
+ * ----------------------------- */
+
+function requireAdmin(req, res) {
+  const role = String(req.query.role || req.body?.role || "").trim();
+
+  if (role !== "admin") {
+    res.status(403).json({ error: "สำหรับ admin เท่านั้น" });
+    return false;
+  }
+
+  return true;
+}
+
+// ภาพรวม Admin
+app.get("/api/admin/overview", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const [[userCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM users`);
+    const [[adminCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM users WHERE role = 'admin'`);
+    const [[formCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM survey_forms`);
+    const [[submissionCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM submissions`);
+
+    res.json({
+      users: userCount.total || 0,
+      admins: adminCount.total || 0,
+      forms: formCount.total || 0,
+      submissions: submissionCount.total || 0,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// รายการผู้ใช้
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const [rows] = await pool.execute(`
+      SELECT id, username, display_name, role
+      FROM users
+      ORDER BY id DESC
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// เพิ่มผู้ใช้
+app.post("/api/admin/users", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const username = String(req.body.username || "").trim();
+    const password = String(req.body.password || "").trim();
+    const role = String(req.body.role || "staff").trim();
+
+    if (!username || !password) {
+      return res.status(400).json({ error: "กรุณากรอก username และ password" });
+    }
+
+    const allowedRoles = ["staff", "manager", "admin"];
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: "role ไม่ถูกต้อง" });
+    }
+
+    const [exists] = await pool.execute(
+      `SELECT id FROM users WHERE username = ? LIMIT 1`,
+      [username]
+    );
+
+    if (exists.length) {
+      return res.status(409).json({ error: "username นี้มีอยู่แล้ว" });
+    }
+
+    const [result] = await pool.execute(
+      `INSERT INTO users (username, password, display_name, role)
+       VALUES (?, ?, ?, ?)`,
+      [username, password, username, role]
+    );
+
+    res.json({ ok: true, id: result.insertId });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// เปลี่ยน role
+app.put("/api/admin/users/:id/role", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const id = Number(req.params.id);
+    const role = String(req.body.role || "staff").trim();
+
+    const allowedRoles = ["staff", "manager", "admin"];
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({ error: "role ไม่ถูกต้อง" });
+    }
+
+    await pool.execute(`UPDATE users SET role = ? WHERE id = ?`, [role, id]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ลบผู้ใช้
+app.delete("/api/admin/users/:id", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    await pool.execute(`DELETE FROM users WHERE id = ?`, [id]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// รายการฟอร์มทั้งหมด
+app.get("/api/admin/forms", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const [rows] = await pool.execute(`
+      SELECT id, created_at, created_by, created_by_username, form_title,
+             dept_name, uni_strategy, center_strategy, start_date, end_date
+      FROM survey_forms
+      ORDER BY id DESC
+      LIMIT 1000
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ลบฟอร์ม
+app.delete("/api/admin/forms/:id", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    await pool.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
+
+    res.json({ ok: true });
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });

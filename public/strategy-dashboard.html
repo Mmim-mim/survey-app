@@ -330,7 +330,7 @@
         accent-color: #9b1c1c;
       }
 
-            /* ===== Strategy Split Mockup Style ===== */
+      /* ===== Strategy Split Mockup Style ===== */
       .strategy-split {
         margin: 18px 0;
         display: grid;
@@ -602,7 +602,7 @@
         }
       }
 
-            /* ===== Strategy Split Section ===== */
+      /* ===== Strategy Split Section ===== */
       .strategy-split {
         margin: 18px 0;
         display: grid;
@@ -720,6 +720,10 @@
 
         .strategy-group-head {
           flex-direction: column;
+        }
+
+        .full-width {
+          grid-column: 1 / -1;
         }
       }
     </style>
@@ -846,17 +850,16 @@
             <canvas id="centerStrategyChart"></canvas>
           </div>
         </div>
+      </div>
 
-        <div class="panel">
-          <h3>สรุปฟอร์มตามปีงบประมาณ</h3>
-          <div class="chart-wrap">
-            <canvas id="formsByYearChart"></canvas>
-          </div>
+      <div class="panel full-width">
+        <h2>สรุปฟอร์มตามปีงบประมาณ</h2>
+        <div class="chart-wrap">
+          <canvas id="formsByYearChart"></canvas>
         </div>
       </div>
 
-            <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
-           <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
+      <!-- ===== แยกข้อมูลตามยุทธศาสตร์ ===== -->
       <div class="strategy-split">
         <section class="strategy-block uni">
           <div class="strategy-main-head">

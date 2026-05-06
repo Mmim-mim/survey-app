@@ -340,7 +340,11 @@
           localStorage.setItem("displayName", data.user?.display_name || "");
           localStorage.setItem("role", data.user?.role || "staff");
 
-          window.location.href = "index.html";
+          if (data.role === "admin") {
+            window.location.href = "admin.html";
+          } else {
+            window.location.href = "index.html";
+          }
         } catch (e2) {
           err.textContent = "Server error: " + e2.message;
         }

@@ -1,423 +1,439 @@
 <!doctype html>
 <html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>จัดการคำถาม</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>จัดการคำถาม</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
 
-  <style>
-    :root {
-      --red: #8b1515;
-      --gold: #c9a34e;
-      --card: #ffffff;
-      --line: #ead8c8;
-      --text: #241414;
-      --muted: #7b6b6b;
-      --shadow: 0 12px 30px rgba(139, 21, 21, 0.10);
-      --radius: 22px;
-    }
+    <style>
+      :root {
+        --red: #8b1515;
+        --gold: #c9a34e;
+        --card: #ffffff;
+        --line: #ead8c8;
+        --text: #241414;
+        --muted: #7b6b6b;
+        --shadow: 0 12px 30px rgba(139, 21, 21, 0.1);
+        --radius: 22px;
+      }
 
-    * {
-      box-sizing: border-box;
-    }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      font-family: "Noto Sans Thai", sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(139,21,21,.10), transparent 32%),
-        radial-gradient(circle at top right, rgba(201,163,78,.20), transparent 34%),
-        linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
-      min-height: 100vh;
-    }
+      body {
+        margin: 0;
+        font-family: "Noto Sans Thai", sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(139, 21, 21, 0.1),
+            transparent 32%
+          ),
+          radial-gradient(
+            circle at top right,
+            rgba(201, 163, 78, 0.2),
+            transparent 34%
+          ),
+          linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
+        min-height: 100vh;
+      }
 
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -280px;
-      width: 280px;
-      height: 100vh;
-      background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-      padding: 86px 22px 22px;
-      color: white;
-      z-index: 2000;
-      transition: left 0.28s ease;
-      box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-    }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+        padding: 86px 22px 22px;
+        color: white;
+        z-index: 2000;
+        transition: left 0.28s ease;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
+      }
 
-    body.sidebar-open .sidebar {
-      left: 0;
-    }
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
 
-    .brand {
-      font-size: 22px;
-      font-weight: 900;
-      margin-bottom: 24px;
-      color: #fff;
-    }
+      .brand {
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 24px;
+        color: #fff;
+      }
 
-    .nav {
-      display: grid;
-      gap: 10px;
-    }
+      .nav {
+        display: grid;
+        gap: 10px;
+      }
 
-    .nav a {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-weight: 800;
-    }
+      .nav a {
+        display: block;
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-weight: 800;
+      }
 
-    .nav a:hover,
-    .nav a.active {
-      background: rgba(255, 255, 255, 0.18);
-    }
+      .nav a:hover,
+      .nav a.active {
+        background: rgba(255, 255, 255, 0.18);
+      }
 
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.38);
-      display: none;
-      z-index: 1500;
-    }
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.38);
+        display: none;
+        z-index: 1500;
+      }
 
-    body.sidebar-open .sidebar-overlay {
-      display: block;
-    }
+      body.sidebar-open .sidebar-overlay {
+        display: block;
+      }
 
-    .hamburger {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 2100;
-      width: 46px;
-      height: 46px;
-      border: 1px solid #ead8c8;
-      border-radius: 14px;
-      background: #fff;
-      color: #8b1515;
-      font-size: 24px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
-    }
+      .hamburger {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 2100;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #ead8c8;
+        border-radius: 14px;
+        background: #fff;
+        color: #8b1515;
+        font-size: 24px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
+      }
 
-    .page {
-      padding: 28px 42px 42px;
-      max-width: 1300px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    h1 {
-      margin: 0;
-      color: var(--red);
-      font-size: 34px;
-      font-weight: 900;
-    }
-
-    .sub {
-      color: var(--muted);
-      margin-top: 6px;
-      font-weight: 600;
-    }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .panel h2 {
-      margin: 0;
-      color: var(--red);
-      font-size: 20px;
-      font-weight: 900;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 180px 1fr 180px 150px auto;
-      gap: 10px;
-      align-items: end;
-    }
-
-    label {
-      display: block;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      border: 1px solid #e2c8b5;
-      border-radius: 14px;
-      padding: 0 12px;
-      background: white;
-      font: inherit;
-      outline: none;
-    }
-
-    input,
-    select {
-      height: 44px;
-    }
-
-    textarea {
-      min-height: 44px;
-      padding-top: 10px;
-      resize: vertical;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--gold);
-      box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
-    }
-
-    .btn {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--red);
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-weight: 900;
-      cursor: pointer;
-      text-decoration: none;
-      font-family: inherit;
-      min-height: 44px;
-    }
-
-    .btn.primary {
-      background: linear-gradient(90deg, var(--red), var(--gold));
-      color: white;
-      border-color: transparent;
-    }
-
-    .btn.danger {
-      color: #b91c1c;
-      border-color: #fecaca;
-      background: #fff5f5;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid #f0dfd0;
-      border-radius: 16px;
-    }
-
-    table {
-      width: 100%;
-      min-width: 920px;
-      border-collapse: collapse;
-    }
-
-    th,
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #f0dfd0;
-      text-align: left;
-      font-size: 14px;
-      vertical-align: top;
-    }
-
-    th {
-      background: #fff1e6;
-      color: var(--red);
-      font-weight: 900;
-    }
-
-    td {
-      background: #fffdf9;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      background: #fff1e6;
-      color: var(--red);
-    }
-
-    .badge.rating {
-      background: #dcfce7;
-      color: #15803d;
-    }
-
-    .badge.textarea {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    .badge.text {
-      background: #f3e8ff;
-      color: #7e22ce;
-    }
-
-    .empty {
-      color: var(--muted);
-      text-align: center;
-      padding: 24px;
-    }
-
-    @media (max-width: 1100px) {
       .page {
-        padding: 84px 18px 28px;
+        padding: 28px 42px 42px;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--red);
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .sub {
+        color: var(--muted);
+        margin-top: 6px;
+        font-weight: 600;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        color: var(--red);
+        font-size: 20px;
+        font-weight: 900;
       }
 
       .form-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 180px 1fr 180px 150px auto;
+        gap: 10px;
+        align-items: end;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+      label {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
 
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">👑 Admin</div>
-    <nav class="nav">
-      <a href="admin.html">Dashboard</a>
-      <a href="admin-users.html">จัดการผู้ใช้</a>
-      <a href="admin-forms.html">จัดการฟอร์ม</a>
-      <a href="admin-questions.html" class="active">จัดการคำถาม</a>
-      <a href="login.html">ออกจากระบบ</a>
-    </nav>
-  </aside>
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid #e2c8b5;
+        border-radius: 14px;
+        padding: 0 12px;
+        background: white;
+        font: inherit;
+        outline: none;
+      }
 
-  <main class="page">
-    <div class="header">
-      <div>
-        <h1>📝 จัดการคำถาม</h1>
-        <div class="sub">สร้างและจัดการคำถามกลางสำหรับนำไปใช้ในแบบฟอร์ม</div>
-      </div>
-    </div>
+      input,
+      select {
+        height: 44px;
+      }
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>เพิ่มคำถามกลาง</h2>
-      </div>
+      textarea {
+        height: 44px;
+        min-height: 44px;
+        padding: 10px 12px;
+        resize: none;
+        overflow: hidden;
+      }
 
-      <div class="form-grid">
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
+      }
+
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--red);
+        border-radius: 14px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        text-decoration: none;
+        font-family: inherit;
+        min-height: 44px;
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, var(--red), var(--gold));
+        color: white;
+        border-color: transparent;
+      }
+
+      .btn.danger {
+        color: #b91c1c;
+        border-color: #fecaca;
+        background: #fff5f5;
+      }
+
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+      }
+
+      table {
+        width: 100%;
+        min-width: 920px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f0dfd0;
+        text-align: left;
+        font-size: 14px;
+        vertical-align: top;
+      }
+
+      th {
+        background: #fff1e6;
+        color: var(--red);
+        font-weight: 900;
+      }
+
+      td {
+        background: #fffdf9;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+        background: #fff1e6;
+        color: var(--red);
+      }
+
+      .badge.rating {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .badge.textarea {
+        background: #e0f2fe;
+        color: #0369a1;
+      }
+
+      .badge.text {
+        background: #f3e8ff;
+        color: #7e22ce;
+      }
+
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 24px;
+      }
+
+      @media (max-width: 1100px) {
+        .page {
+          padding: 84px 18px 28px;
+        }
+
+        .form-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">👑 Admin</div>
+      <nav class="nav">
+        <a href="admin.html">Dashboard</a>
+        <a href="admin-users.html">จัดการผู้ใช้</a>
+        <a href="admin-forms.html">จัดการฟอร์ม</a>
+        <a href="admin-questions.html" class="active">จัดการคำถาม</a>
+        <a href="login.html">ออกจากระบบ</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <div class="header">
         <div>
-          <label>หมวดคำถาม</label>
-          <input id="categoryInput" placeholder="เช่น การบริการ" />
+          <h1>📝 จัดการคำถาม</h1>
+          <div class="sub">สร้างและจัดการคำถามกลางสำหรับนำไปใช้ในแบบฟอร์ม</div>
+        </div>
+      </div>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>เพิ่มคำถามกลาง</h2>
         </div>
 
-        <div>
-          <label>คำถาม</label>
-          <textarea id="questionInput" placeholder="พิมพ์คำถามกลาง..."></textarea>
+        <div class="form-grid">
+          <div>
+            <label>หมวดคำถาม</label>
+            <input id="categoryInput" placeholder="เช่น การบริการ" />
+          </div>
+
+          <div>
+            <label>คำถาม</label>
+            <textarea
+              id="questionInput"
+              placeholder="พิมพ์คำถามกลาง..."
+            ></textarea>
+          </div>
+
+          <div>
+            <label>ประเภทคำถาม</label>
+            <select id="typeInput">
+              <option value="rating">rating</option>
+              <option value="textarea">textarea</option>
+              <option value="text">text</option>
+            </select>
+          </div>
+
+          <div>
+            <label>สถานะ</label>
+            <select id="statusInput">
+              <option value="active">เปิดใช้งาน</option>
+              <option value="inactive">ปิดใช้งาน</option>
+            </select>
+          </div>
+
+          <button class="btn primary" id="btnAddQuestion">เพิ่มคำถาม</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>รายการคำถามกลาง</h2>
+          <button class="btn" id="btnClearDemo">ล้างข้อมูลตัวอย่าง</button>
         </div>
 
-        <div>
-          <label>ประเภทคำถาม</label>
-          <select id="typeInput">
-            <option value="rating">rating</option>
-            <option value="textarea">textarea</option>
-            <option value="text">text</option>
-          </select>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px">ลำดับ</th>
+                <th style="width: 170px">หมวด</th>
+                <th>คำถาม</th>
+                <th style="width: 130px">ประเภท</th>
+                <th style="width: 130px">สถานะ</th>
+                <th style="width: 100px">Action</th>
+              </tr>
+            </thead>
+            <tbody id="questionTableBody">
+              <tr>
+                <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+      </section>
+    </main>
 
-        <div>
-          <label>สถานะ</label>
-          <select id="statusInput">
-            <option value="active">เปิดใช้งาน</option>
-            <option value="inactive">ปิดใช้งาน</option>
-          </select>
-        </div>
-
-        <button class="btn primary" id="btnAddQuestion">เพิ่มคำถาม</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <div class="panel-head">
-        <h2>รายการคำถามกลาง</h2>
-        <button class="btn" id="btnClearDemo">ล้างข้อมูลตัวอย่าง</button>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 70px;">ลำดับ</th>
-              <th style="width: 170px;">หมวด</th>
-              <th>คำถาม</th>
-              <th style="width: 130px;">ประเภท</th>
-              <th style="width: 130px;">สถานะ</th>
-              <th style="width: 100px;">Action</th>
-            </tr>
-          </thead>
-          <tbody id="questionTableBody">
-            <tr>
-              <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    document.body.classList.remove("sidebar-open");
-
-    const hamburgerBtn = document.getElementById("hamburgerBtn");
-    const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-    hamburgerBtn.addEventListener("click", () => {
-      document.body.classList.toggle("sidebar-open");
-    });
-
-    sidebarOverlay.addEventListener("click", () => {
+    <script>
       document.body.classList.remove("sidebar-open");
-    });
 
-    document.querySelectorAll(".sidebar a").forEach((link) => {
-      link.addEventListener("click", () => {
+      const hamburgerBtn = document.getElementById("hamburgerBtn");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      hamburgerBtn.addEventListener("click", () => {
+        document.body.classList.toggle("sidebar-open");
+      });
+
+      sidebarOverlay.addEventListener("click", () => {
         document.body.classList.remove("sidebar-open");
       });
-    });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        document.body.classList.remove("sidebar-open");
-      }
-    });
-  </script>
+      document.querySelectorAll(".sidebar a").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.body.classList.remove("sidebar-open");
+        });
+      });
 
-  <script src="admin-questions.js"></script>
-</body>
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.body.classList.remove("sidebar-open");
+        }
+      });
+    </script>
+
+    <script src="admin-questions.js"></script>
+  </body>
 </html>

@@ -212,14 +212,6 @@
         line-height: 1;
       }
 
-      .grid {
-        display: grid;
-        grid-template-columns: minmax(520px, 1fr) minmax(520px, 1fr);
-        gap: 22px;
-        margin-bottom: 18px;
-        align-items: start;
-      }
-
       .panel {
         padding: 18px;
       }
@@ -239,66 +231,6 @@
         font-weight: 900;
       }
 
-      .form-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr 140px auto;
-        gap: 10px;
-        margin-bottom: 14px;
-      }
-
-      input,
-      select {
-        height: 44px;
-        border: 1px solid #e2c8b5;
-        border-radius: 14px;
-        padding: 0 12px;
-        background: white;
-        font: inherit;
-        outline: none;
-      }
-
-      input:focus,
-      select:focus {
-        border-color: var(--gold);
-        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
-      }
-
-      .table-wrap {
-        overflow: auto;
-        border: 1px solid #f0dfd0;
-        border-radius: 16px;
-      }
-
-      table {
-        width: 100%;
-        min-width: 760px;
-        border-collapse: collapse;
-      }
-
-      th,
-      td {
-        padding: 12px 14px;
-        border-bottom: 1px solid #f0dfd0;
-        text-align: left;
-        font-size: 14px;
-      }
-
-      th {
-        background: #fff1e6;
-        color: var(--red);
-        font-weight: 900;
-      }
-
-      td {
-        background: #fffdf9;
-      }
-
-      .empty {
-        color: var(--muted);
-        text-align: center;
-        padding: 24px;
-      }
-
       .badge {
         display: inline-block;
         padding: 5px 10px;
@@ -314,9 +246,7 @@
           grid-template-columns: 1fr;
         }
 
-        .cards,
-        .grid,
-        .form-row {
+        .cards {
           grid-template-columns: 1fr;
         }
       }
@@ -332,6 +262,8 @@
         <div class="brand">👑 Admin</div>
         <nav class="nav">
           <a href="admin.html" class="active">Dashboard</a>
+          <a href="admin-users.html">จัดการผู้ใช้</a>
+          <a href="admin-forms.html">จัดการฟอร์ม</a>
           <a href="dashboard.html">Dashboard หลัก</a>
           <a href="strategy-dashboard.html">Strategy Dashboard</a>
           <a href="login.html">ออกจากระบบ</a>
@@ -367,67 +299,6 @@
             <div class="kpi-label">จำนวน Admin</div>
             <div class="kpi-value" id="kpiAdmins">0</div>
           </div>
-        </div>
-
-        <div class="grid">
-          <section class="panel">
-            <div class="panel-head">
-              <h2>👤 จัดการผู้ใช้</h2>
-            </div>
-
-            <div class="form-row">
-              <input id="newUsername" placeholder="username" />
-              <input id="newPassword" placeholder="password" type="password" />
-              <select id="newRole">
-                <option value="staff">staff</option>
-                <option value="manager">manager</option>
-                <option value="admin">admin</option>
-              </select>
-              <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Role</th>
-                    <th>เปลี่ยน Role</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="userTableBody">
-                  <tr>
-                    <td colspan="4" class="empty">กำลังโหลด...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-head">
-              <h2>📄 จัดการฟอร์ม</h2>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ชื่อฟอร์ม</th>
-                    <th>เจ้าของ</th>
-                    <th>ยุทธศาสตร์</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody id="formTableBody">
-                  <tr>
-                    <td colspan="4" class="empty">กำลังโหลด...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
         </div>
 
         <section class="panel">

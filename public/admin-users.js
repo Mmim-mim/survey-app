@@ -52,7 +52,9 @@ async function loadUsers() {
   userTableBody.innerHTML = users.map((u) => `
     <tr>
       <td>${esc(u.username)}</td>
-      <td><span class="badge">${esc(u.role || "staff")}</span></td>
+    <td>
+        <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>
+    </td>
       <td>
         <select onchange="updateUserRole(${u.id}, this.value)">
           <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>

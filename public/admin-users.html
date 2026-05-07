@@ -1,350 +1,384 @@
 <!doctype html>
 <html lang="th">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>จัดการผู้ใช้</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>จัดการผู้ใช้</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
 
-  <style>
-    :root {
-      --red: #8b1515;
-      --gold: #c9a34e;
-      --card: #ffffff;
-      --line: #ead8c8;
-      --text: #241414;
-      --muted: #7b6b6b;
-      --shadow: 0 12px 30px rgba(139, 21, 21, 0.1);
-      --radius: 18px;
-    }
+    <style>
+      :root {
+        --red: #8b1515;
+        --gold: #c9a34e;
+        --card: #ffffff;
+        --line: #ead8c8;
+        --text: #241414;
+        --muted: #7b6b6b;
+        --shadow: 0 12px 30px rgba(139, 21, 21, 0.1);
+        --radius: 18px;
+      }
 
-    * { box-sizing: border-box; }
+      * {
+        box-sizing: border-box;
+      }
 
-    body {
-      margin: 0;
-      font-family: "Noto Sans Thai", system-ui, sans-serif;
-      background:
-        radial-gradient(circle at top left, rgba(139, 21, 21, 0.12), transparent 32%),
-        radial-gradient(circle at top right, rgba(201, 163, 78, 0.22), transparent 34%),
-        linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
-      color: var(--text);
-    }
+      body {
+        margin: 0;
+        font-family: "Noto Sans Thai", system-ui, sans-serif;
+        background:
+          radial-gradient(
+            circle at top left,
+            rgba(139, 21, 21, 0.12),
+            transparent 32%
+          ),
+          radial-gradient(
+            circle at top right,
+            rgba(201, 163, 78, 0.22),
+            transparent 34%
+          ),
+          linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
+        color: var(--text);
+      }
 
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: -280px;
-      width: 280px;
-      height: 100vh;
-      background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-      padding: 86px 22px 22px;
-      color: white;
-      z-index: 2000;
-      transition: left 0.28s ease;
-      box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-    }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+        padding: 86px 22px 22px;
+        color: white;
+        z-index: 2000;
+        transition: left 0.28s ease;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
+      }
 
-    body.sidebar-open .sidebar { left: 0; }
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
 
-    .brand {
-      font-size: 22px;
-      font-weight: 900;
-      margin-bottom: 24px;
-      color: #fff;
-    }
+      .brand {
+        font-size: 22px;
+        font-weight: 900;
+        margin-bottom: 24px;
+        color: #fff;
+      }
 
-    .nav {
-      display: grid;
-      gap: 10px;
-    }
+      .nav {
+        display: grid;
+        gap: 10px;
+      }
 
-    .nav a {
-      display: block;
-      color: #fff;
-      text-decoration: none;
-      padding: 12px 14px;
-      border-radius: 14px;
-      font-weight: 800;
-    }
+      .nav a {
+        display: block;
+        color: #fff;
+        text-decoration: none;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-weight: 800;
+      }
 
-    .nav a:hover,
-    .nav a.active {
-      background: rgba(255, 255, 255, 0.18);
-    }
+      .nav a:hover,
+      .nav a.active {
+        background: rgba(255, 255, 255, 0.18);
+      }
 
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.38);
-      display: none;
-      z-index: 1500;
-    }
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.38);
+        display: none;
+        z-index: 1500;
+      }
 
-    body.sidebar-open .sidebar-overlay {
-      display: block;
-    }
+      body.sidebar-open .sidebar-overlay {
+        display: block;
+      }
 
-    .hamburger {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      z-index: 2100;
-      width: 46px;
-      height: 46px;
-      border: 1px solid #ead8c8;
-      border-radius: 14px;
-      background: #fff;
-      color: #8b1515;
-      font-size: 24px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
-    }
+      .hamburger {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 2100;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #ead8c8;
+        border-radius: 14px;
+        background: #fff;
+        color: #8b1515;
+        font-size: 24px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
+      }
 
-    .page {
-      padding: 28px 42px 42px;
-      max-width: 1300px;
-      margin: 0 auto;
-      width: 100%;
-    }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-
-    h1 {
-      margin: 0;
-      color: var(--red);
-      font-size: 34px;
-      font-weight: 900;
-    }
-
-    .sub {
-      color: var(--muted);
-      margin-top: 6px;
-      font-weight: 600;
-    }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 18px;
-    }
-
-    .panel-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .panel h2 {
-      margin: 0;
-      color: var(--red);
-      font-size: 20px;
-      font-weight: 900;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 150px auto;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
-
-    input, select {
-      height: 44px;
-      border: 1px solid #e2c8b5;
-      border-radius: 14px;
-      padding: 0 12px;
-      background: white;
-      font: inherit;
-      outline: none;
-    }
-
-    input:focus, select:focus {
-      border-color: var(--gold);
-      box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
-    }
-
-    .btn {
-      border: 1px solid var(--line);
-      background: #fff;
-      color: var(--red);
-      border-radius: 14px;
-      padding: 10px 14px;
-      font-weight: 900;
-      cursor: pointer;
-      text-decoration: none;
-      font-family: inherit;
-    }
-
-    .btn.primary {
-      background: linear-gradient(90deg, var(--red), var(--gold));
-      color: white;
-      border-color: transparent;
-    }
-
-    .btn.danger {
-      color: #b91c1c;
-      border-color: #fecaca;
-      background: #fff5f5;
-    }
-
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid #f0dfd0;
-      border-radius: 16px;
-    }
-
-    table {
-      width: 100%;
-      min-width: 760px;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 12px 14px;
-      border-bottom: 1px solid #f0dfd0;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      background: #fff1e6;
-      color: var(--red);
-      font-weight: 900;
-    }
-
-    td {
-      background: #fffdf9;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 900;
-      background: #fff1e6;
-      color: var(--red);
-    }
-
-    .empty {
-      color: var(--muted);
-      text-align: center;
-      padding: 24px;
-    }
-
-    @media (max-width: 900px) {
       .page {
-        padding: 84px 18px 28px;
+        padding: 28px 42px 42px;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      h1 {
+        margin: 0;
+        color: var(--red);
+        font-size: 34px;
+        font-weight: 900;
+      }
+
+      .sub {
+        color: var(--muted);
+        margin-top: 6px;
+        font-weight: 600;
+      }
+
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .panel-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel h2 {
+        margin: 0;
+        color: var(--red);
+        font-size: 20px;
+        font-weight: 900;
       }
 
       .form-row {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: 1fr 1fr 150px auto;
+        gap: 10px;
+        margin-bottom: 14px;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
-  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+      input,
+      select {
+        height: 44px;
+        border: 1px solid #e2c8b5;
+        border-radius: 14px;
+        padding: 0 12px;
+        background: white;
+        font: inherit;
+        outline: none;
+      }
 
-  <aside class="sidebar" id="sidebar">
-    <div class="brand">👑 Admin</div>
-    <nav class="nav">
-      <a href="admin.html">Dashboard</a>
-      <a href="admin-users.html" class="active">จัดการผู้ใช้</a>
-      <a href="admin-forms.html">จัดการฟอร์ม</a>
-      <a href="dashboard.html">Dashboard หลัก</a>
-      <a href="strategy-dashboard.html">Strategy Dashboard</a>
-      <a href="login.html">ออกจากระบบ</a>
-    </nav>
-  </aside>
+      input:focus,
+      select:focus {
+        border-color: var(--gold);
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.22);
+      }
 
-  <main class="page">
-    <div class="header">
-      <div>
-        <h1>👥 จัดการผู้ใช้</h1>
-        <div class="sub">เพิ่มผู้ใช้ ลบผู้ใช้ และเปลี่ยน Role ของผู้ใช้</div>
+      .btn {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--red);
+        border-radius: 14px;
+        padding: 10px 14px;
+        font-weight: 900;
+        cursor: pointer;
+        text-decoration: none;
+        font-family: inherit;
+      }
+
+      .btn.primary {
+        background: linear-gradient(90deg, var(--red), var(--gold));
+        color: white;
+        border-color: transparent;
+      }
+
+      .btn.danger {
+        color: #b91c1c;
+        border-color: #fecaca;
+        background: #fff5f5;
+      }
+
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+      }
+
+      table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f0dfd0;
+        text-align: left;
+        font-size: 14px;
+      }
+
+      th {
+        background: #fff1e6;
+        color: var(--red);
+        font-weight: 900;
+      }
+
+      td {
+        background: #fffdf9;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      /* admin */
+      .badge.admin {
+        background: #fff1e6;
+        color: #8b1515;
+      }
+
+      /* manager */
+      .badge.manager {
+        background: #e0f2fe;
+        color: #0369a1;
+      }
+
+      /* staff */
+      .badge.staff {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      .empty {
+        color: var(--muted);
+        text-align: center;
+        padding: 24px;
+      }
+
+      @media (max-width: 900px) {
+        .page {
+          padding: 84px 18px 28px;
+        }
+
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">👑 Admin</div>
+      <nav class="nav">
+        <a href="admin.html">Dashboard</a>
+        <a href="admin-users.html" class="active">จัดการผู้ใช้</a>
+        <a href="admin-forms.html">จัดการฟอร์ม</a>
+        <a href="dashboard.html">Dashboard หลัก</a>
+        <a href="strategy-dashboard.html">Strategy Dashboard</a>
+        <a href="login.html">ออกจากระบบ</a>
+      </nav>
+    </aside>
+
+    <main class="page">
+      <div class="header">
+        <div>
+          <h1>👥 จัดการผู้ใช้</h1>
+          <div class="sub">เพิ่มผู้ใช้ ลบผู้ใช้ และเปลี่ยน Role ของผู้ใช้</div>
+        </div>
+
+        <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
       </div>
 
-      <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
-    </div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>เพิ่มผู้ใช้ใหม่</h2>
+        </div>
 
-    <section class="panel">
-      <div class="panel-head">
-        <h2>เพิ่มผู้ใช้ใหม่</h2>
-      </div>
+        <div class="form-row">
+          <input id="newUsername" placeholder="username" />
+          <input id="newPassword" placeholder="password" type="password" />
+          <select id="newRole">
+            <option value="staff">staff</option>
+            <option value="manager">manager</option>
+            <option value="admin">admin</option>
+          </select>
+          <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
+        </div>
 
-      <div class="form-row">
-        <input id="newUsername" placeholder="username" />
-        <input id="newPassword" placeholder="password" type="password" />
-        <select id="newRole">
-          <option value="staff">staff</option>
-          <option value="manager">manager</option>
-          <option value="admin">admin</option>
-        </select>
-        <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
-      </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Role ปัจจุบัน</th>
+                <th>เปลี่ยน Role</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <tr>
+                <td colspan="4" class="empty">กำลังโหลด...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Role ปัจจุบัน</th>
-              <th>เปลี่ยน Role</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="userTableBody">
-            <tr>
-              <td colspan="4" class="empty">กำลังโหลด...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    document.body.classList.remove("sidebar-open");
-
-    const hamburgerBtn = document.getElementById("hamburgerBtn");
-    const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-    hamburgerBtn.addEventListener("click", () => {
-      document.body.classList.toggle("sidebar-open");
-    });
-
-    sidebarOverlay.addEventListener("click", () => {
+    <script>
       document.body.classList.remove("sidebar-open");
-    });
 
-    document.querySelectorAll(".sidebar a").forEach((link) => {
-      link.addEventListener("click", () => {
+      const hamburgerBtn = document.getElementById("hamburgerBtn");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      hamburgerBtn.addEventListener("click", () => {
+        document.body.classList.toggle("sidebar-open");
+      });
+
+      sidebarOverlay.addEventListener("click", () => {
         document.body.classList.remove("sidebar-open");
       });
-    });
 
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        document.body.classList.remove("sidebar-open");
-      }
-    });
-  </script>
+      document.querySelectorAll(".sidebar a").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.body.classList.remove("sidebar-open");
+        });
+      });
 
-  <script src="admin-users.js"></script>
-</body>
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.body.classList.remove("sidebar-open");
+        }
+      });
+    </script>
+
+    <script src="admin-users.js"></script>
+  </body>
 </html>

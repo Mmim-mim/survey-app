@@ -1,42 +1,499 @@
 <!doctype html>
 <html lang="th">
-  <head>
-    <meta charset="UTF-8" />
-    <title>จัดการฟอร์ม</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>จัดการฟอร์ม</title>
 
-    <style>
-      body {
-        margin: 0;
-        font-family: sans-serif;
-        background: #fdf6ef;
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --red: #8b1515;
+      --red2: #b32626;
+      --gold: #c9a34e;
+      --bg: #fff7f0;
+      --card: #ffffff;
+      --line: #ead8c8;
+      --text: #241414;
+      --muted: #7b6b6b;
+      --shadow: 0 12px 30px rgba(139, 21, 21, 0.10);
+      --radius: 22px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans Thai", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(139,21,21,.10), transparent 32%),
+        radial-gradient(circle at top right, rgba(201,163,78,.20), transparent 34%),
+        linear-gradient(135deg, #fffaf5 0%, #fff1e5 100%);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+      padding: 24px 18px;
+      color: white;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      font-size: 26px;
+      font-weight: 900;
+      margin-bottom: 22px;
+      padding: 8px 10px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.25);
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-weight: 800;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .nav a:hover,
+    .nav a.active {
+      background: rgba(255,255,255,.18);
+    }
+
+    .admin-profile {
+      position: absolute;
+      bottom: 22px;
+      left: 18px;
+      right: 18px;
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.12);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #fff;
+      display: grid;
+      place-items: center;
+      color: var(--red);
+      font-weight: 900;
+    }
+
+    .page {
+      padding: 28px 34px 40px;
+      overflow-x: hidden;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--red);
+      font-size: 34px;
+      font-weight: 900;
+    }
+
+    .sub {
+      margin-top: 6px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--red);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      justify-content: center;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, var(--red), var(--gold));
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 10px 20px rgba(139,21,21,.15);
+    }
+
+    .btn.danger {
+      color: #dc2626;
+      border-color: #fecaca;
+      background: #fff5f5;
+    }
+
+    .filter-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr 1fr auto;
+      gap: 14px;
+      margin-bottom: 16px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 46px;
+      border: 1px solid #e2c8b5;
+      border-radius: 14px;
+      padding: 0 14px;
+      background: #fff;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(201,163,78,.20);
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      background: #fff1e6;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .stat-value {
+      color: var(--red);
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+
+    .table-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1100px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0dfd0;
+      text-align: left;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    th {
+      background: #fff1e6;
+      color: var(--red);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    td {
+      background: #fffdf9;
+    }
+
+    tr:hover td {
+      background: #fff8f2;
+    }
+
+    .form-title {
+      font-weight: 900;
+      color: #241414;
+    }
+
+    .muted {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .owner-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .owner-badge.manager {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #dcfce7;
+      color: #15803d;
+    }
+
+    .status-badge.draft {
+      background: #fff7ed;
+      color: #c2410c;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .icon-btn {
+      min-width: 42px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--red);
+      font-weight: 900;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn.danger {
+      color: #dc2626;
+      border-color: #fecaca;
+      background: #fff5f5;
+    }
+
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 13px;
+      border-top: 1px solid #f0dfd0;
+      background: #fffdf9;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    @media (max-width: 1150px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .filter-card,
+      .stat-grid {
+        grid-template-columns: 1fr;
       }
 
       .page {
-        padding: 40px;
+        padding: 22px;
       }
+    }
+  </style>
+</head>
 
-      .card {
-        background: #fff;
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      }
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">👑 Admin</div>
 
-      h1 {
-        color: #8b0000;
-      }
-    </style>
-  </head>
+      <nav class="nav">
+        <a href="admin.html">🏠 Dashboard</a>
+        <a href="admin-users.html">👥 จัดการผู้ใช้</a>
+        <a href="admin-forms.html" class="active">📄 จัดการฟอร์ม</a>
+        <a href="dashboard.html">📊 Dashboard หลัก</a>
+        <a href="strategy-dashboard.html">🎯 Strategy Dashboard</a>
+        <a href="login.html">🚪 ออกจากระบบ</a>
+      </nav>
 
-  <body>
-    <div class="page">
-      <div class="card">
-        <h1>📄 จัดการฟอร์ม</h1>
+      <div class="admin-profile">
+        <div class="avatar">A</div>
+        <div>
+          <div style="font-weight:900;">Admin</div>
+          <div style="font-size:12px; opacity:.9;">admin</div>
+        </div>
+      </div>
+    </aside>
 
-        <p>หน้านี้สำหรับจัดการฟอร์มทั้งหมด</p>
+    <main class="page">
+      <div class="page-head">
+        <div>
+          <h1>📄 จัดการฟอร์ม</h1>
+          <div class="sub">ค้นหา ตรวจสอบ และจัดการฟอร์มทั้งหมดในระบบ</div>
+        </div>
+
+        <a href="from.html" class="btn primary">＋ สร้างฟอร์มใหม่</a>
+      </div>
+
+      <section class="filter-card">
+        <div class="field">
+          <label>ค้นหาชื่อฟอร์ม</label>
+          <input id="searchInput" placeholder="ค้นหาชื่อฟอร์ม..." />
+        </div>
+
+        <div class="field">
+          <label>เจ้าของ</label>
+          <select id="ownerFilter">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>ยุทธศาสตร์</label>
+          <select id="strategyFilter">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>เรียงลำดับ</label>
+          <select id="sortFilter">
+            <option value="latest">ล่าสุดก่อน</option>
+            <option value="oldest">เก่าสุดก่อน</option>
+            <option value="name">ชื่อฟอร์ม A-Z</option>
+          </select>
+        </div>
+
         <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
+      </section>
 
-        <div class="table-wrap" style="margin-top: 16px">
+      <section class="stat-grid">
+        <div class="stat">
+          <div class="stat-icon">📋</div>
+          <div>
+            <div class="stat-label">ฟอร์มทั้งหมด</div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-icon">✅</div>
+          <div>
+            <div class="stat-label">เปิดใช้งาน</div>
+            <div class="stat-value" id="statActive">0</div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-icon">✏️</div>
+          <div>
+            <div class="stat-label">ร่าง</div>
+            <div class="stat-value" id="statDraft">0</div>
+          </div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-icon">👥</div>
+          <div>
+            <div class="stat-label">เจ้าของฟอร์ม</div>
+            <div class="stat-value" id="statOwners">0</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="table-card">
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -44,19 +501,26 @@
                 <th>เจ้าของ</th>
                 <th>ยุทธศาสตร์</th>
                 <th>วันที่สร้าง</th>
+                <th>สถานะ</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody id="formTableBody">
               <tr>
-                <td colspan="5" class="empty">กำลังโหลด...</td>
+                <td colspan="6" class="empty">กำลังโหลด...</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <script src="admin-forms.js"></script>
-      </div>
-    </div>
-  </body>
+        <div class="footer-row">
+          <div id="resultCount">แสดง 0 รายการ</div>
+          <div>Admin Forms Management</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="admin-forms.js"></script>
+</body>
 </html>

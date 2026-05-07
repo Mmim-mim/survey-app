@@ -1,46 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
-<head>
-<meta charset="UTF-8" />
-<title>จัดการฟอร์ม</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>จัดการฟอร์ม</title>
 
-<style>
-body{
-  margin:0;
-  font-family:sans-serif;
-  background:#fdf6ef;
-}
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        background: #fdf6ef;
+      }
 
-.page{
-  padding:40px;
-}
+      .page {
+        padding: 40px;
+      }
 
-.card{
-  background:#fff;
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-}
+      .card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
 
-h1{
-  color:#8b0000;
-}
-</style>
-</head>
+      h1 {
+        color: #8b0000;
+      }
+    </style>
+  </head>
 
-<body>
+  <body>
+    <div class="page">
+      <div class="card">
+        <h1>📄 จัดการฟอร์ม</h1>
 
-<div class="page">
+        <p>หน้านี้สำหรับจัดการฟอร์มทั้งหมด</p>
+        <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
 
-  <div class="card">
-    <h1>📄 จัดการฟอร์ม</h1>
+        <div class="table-wrap" style="margin-top: 16px">
+          <table>
+            <thead>
+              <tr>
+                <th>ชื่อฟอร์ม</th>
+                <th>เจ้าของ</th>
+                <th>ยุทธศาสตร์</th>
+                <th>วันที่สร้าง</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="formTableBody">
+              <tr>
+                <td colspan="5" class="empty">กำลังโหลด...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <p>
-      หน้านี้สำหรับจัดการฟอร์มทั้งหมด
-    </p>
-  </div>
-
-</div>
-
-</body>
+        <script src="admin-forms.js"></script>
+      </div>
+    </div>
+  </body>
 </html>

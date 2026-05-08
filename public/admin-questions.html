@@ -172,9 +172,21 @@
 
       .form-grid {
         display: grid;
-        grid-template-columns: 180px 1fr 180px 150px 120px;
+        grid-template-columns: 180px 1fr 260px 180px 150px 120px;
         gap: 10px;
         align-items: start;
+      }
+
+      .form-grid > div {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+      }
+
+      .form-grid label {
+        height: 20px;
+        display: flex;
+        align-items: center;
       }
 
       label {
@@ -362,6 +374,23 @@
           </div>
 
           <div>
+            <label>ใช้ใน Dropdown / หัวข้อ</label>
+            <select id="usedInInput">
+              <option value="">เลือกหัวข้อ</option>
+              <option value="LibQUAL+TM > ความรู้สึกที่มีต่อบริการ">
+                LibQUAL+TM > ความรู้สึกที่มีต่อบริการ
+              </option>
+              <option value="LibQUAL+TM > การควบคุมสารสนเทศ">
+                LibQUAL+TM > การควบคุมสารสนเทศ
+              </option>
+              <option value="LibQUAL+TM > ห้องสมุดในฐานะสถานที่">
+                LibQUAL+TM > ห้องสมุดในฐานะสถานที่
+              </option>
+              <option value="คำถามทั่วไป">คำถามทั่วไป</option>
+            </select>
+          </div>
+
+          <div>
             <label>ประเภทคำถาม</label>
             <select id="typeInput">
               <option value="rating">rating</option>
@@ -398,8 +427,9 @@
             <thead>
               <tr>
                 <th style="width: 70px">ลำดับ</th>
-                <th style="width: 170px">หมวด</th>
+                <th style="width: 150px">หมวด</th>
                 <th>คำถาม</th>
+                <th style="width: 260px">ใช้ใน Dropdown</th>
                 <th style="width: 130px">ประเภท</th>
                 <th style="width: 130px">สถานะ</th>
                 <th style="width: 100px">Action</th>
@@ -407,7 +437,7 @@
             </thead>
             <tbody id="questionTableBody">
               <tr>
-                <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+                <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
               </tr>
             </tbody>
           </table>

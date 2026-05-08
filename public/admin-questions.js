@@ -2,6 +2,7 @@ const role = (localStorage.getItem("role") || "").trim();
 
 const categoryInput = document.getElementById("categoryInput");
 const questionInput = document.getElementById("questionInput");
+const usedInInput = document.getElementById("usedInInput");
 const typeInput = document.getElementById("typeInput");
 const statusInput = document.getElementById("statusInput");
 const btnAddQuestion = document.getElementById("btnAddQuestion");
@@ -34,7 +35,7 @@ function renderQuestions() {
   if (!questions.length) {
     questionTableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+        <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
       </tr>
     `;
     return;
@@ -47,10 +48,11 @@ function renderQuestions() {
           <td>${index + 1}</td>
           <td>${esc(q.category)}</td>
           <td>${esc(q.question)}</td>
-          <td>
-            <span class="badge ${esc(q.type)}">${esc(q.type)}</span>
-          </td>
-          <td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
+<td>${esc(q.usedIn || "-")}</td>
+<td>
+  <span class="badge ${esc(q.type)}">${esc(q.type)}</span>
+</td>
+<td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
           <td>
             <button class="btn danger" onclick="deleteQuestion(${index})">ลบ</button>
           </td>
@@ -62,28 +64,30 @@ function renderQuestions() {
 
 function addQuestion() {
   const category = categoryInput.value.trim();
-  const question = questionInput.value.trim();
-  const type = typeInput.value;
-  const status = statusInput.value;
+const question = questionInput.value.trim();
+const usedIn = usedInInput.value.trim();
+const type = typeInput.value;
+const status = statusInput.value;
 
-  if (!category || !question) {
-    alert("กรุณากรอกหมวดคำถามและคำถาม");
-    return;
-  }
-
+  if (!category || !question || !usedIn) {
+  alert("กรุณากรอกหมวดคำถาม คำถาม และเลือก Dropdown/หัวข้อ");
+  return;
+}
   questions.push({
-    category,
-    question,
-    type,
-    status,
-  });
+  category,
+  question,
+  usedIn,
+  type,
+  status,
+});
 
   saveQuestions();
 
   categoryInput.value = "";
-  questionInput.value = "";
-  typeInput.value = "rating";
-  statusInput.value = "active";
+questionInput.value = "";
+usedInInput.value = "";
+typeInput.value = "rating";
+statusInput.value = "active";
 
   renderQuestions();
 }

@@ -47,18 +47,55 @@
       }
 
       .layout {
-        display: grid;
-        grid-template-columns: 260px 1fr;
+        display: block;
         min-height: 100vh;
       }
 
       .sidebar {
-        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-        padding: 24px 18px;
-        color: white;
-        position: sticky;
+        position: fixed;
         top: 0;
+        left: -280px;
+        width: 280px;
         height: 100vh;
+        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+        padding: 86px 22px 22px;
+        color: white;
+        z-index: 2000;
+        transition: left 0.28s ease;
+        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
+      }
+
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.38);
+        display: none;
+        z-index: 1500;
+      }
+
+      body.sidebar-open .sidebar-overlay {
+        display: block;
+      }
+
+      .hamburger {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 2100;
+        width: 46px;
+        height: 46px;
+        border: 1px solid #ead8c8;
+        border-radius: 14px;
+        background: #fff;
+        color: #8b1515;
+        font-size: 24px;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
       }
 
       .brand {
@@ -405,6 +442,9 @@
   </head>
 
   <body>
+    <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <div class="layout">
       <aside class="sidebar">
         <div class="brand">👑 Admin</div>
@@ -530,6 +570,33 @@
         </section>
       </main>
     </div>
+
+    <script>
+      document.body.classList.remove("sidebar-open");
+
+      const hamburgerBtn = document.getElementById("hamburgerBtn");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+      hamburgerBtn.addEventListener("click", () => {
+        document.body.classList.toggle("sidebar-open");
+      });
+
+      sidebarOverlay.addEventListener("click", () => {
+        document.body.classList.remove("sidebar-open");
+      });
+
+      document.querySelectorAll(".sidebar a").forEach((link) => {
+        link.addEventListener("click", () => {
+          document.body.classList.remove("sidebar-open");
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          document.body.classList.remove("sidebar-open");
+        }
+      });
+    </script>
 
     <script src="admin-forms.js"></script>
   </body>

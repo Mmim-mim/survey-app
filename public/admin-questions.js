@@ -9,8 +9,6 @@ const btnAddQuestion = document.getElementById("btnAddQuestion");
 const btnClearDemo = document.getElementById("btnClearDemo");
 const questionTableBody = document.getElementById("questionTableBody");
 
-let questions = JSON.parse(localStorage.getItem("questionBankDemo") || "[]");
-
 function guardAdmin() {
   if (role !== "admin") {
     alert("หน้านี้สำหรับ admin เท่านั้น");
@@ -27,12 +25,28 @@ function esc(s) {
     .replaceAll("'", "&#039;");
 }
 
-function saveQuestions() {
-  localStorage.setItem("questionBankDemo", JSON.stringify(questions));
+async function api(path, options = {}) {
+  const res = await fetch(path, {
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new Error(json.error || "เกิดข้อผิดพลาด");
+  }
+
+  return json;
 }
 
-function renderQuestions() {
-  if (!questions.length) {
+async function loadQuestions() {
+  const rows = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
+
+  if (!rows.length) {
     questionTableBody.innerHTML = `
       <tr>
         <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
@@ -41,20 +55,18 @@ function renderQuestions() {
     return;
   }
 
-  questionTableBody.innerHTML = questions
+  questionTableBody.innerHTML = rows
     .map((q, index) => {
       return `
         <tr>
           <td>${index + 1}</td>
           <td>${esc(q.category)}</td>
-          <td>${esc(q.question)}</td>
-<td>${esc(q.usedIn || "-")}</td>
-<td>
-  <span class="badge ${esc(q.type)}">${esc(q.type)}</span>
-</td>
-<td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
+          <td>${esc(q.question_text)}</td>
+          <td>${esc(q.used_in_label)}</td>
+          <td><span class="badge ${esc(q.question_type)}">${esc(q.question_type)}</span></td>
+          <td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
           <td>
-            <button class="btn danger" onclick="deleteQuestion(${index})">ลบ</button>
+            <button class="btn danger" onclick="deleteQuestion(${q.id})">ลบ</button>
           </td>
         </tr>
       `;
@@ -62,56 +74,58 @@ function renderQuestions() {
     .join("");
 }
 
-function addQuestion() {
+async function addQuestion() {
   const category = categoryInput.value.trim();
-const question = questionInput.value.trim();
-const usedIn = usedInInput.value.trim();
-const type = typeInput.value;
-const status = statusInput.value;
+  const question_text = questionInput.value.trim();
+  const datalist_id = usedInInput.value.trim();
+  const used_in_label =
+    usedInInput.options[usedInInput.selectedIndex]?.textContent.trim() || "";
+  const question_type = typeInput.value;
+  const status = statusInput.value;
 
-  if (!category || !question || !usedIn) {
-  alert("กรุณากรอกหมวดคำถาม คำถาม และเลือก Dropdown/หัวข้อ");
-  return;
-}
-  questions.push({
-  category,
-  question,
-  usedIn,
-  type,
-  status,
-});
+  if (!category || !question_text || !datalist_id) {
+    alert("กรุณากรอกหมวดคำถาม คำถาม และเลือก Dropdown/หัวข้อ");
+    return;
+  }
 
-  saveQuestions();
+  await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
+    method: "POST",
+    body: JSON.stringify({
+      category,
+      question_text,
+      used_in_label,
+      datalist_id,
+      question_type,
+      status,
+    }),
+  });
 
   categoryInput.value = "";
-questionInput.value = "";
-usedInInput.value = "";
-typeInput.value = "rating";
-statusInput.value = "active";
+  questionInput.value = "";
+  usedInInput.value = "";
+  typeInput.value = "rating";
+  statusInput.value = "active";
 
-  renderQuestions();
+  await loadQuestions();
 }
 
-function deleteQuestion(index) {
+async function deleteQuestion(id) {
   if (!confirm("ต้องการลบคำถามนี้ใช่ไหม?")) return;
 
-  questions.splice(index, 1);
-  saveQuestions();
-  renderQuestions();
-}
+  await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
+    method: "DELETE",
+  });
 
-function clearDemo() {
-  if (!confirm("ต้องการล้างข้อมูลคำถามตัวอย่างทั้งหมดใช่ไหม?")) return;
-
-  questions = [];
-  saveQuestions();
-  renderQuestions();
+  await loadQuestions();
 }
 
 window.deleteQuestion = deleteQuestion;
 
 btnAddQuestion.addEventListener("click", addQuestion);
-btnClearDemo.addEventListener("click", clearDemo);
+
+if (btnClearDemo) {
+  btnClearDemo.style.display = "none";
+}
 
 guardAdmin();
-renderQuestions();
+loadQuestions();

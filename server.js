@@ -1145,6 +1145,90 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
   }
 });
 
+/** -----------------------------
+ *  QUESTION BANK API
+ * ----------------------------- */
+
+// ดึงคำถามทั้งหมด สำหรับหน้า admin
+app.get("/api/admin/questions", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const [rows] = await pool.execute(`
+      SELECT id, category, question_text, used_in_label, datalist_id, question_type, status, created_at
+      FROM question_bank
+      ORDER BY id DESC
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// เพิ่มคำถาม
+app.post("/api/admin/questions", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const category = String(req.body.category || "").trim();
+    const question_text = String(req.body.question_text || "").trim();
+    const used_in_label = String(req.body.used_in_label || "").trim();
+    const datalist_id = String(req.body.datalist_id || "").trim();
+    const question_type = String(req.body.question_type || "rating").trim();
+    const status = String(req.body.status || "active").trim();
+
+    if (!category || !question_text || !used_in_label || !datalist_id) {
+      return res.status(400).json({ error: "กรุณากรอกข้อมูลให้ครบ" });
+    }
+
+    const [result] = await pool.execute(
+      `INSERT INTO question_bank
+       (category, question_text, used_in_label, datalist_id, question_type, status)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [category, question_text, used_in_label, datalist_id, question_type, status]
+    );
+
+    res.json({ ok: true, id: result.insertId });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ลบคำถาม
+app.delete("/api/admin/questions/:id", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    await pool.execute(`DELETE FROM question_bank WHERE id = ?`, [id]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ดึงคำถาม active ไปใช้ใน from.html
+app.get("/api/question-bank/active", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT datalist_id, question_text
+      FROM question_bank
+      WHERE status = 'active'
+      ORDER BY id ASC
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -618,8 +618,6 @@
         border-color: #c9a34e;
         box-shadow: 0 8px 16px rgba(155, 28, 28, 0.08);
       }
-      
-      
     </style>
   </head>
 
@@ -1872,8 +1870,48 @@
         });
       });
 
+      async function loadQuestionBankIntoDatalists() {
+        try {
+          const res = await fetch("/api/question-bank/active");
+          const rows = await res.json();
+
+          if (!res.ok || !Array.isArray(rows) || rows.length === 0) {
+            return;
+          }
+
+          const grouped = {};
+
+          rows.forEach((row) => {
+            const listId = String(row.datalist_id || "").trim();
+            const text = String(row.question_text || "").trim();
+
+            if (!listId || !text) return;
+
+            if (!grouped[listId]) grouped[listId] = [];
+            grouped[listId].push(text);
+          });
+
+          Object.entries(grouped).forEach(([listId, questions]) => {
+            const datalist = document.getElementById(listId);
+            if (!datalist) return;
+
+            datalist.innerHTML = "";
+
+            questions.forEach((q) => {
+              const option = document.createElement("option");
+              option.value = q;
+              datalist.appendChild(option);
+            });
+          });
+        } catch (err) {
+          console.warn("load question bank failed:", err);
+        }
+      }
+
       window.addEventListener("DOMContentLoaded", async () => {
         try {
+          await loadQuestionBankIntoDatalists();
+
           if (pageMode === "edit") {
             await loadFormForEdit();
           } else if (pageMode === "copy") {

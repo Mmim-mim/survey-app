@@ -68,6 +68,9 @@
       body.sidebar-open .sidebar {
         left: 0;
       }
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
 
       .sidebar-overlay {
         position: fixed;
@@ -153,8 +156,15 @@
       }
 
       .page {
-        padding: 28px 34px 40px;
-        overflow-x: hidden;
+        padding: 28px 42px 42px;
+        max-width: 1300px;
+        margin: 0 auto;
+        width: 100%;
+        transition: transform 0.28s ease;
+      }
+
+      body.sidebar-open .page {
+        transform: translateX(280px);
       }
 
       .page-head {

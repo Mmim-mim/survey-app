@@ -437,8 +437,8 @@
 
           <div class="chart-grid">
             <div class="chart-card">
-              <h3>ฟอร์มตามเจ้าของ</h3>
-              <canvas id="ownerChart"></canvas>
+              <h3>ฟอร์มตามฝ่าย</h3>
+              <canvas id="departmentChart"></canvas>
             </div>
 
             <div class="chart-card">
@@ -524,26 +524,34 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-      const ownerChart = new Chart(document.getElementById("ownerChart"), {
-        type: "doughnut",
-        data: {
-          labels: ["manager", "staff"],
-          datasets: [
-            {
-              data: [12, 7],
-              borderWidth: 0,
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              position: "bottom",
+      const departmentChart = new Chart(
+        document.getElementById("departmentChart"),
+        {
+          type: "doughnut",
+          data: {
+            labels: [
+              "ฝ่ายเลขานุการ",
+              "ฝ่ายบริการ",
+              "ฝ่ายพัฒนา",
+              "ฝ่ายเทคโนโลยี",
+            ],
+            datasets: [
+              {
+                data: [5, 8, 4, 2],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+              },
             },
           },
         },
-      });
+      );
 
       const statusChart = new Chart(document.getElementById("statusChart"), {
         type: "bar",

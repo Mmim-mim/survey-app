@@ -198,6 +198,75 @@
         margin-bottom: 18px;
       }
 
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .quick-card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 20px;
+        text-decoration: none;
+        color: var(--text);
+        transition: 0.2s ease;
+      }
+
+      .quick-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--gold);
+      }
+
+      .quick-icon {
+        font-size: 30px;
+        margin-bottom: 12px;
+      }
+
+      .quick-title {
+        font-size: 18px;
+        font-weight: 900;
+        color: var(--red);
+        margin-bottom: 6px;
+      }
+
+      .quick-desc {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .recent-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .recent-table th,
+      .recent-table td {
+        padding: 14px;
+        border-bottom: 1px solid #f0dfd0;
+        text-align: left;
+      }
+
+      .recent-table th {
+        color: var(--red);
+        background: #fff7f1;
+        font-weight: 900;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #15803d;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
       .card,
       .panel {
         background: var(--card);
@@ -261,6 +330,10 @@
         .cards {
           grid-template-columns: 1fr;
         }
+
+        .quick-grid {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -298,20 +371,85 @@
             <div class="kpi-label">จำนวนผู้ใช้</div>
             <div class="kpi-value" id="kpiUsers">0</div>
           </div>
+
           <div class="card">
             <div class="kpi-label">จำนวนฟอร์ม</div>
             <div class="kpi-value" id="kpiForms">0</div>
           </div>
+
           <div class="card">
             <div class="kpi-label">จำนวนคำตอบ</div>
             <div class="kpi-value" id="kpiSubmissions">0</div>
           </div>
+
           <div class="card">
             <div class="kpi-label">จำนวน Admin</div>
             <div class="kpi-value" id="kpiAdmins">0</div>
           </div>
         </div>
-        
+
+        <section class="quick-grid">
+          <a href="from.html" class="quick-card">
+            <div class="quick-icon">📄</div>
+            <div class="quick-title">สร้างฟอร์ม</div>
+            <div class="quick-desc">สร้างแบบประเมินหรือแบบสอบถามใหม่</div>
+          </a>
+
+          <a href="admin-users.html" class="quick-card">
+            <div class="quick-icon">👥</div>
+            <div class="quick-title">จัดการผู้ใช้</div>
+            <div class="quick-desc">เพิ่ม ลบ และจัดการสิทธิ์ผู้ใช้งาน</div>
+          </a>
+
+          <a href="admin-questions.html" class="quick-card">
+            <div class="quick-icon">📝</div>
+            <div class="quick-title">จัดการคำถาม</div>
+            <div class="quick-desc">จัดการ Question Bank และ Dropdown</div>
+          </a>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>📋 ฟอร์มล่าสุด</h2>
+            <span class="badge">Recent Forms</span>
+          </div>
+
+          <table class="recent-table">
+            <thead>
+              <tr>
+                <th>ชื่อฟอร์ม</th>
+                <th>เจ้าของ</th>
+                <th>สถานะ</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>แบบประเมินความพึงพอใจห้องสมุด</td>
+                <td>manager</td>
+                <td>
+                  <span class="status-pill">เปิดใช้งาน</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>แบบประเมินกิจกรรม</td>
+                <td>staff</td>
+                <td>
+                  <span class="status-pill">เปิดใช้งาน</span>
+                </td>
+              </tr>
+
+              <tr>
+                <td>แบบสอบถามเว็บไซต์</td>
+                <td>manager</td>
+                <td>
+                  <span class="status-pill">เปิดใช้งาน</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
       </main>
     </div>
 

@@ -251,6 +251,27 @@
         text-align: left;
       }
 
+      .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .chart-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        border: 1px solid #f1dfd2;
+      }
+
+      .chart-card h3 {
+        margin-bottom: 20px;
+        color: #7a120d;
+        font-size: 18px;
+      }
+
       .recent-table th {
         color: var(--red);
         background: #fff7f1;
@@ -389,10 +410,10 @@
         </div>
 
         <section class="quick-grid">
-          <a href="from.html" class="quick-card">
-            <div class="quick-icon">📄</div>
-            <div class="quick-title">สร้างฟอร์ม</div>
-            <div class="quick-desc">สร้างแบบประเมินหรือแบบสอบถามใหม่</div>
+          <a href="admin-forms.html" class="quick-card">
+            <div class="quick-icon">🗂️</div>
+            <div class="quick-title">จัดการฟอร์ม</div>
+            <div class="quick-desc">ตรวจสอบ แก้ไข และจัดการฟอร์มทั้งหมด</div>
           </a>
 
           <a href="admin-users.html" class="quick-card">
@@ -406,6 +427,25 @@
             <div class="quick-title">จัดการคำถาม</div>
             <div class="quick-desc">จัดการ Question Bank และ Dropdown</div>
           </a>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>📊 ภาพรวมระบบ</h2>
+            <span class="badge">Dashboard Analytics</span>
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart-card">
+              <h3>ฟอร์มตามเจ้าของ</h3>
+              <canvas id="ownerChart"></canvas>
+            </div>
+
+            <div class="chart-card">
+              <h3>ฟอร์มตามสถานะ</h3>
+              <canvas id="statusChart"></canvas>
+            </div>
+          </div>
         </section>
 
         <section class="panel">
@@ -481,5 +521,50 @@
     </script>
 
     <script src="admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+              const ownerChart = new Chart(
+        document.getElementById("ownerChart"),
+        {
+          type: "doughnut",
+          data: {
+            labels: ["manager", "staff"],
+            datasets: [{
+              data: [12, 7],
+              borderWidth: 0
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom"
+              }
+            }
+          }
+        }
+      );
+
+      const statusChart = new Chart(
+        document.getElementById("statusChart"),
+        {
+          type: "bar",
+          data: {
+            labels: ["เปิดใช้งาน", "ร่าง"],
+            datasets: [{
+              data: [12, 7],
+              borderRadius: 12
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false
+              }
+            }
+          }
+        }
+      );
+    </script>
   </body>
 </html>

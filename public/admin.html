@@ -251,13 +251,39 @@
         text-align: left;
       }
 
-      .chart-grid {
+      .analytics-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        grid-template-columns: 1fr 1fr;
         gap: 20px;
         margin-top: 20px;
       }
 
+      .strategy-stack {
+        display: grid;
+        gap: 20px;
+      }
+
+      .chart-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        border: 1px solid #f1dfd2;
+      }
+
+      .department-card {
+        min-height: 430px;
+      }
+
+      .chart-card h3 {
+        margin: 0 0 20px;
+        color: #7a120d;
+        font-size: 18px;
+      }
+
+      .chart-card canvas {
+        max-height: 340px;
+      }
       .chart-card {
         background: #fff;
         border-radius: 20px;
@@ -355,6 +381,10 @@
         .quick-grid {
           grid-template-columns: 1fr;
         }
+
+        .analytics-layout {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -435,15 +465,22 @@
             <span class="badge">Dashboard Analytics</span>
           </div>
 
-          <div class="chart-grid">
-            <div class="chart-card">
+          <div class="analytics-layout">
+            <div class="chart-card department-card">
               <h3>ฟอร์มตามฝ่าย</h3>
               <canvas id="departmentChart"></canvas>
             </div>
 
-            <div class="chart-card">
-              <h3>ฟอร์มตามสถานะ</h3>
-              <canvas id="statusChart"></canvas>
+            <div class="strategy-stack">
+              <div class="chart-card">
+                <h3>ฟอร์มตามยุทธศาสตร์มหาวิทยาลัย</h3>
+                <canvas id="uniStrategyChart"></canvas>
+              </div>
+
+              <div class="chart-card">
+                <h3>ฟอร์มตามยุทธศาสตร์ห้องสมุด</h3>
+                <canvas id="centerStrategyChart"></canvas>
+              </div>
             </div>
           </div>
         </section>
@@ -524,43 +561,68 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script>
-      const departmentChart = new Chart(
-        document.getElementById("departmentChart"),
-        {
-          type: "doughnut",
-          data: {
-            labels: [
-              "ฝ่ายเลขานุการ",
-              "ฝ่ายบริการ",
-              "ฝ่ายพัฒนา",
-              "ฝ่ายเทคโนโลยี",
-            ],
-            datasets: [
-              {
-                data: [5, 8, 4, 2],
-                borderWidth: 0,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              legend: {
-                position: "bottom",
-              },
+      new Chart(document.getElementById("departmentChart"), {
+        type: "doughnut",
+        data: {
+          labels: ["ฝ่ายเลขานุการ", "ฝ่ายบริการ", "ฝ่ายพัฒนา", "ฝ่ายเทคโนโลยี"],
+          datasets: [
+            {
+              data: [5, 7, 4, 2],
+              borderWidth: 0,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "bottom",
             },
           },
         },
-      );
+      });
 
-      const statusChart = new Chart(document.getElementById("statusChart"), {
+      new Chart(document.getElementById("uniStrategyChart"), {
         type: "bar",
         data: {
-          labels: ["เปิดใช้งาน", "ร่าง"],
+          labels: [
+            "ยุทธศาสตร์ที่ 1",
+            "ยุทธศาสตร์ที่ 2",
+            "ยุทธศาสตร์ที่ 3",
+            "ยุทธศาสตร์ที่ 4",
+          ],
           datasets: [
             {
-              data: [12, 7],
-              borderRadius: 12,
+              label: "จำนวนฟอร์ม",
+              data: [8, 5, 3, 2],
+              borderRadius: 10,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: false,
+            },
+          },
+        },
+      });
+
+      new Chart(document.getElementById("centerStrategyChart"), {
+        type: "bar",
+        data: {
+          labels: [
+            "ยุทธศาสตร์ที่ 1",
+            "ยุทธศาสตร์ที่ 2",
+            "ยุทธศาสตร์ที่ 3",
+            "ยุทธศาสตร์ที่ 4",
+          ],
+          datasets: [
+            {
+              label: "จำนวนฟอร์ม",
+              data: [6, 4, 3, 1],
+              borderRadius: 10,
             },
           ],
         },

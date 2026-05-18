@@ -183,7 +183,7 @@
 
       .form-grid {
         display: grid;
-        grid-template-columns: 180px 1fr 260px 180px 150px 120px;
+        grid-template-columns: 1fr 280px 180px 150px 120px;
         gap: 10px;
         align-items: start;
       }
@@ -372,11 +372,6 @@
 
         <div class="form-grid">
           <div>
-            <label>หมวดคำถาม</label>
-            <input id="categoryInput" placeholder="เช่น การบริการ" />
-          </div>
-
-          <div>
             <label>คำถาม</label>
             <textarea
               id="questionInput"
@@ -497,7 +492,6 @@
             <thead>
               <tr>
                 <th style="width: 70px">ลำดับ</th>
-                <th style="width: 150px">หมวด</th>
                 <th>คำถาม</th>
                 <th style="width: 260px">ใช้ใน Dropdown</th>
                 <th style="width: 130px">ประเภท</th>
@@ -507,7 +501,7 @@
             </thead>
             <tbody id="questionTableBody">
               <tr>
-                <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
+                <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
               </tr>
             </tbody>
           </table>

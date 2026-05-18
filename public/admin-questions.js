@@ -1,6 +1,5 @@
 const role = (localStorage.getItem("role") || "").trim();
 
-const categoryInput = document.getElementById("categoryInput");
 const questionInput = document.getElementById("questionInput");
 const usedInInput = document.getElementById("usedInInput");
 const typeInput = document.getElementById("typeInput");
@@ -49,7 +48,7 @@ async function loadQuestions() {
   if (!rows.length) {
     questionTableBody.innerHTML = `
       <tr>
-        <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
+        <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
       </tr>
     `;
     return;
@@ -60,7 +59,6 @@ async function loadQuestions() {
       return `
         <tr>
           <td>${index + 1}</td>
-          <td>${esc(q.category)}</td>
           <td>${esc(q.question_text)}</td>
           <td>${esc(q.used_in_label)}</td>
           <td><span class="badge ${esc(q.question_type)}">${esc(q.question_type)}</span></td>
@@ -75,7 +73,7 @@ async function loadQuestions() {
 }
 
 async function addQuestion() {
-  const category = categoryInput.value.trim();
+
   const question_text = questionInput.value.trim();
   const datalist_id = usedInInput.value.trim();
   const used_in_label =
@@ -83,15 +81,14 @@ async function addQuestion() {
   const question_type = typeInput.value;
   const status = statusInput.value;
 
-  if (!category || !question_text || !datalist_id) {
-    alert("กรุณากรอกหมวดคำถาม คำถาม และเลือก Dropdown/หัวข้อ");
-    return;
-  }
-
+  if (!question_text || !datalist_id) {
+  alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
+  return;
+}
   await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
     method: "POST",
     body: JSON.stringify({
-      category,
+      category: used_in_label,
       question_text,
       used_in_label,
       datalist_id,
@@ -100,7 +97,6 @@ async function addQuestion() {
     }),
   });
 
-  categoryInput.value = "";
   questionInput.value = "";
   usedInInput.value = "";
   typeInput.value = "rating";

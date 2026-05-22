@@ -421,7 +421,7 @@ const PORT = process.env.PORT || 3000;
 // 1) บันทึกฟอร์ม
  app.post("/api/forms", async (req, res) => {
   try {
-    const {
+   const {
   created_by,
   created_by_username,
   form_title,
@@ -434,6 +434,7 @@ const PORT = process.env.PORT || 3000;
   kpi_quality,
   start_date,
   end_date,
+  attachment_url,
   form,
 } = req.body || {};
 
@@ -443,27 +444,28 @@ const PORT = process.env.PORT || 3000;
 
     const form_json = JSON.stringify(form);
 
-    const [result] = await pool.execute(
-      `INSERT INTO survey_forms
-      (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
-      kpi_quantity, kpi_quality, start_date, end_date, form_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-     [
-      created_by || null,
-      created_by_username || null,
-      form_title || null,
-      dept_name || null,
-      uni_strategy || null,
-      center_strategy || null,
-      center_mission || null,
-      goal_text || null,
-      kpi_quantity || null,
-      kpi_quality || null,
-      start_date || null,
-      end_date || null,
-      form_json,
-    ]
-    );
+   const [result] = await pool.execute(
+  `INSERT INTO survey_forms
+  (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
+  kpi_quantity, kpi_quality, start_date, end_date, attachment_url, form_json)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  [
+    created_by || null,
+    created_by_username || null,
+    form_title || null,
+    dept_name || null,
+    uni_strategy || null,
+    center_strategy || null,
+    center_mission || null,
+    goal_text || null,
+    kpi_quantity || null,
+    kpi_quality || null,
+    start_date || null,
+    end_date || null,
+    attachment_url || null,
+    form_json,
+  ]
+);
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
@@ -513,7 +515,7 @@ app.get("/api/forms/:id", async (req, res) => {
       `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
               goal_text, kpi_quantity, kpi_quality,
-              start_date, end_date, form_json
+              start_date, end_date, attachment_url, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -537,6 +539,7 @@ app.get("/api/forms/:id", async (req, res) => {
       id: r.id,
       created_at: r.created_at,
       created_by: r.created_by,
+      attachment_url: r.attachment_url,
       created_by_username: r.created_by_username,
       form_title: r.form_title,
       dept_name: r.dept_name,

@@ -321,6 +321,25 @@
         <p id="heroSubtitle"></p>
       </div>
 
+      <div id="attachmentBox" class="section" style="display: none">
+        <div class="title">เอกสาร / รูปภาพประกอบ</div>
+
+        <a
+          id="attachmentLink"
+          href="#"
+          target="_blank"
+          rel="noopener noreferrer"
+          style="
+            color: #9b1c1c;
+            font-weight: 700;
+            text-decoration: none;
+            word-break: break-all;
+          "
+        >
+          เปิดดูเอกสารประกอบ
+        </a>
+      </div>
+
       <!-- ข้อมูลโครงการ -->
       <div class="section" id="projectInfo">
         <div class="title">ข้อมูลโครงการ</div>
@@ -1122,6 +1141,8 @@
               kpi_quality: json.kpi_quality ?? json.form?.kpi_quality ?? "",
               start_date: json.start_date ?? json.form?.start_date ?? "",
               end_date: json.end_date ?? json.form?.end_date ?? "",
+              attachment_url:
+                json.attachment_url ?? json.form?.attachment_url ?? "",
             };
           } catch (err) {
             console.error(err);
@@ -1138,6 +1159,18 @@
         }
 
         renderPage();
+
+        const attachmentBox = document.getElementById("attachmentBox");
+        const attachmentLink = document.getElementById("attachmentLink");
+        const attachmentUrl = String(data.attachment_url || "").trim();
+
+        if (attachmentBox && attachmentLink && attachmentUrl) {
+          attachmentBox.style.display = "block";
+          attachmentLink.href = attachmentUrl;
+          attachmentLink.textContent = attachmentUrl;
+        } else if (attachmentBox) {
+          attachmentBox.style.display = "none";
+        }
       }
 
       loadData();

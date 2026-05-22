@@ -646,6 +646,30 @@
             name="form_desc"
             placeholder="คำอธิบาย (ถ้ามี)"
           ></textarea>
+          <textarea
+            class="subtitle-inp"
+            placeholder="คำอธิบายแบบประเมิน"
+          ></textarea>
+
+          <div style="margin-top: 16px">
+            <label
+              style="
+                display: block;
+                font-weight: 700;
+                margin-bottom: 8px;
+                color: #7a1414;
+              "
+            >
+              ลิงก์รูปภาพ / เอกสารประกอบ
+            </label>
+
+            <input
+              type="url"
+              id="attachmentUrl"
+              class="input"
+              placeholder="https://drive.google.com/... หรือ URL อื่น ๆ"
+            />
+          </div>
         </div>
 
         <!-- ====== ตัวชี้วัด ====== -->
@@ -1966,6 +1990,10 @@
               kpi_quality: formData.kpi_quality,
               start_date: formData.start_date || null,
               end_date: formData.end_date || null,
+
+              attachment_url:
+                document.getElementById("attachmentUrl")?.value.trim() || "",
+
               form: formData,
             };
 

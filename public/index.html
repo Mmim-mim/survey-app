@@ -614,6 +614,21 @@
             .map((r, i) => {
               const dateText = formatDateRange(r.start_date, r.end_date);
 
+              const currentUser = String(username || "")
+                .trim()
+                .toLowerCase();
+              const ownerUser = String(
+                r.created_by_username || r.created_by || "",
+              )
+                .trim()
+                .toLowerCase();
+
+              const canEdit = currentUser === ownerUser;
+
+              const editButton = canEdit
+                ? `<button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>`
+                : "";
+
               return `
 <tr>
   <td style="text-align:center;">${i + 1}</td>
@@ -629,7 +644,7 @@
   <div class="action-icons">
     <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
     <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">📋</button>
-    <button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>
+    ${editButton}
     <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">📄</button>
   </div>
 </td>

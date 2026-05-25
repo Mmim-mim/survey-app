@@ -22,8 +22,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 });
 
 function safeJsonParse(s) {
@@ -44,7 +44,7 @@ function parseSubmissionPayload(payloadJson) {
     ? p.comments
     : Array.isArray(p.suggestions)
       ? p.suggestions
-      : (typeof p.suggestion === "string" && p.suggestion.trim())
+      : typeof p.suggestion === "string" && p.suggestion.trim()
         ? [p.suggestion.trim()]
         : [];
 
@@ -103,7 +103,7 @@ app.post("/api/login", async (req, res) => {
 
     const [rows] = await pool.execute(
       "SELECT id, username, password, display_name, role FROM users WHERE username = ? LIMIT 1",
-      [String(username).trim()]
+      [String(username).trim()],
     );
 
     if (!rows.length) {
@@ -120,12 +120,12 @@ app.post("/api/login", async (req, res) => {
     res.json({
       ok: true,
       user: {
-      id: user.id,
-      username: user.username,
-      display_name: user.display_name || user.username,
-      role: user.role || "staff",
-    },
-  });
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name || user.username,
+        role: user.role || "staff",
+      },
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -143,7 +143,7 @@ app.post("/api/submissions", async (req, res) => {
 
     const [result] = await pool.execute(
       "INSERT INTO submissions (created_by, form_title, payload_json) VALUES (?, ?, ?)",
-      [created_by || null, form_title || null, payload_json]
+      [created_by || null, form_title || null, payload_json],
     );
 
     res.json({ ok: true, id: result.insertId });
@@ -158,7 +158,7 @@ app.post("/api/submissions", async (req, res) => {
 app.get("/api/submissions", async (req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT id, created_at, created_by, form_title FROM submissions ORDER BY id DESC LIMIT 200"
+      "SELECT id, created_at, created_by, form_title FROM submissions ORDER BY id DESC LIMIT 200",
     );
     res.json(rows);
   } catch (e) {
@@ -183,14 +183,14 @@ app.get("/api/dashboard/options", async (req, res) => {
     const params = [];
 
     if (role !== "manager") {
-     const [forms] = await pool.execute(
-  "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
-  [username]
-);
+      const [forms] = await pool.execute(
+        "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+        [username],
+      );
 
-const formTitles = forms
-  .map((f) => String(f.form_title || "").trim())
-  .filter(Boolean);
+      const formTitles = forms
+        .map((f) => String(f.form_title || "").trim())
+        .filter(Boolean);
       if (formTitles.length > 0) {
         sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
         params.push(...formTitles);
@@ -233,7 +233,9 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const formTitle = String(req.query.form_title || "").trim();
     const dateFrom = String(req.query.date_from || "").trim();
     const dateTo = String(req.query.date_to || "").trim();
-    const fiscalYear = req.query.fiscal_year ? Number(req.query.fiscal_year) : null;
+    const fiscalYear = req.query.fiscal_year
+      ? Number(req.query.fiscal_year)
+      : null;
     const deptQ = String(req.query.dept || "").trim();
 
     let sql = `
@@ -244,22 +246,22 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const params = [];
 
     if (role !== "manager") {
-  const [forms] = await pool.execute(
-    "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
-    [username]
-  );
+      const [forms] = await pool.execute(
+        "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+        [username],
+      );
 
-  const formTitles = forms
-    .map((f) => String(f.form_title || "").trim())
-    .filter(Boolean);
+      const formTitles = forms
+        .map((f) => String(f.form_title || "").trim())
+        .filter(Boolean);
 
-  if (formTitles.length > 0) {
-    sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
-    params.push(...formTitles);
-  } else {
-    sql += ` AND 1 = 0 `;
-  }
-}
+      if (formTitles.length > 0) {
+        sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
+        params.push(...formTitles);
+      } else {
+        sql += ` AND 1 = 0 `;
+      }
+    }
 
     if (formTitle) {
       sql += ` AND form_title = ? `;
@@ -349,13 +351,15 @@ app.get("/api/dashboard/summary", async (req, res) => {
       }
     }
 
-    const items = Array.from(itemMap.entries()).map(([question, values], index) => ({
-      no: index + 1,
-      question,
-      avg: Number(avg(values).toFixed(2)),
-      sd: Number(stddev(values).toFixed(2)),
-      count: values.length,
-    }));
+    const items = Array.from(itemMap.entries()).map(
+      ([question, values], index) => ({
+        no: index + 1,
+        question,
+        avg: Number(avg(values).toFixed(2)),
+        sd: Number(stddev(values).toFixed(2)),
+        count: values.length,
+      }),
+    );
 
     const overallAvg = Number(avg(allRatingValues).toFixed(2));
 
@@ -407,9 +411,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
  *  GET /api/dashboard/summary?year=2569&status=...&dept=...&major=...
  * ----------------------------- */
 
-
 const PORT = process.env.PORT || 3000;
-
 
 /** -----------------------------
  *  FORMS (ตาราง survey_forms)
@@ -419,24 +421,24 @@ const PORT = process.env.PORT || 3000;
  * ----------------------------- */
 
 // 1) บันทึกฟอร์ม
- app.post("/api/forms", async (req, res) => {
+app.post("/api/forms", async (req, res) => {
   try {
-   const {
-  created_by,
-  created_by_username,
-  form_title,
-  dept_name,
-  uni_strategy,
-  center_strategy,
-  center_mission,
-  goal_text,
-  kpi_quantity,
-  kpi_quality,
-  start_date,
-  end_date,
-  attachment_url,
-  form,
-} = req.body || {};
+    const {
+      created_by,
+      created_by_username,
+      form_title,
+      dept_name,
+      uni_strategy,
+      center_strategy,
+      center_mission,
+      goal_text,
+      kpi_quantity,
+      kpi_quality,
+      start_date,
+      end_date,
+      attachment_url,
+      form,
+    } = req.body || {};
 
     if (!form) {
       return res.status(400).json({ error: "form is required" });
@@ -444,28 +446,28 @@ const PORT = process.env.PORT || 3000;
 
     const form_json = JSON.stringify(form);
 
-   const [result] = await pool.execute(
-  `INSERT INTO survey_forms
+    const [result] = await pool.execute(
+      `INSERT INTO survey_forms
   (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
   kpi_quantity, kpi_quality, start_date, end_date, attachment_url, form_json)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  [
-    created_by || null,
-    created_by_username || null,
-    form_title || null,
-    dept_name || null,
-    uni_strategy || null,
-    center_strategy || null,
-    center_mission || null,
-    goal_text || null,
-    kpi_quantity || null,
-    kpi_quality || null,
-    start_date || null,
-    end_date || null,
-    attachment_url || null,
-    form_json,
-  ]
-);
+      [
+        created_by || null,
+        created_by_username || null,
+        form_title || null,
+        dept_name || null,
+        uni_strategy || null,
+        center_strategy || null,
+        center_mission || null,
+        goal_text || null,
+        kpi_quantity || null,
+        kpi_quality || null,
+        start_date || null,
+        end_date || null,
+        attachment_url || null,
+        form_json,
+      ],
+    );
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
@@ -519,7 +521,7 @@ app.get("/api/forms/:id", async (req, res) => {
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
-      [id]
+      [id],
     );
 
     if (!rows.length) {
@@ -558,7 +560,7 @@ app.get("/api/forms/:id", async (req, res) => {
   }
 });
 
-const ALLOW_MANAGER_EDIT = true;
+const ALLOW_MANAGER_EDIT = false;
 
 app.put("/api/forms/:id", async (req, res) => {
   try {
@@ -599,7 +601,7 @@ app.put("/api/forms/:id", async (req, res) => {
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
-      [id]
+      [id],
     );
 
     if (!foundRows.length) {
@@ -610,12 +612,13 @@ app.put("/api/forms/:id", async (req, res) => {
     const ownerUsername = String(existing.created_by_username || "").trim();
 
     const isOwner = ownerUsername === reqUsername;
-    const isManager = reqRole === "manager";
+    
 
-    if (!isOwner && !(isManager && ALLOW_MANAGER_EDIT)) {
-      return res.status(403).json({ error: "ไม่มีสิทธิ์แก้ไขฟอร์มนี้" });
+    if (!isOwner) {
+      return res.status(403).json({
+        error: "สามารถแก้ไขได้เฉพาะฟอร์มที่ตัวเองสร้างเท่านั้น",
+      });
     }
-
     const form_json = JSON.stringify(form);
 
     await pool.execute(
@@ -645,7 +648,7 @@ app.put("/api/forms/:id", async (req, res) => {
         end_date || null,
         form_json,
         id,
-      ]
+      ],
     );
 
     res.json({ ok: true, id });
@@ -680,31 +683,29 @@ app.get("/api/strategy-dashboard/options", async (req, res) => {
   ORDER BY created_at DESC
 `);
 
-const yearSet = new Set();
+    const yearSet = new Set();
 
-for (const s of submissionRows) {
-  const p = safeJsonParse(s.payload_json) || {};
-  let year = Number(p.fiscal_year);
+    for (const s of submissionRows) {
+      const p = safeJsonParse(s.payload_json) || {};
+      let year = Number(p.fiscal_year);
 
-  if (!Number.isFinite(year) || !year) {
-    const d = new Date(s.created_at);
-    if (!isNaN(d)) year = d.getFullYear() + 543;
-  }
+      if (!Number.isFinite(year) || !year) {
+        const d = new Date(s.created_at);
+        if (!isNaN(d)) year = d.getFullYear() + 543;
+      }
 
-  if (year) yearSet.add(year);
-}
+      if (year) yearSet.add(year);
+    }
 
-res.json({
-  uniStrategies: Array.from(uniSet),
-  centerStrategies: Array.from(centerSet),
-  fiscalYears: Array.from(yearSet).sort((a, b) => b - a)
-});
-
+    res.json({
+      uniStrategies: Array.from(uniSet),
+      centerStrategies: Array.from(centerSet),
+      fiscalYears: Array.from(yearSet).sort((a, b) => b - a),
+    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-
 
 // 2) SUMMARY
 app.get("/api/strategy-dashboard/summary", async (req, res) => {
@@ -716,7 +717,7 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
       center_strategies,
       fiscal_years,
       date_from,
-      date_to
+      date_to,
     } = req.query;
 
     const toList = (value) =>
@@ -726,7 +727,9 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         .filter(Boolean);
 
     const normalizeText = (value) =>
-      String(value || "").trim().replace(/\s+/g, " ");
+      String(value || "")
+        .trim()
+        .replace(/\s+/g, " ");
 
     const getFiscalYear = (payloadJson, createdAt) => {
       const p = safeJsonParse(payloadJson) || {};
@@ -828,7 +831,7 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         uni_strategy: normalizeText(r.uni_strategy),
         center_strategy: normalizeText(r.center_strategy),
         ratings: Array.isArray(p.ratings) ? p.ratings : [],
-        comments
+        comments,
       };
     });
 
@@ -843,7 +846,9 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
     console.log("centerList:", centerList);
     console.log("yearList:", yearList);
     console.log("rows from DB:", rows.length);
-    console.log("years in rows:", [...new Set(parsed.map((r) => r.fiscal_year))]);
+    console.log("years in rows:", [
+      ...new Set(parsed.map((r) => r.fiscal_year)),
+    ]);
     console.log("sample parsed:", parsed[0]);
     console.log("after filter:", filtered.length);
     console.log("====================================");
@@ -872,7 +877,7 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
           center_strategy: center,
           fiscal_year: year,
           scores: [],
-          respondents: 0
+          respondents: 0,
         });
       }
 
@@ -913,7 +918,7 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
           text,
           created_at: r.created_at,
           created_by: r.created_by,
-          form_title: r.form_title
+          form_title: r.form_title,
         });
       }
     }
@@ -930,10 +935,12 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
       center_strategy: row.center_strategy,
       fiscal_year: row.fiscal_year,
       avg: Number(avgNum(row.scores).toFixed(2)),
-      respondents: row.respondents
+      respondents: row.respondents,
     }));
 
-    const yearLabels = Array.from(yearScoreMap.keys()).sort((a, b) => Number(a) - Number(b));
+    const yearLabels = Array.from(yearScoreMap.keys()).sort(
+      (a, b) => Number(a) - Number(b),
+    );
 
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -942,32 +949,39 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         forms: new Set(filtered.map((r) => r.form_title)).size,
         respondents: filtered.length,
         avgSatisfaction: Number(avgNum(allScores).toFixed(2)),
-        totalComments: comments.length
+        totalComments: comments.length,
       },
       table,
       comments: comments.slice(0, 50),
       charts: {
         yearTrend: {
           labels: yearLabels,
-          values: yearLabels.map((y) => Number(avgNum(yearScoreMap.get(y)).toFixed(2)))
+          values: yearLabels.map((y) =>
+            Number(avgNum(yearScoreMap.get(y)).toFixed(2)),
+          ),
         },
         uniStrategy: {
           labels: Array.from(uniMap.keys()),
-          values: Array.from(uniMap.values()).map((v) => Number(avgNum(v).toFixed(2)))
+          values: Array.from(uniMap.values()).map((v) =>
+            Number(avgNum(v).toFixed(2)),
+          ),
         },
         centerStrategy: {
           labels: Array.from(centerMap.keys()),
-          values: Array.from(centerMap.values()).map((v) => Number(avgNum(v).toFixed(2)))
+          values: Array.from(centerMap.values()).map((v) =>
+            Number(avgNum(v).toFixed(2)),
+          ),
         },
         formsByYear: {
-          labels: Array.from(formsByYearMap.keys()).sort((a, b) => Number(a) - Number(b)),
+          labels: Array.from(formsByYearMap.keys()).sort(
+            (a, b) => Number(a) - Number(b),
+          ),
           values: Array.from(formsByYearMap.keys())
             .sort((a, b) => Number(a) - Number(b))
-            .map((y) => formsByYearMap.get(y))
-        }
-      }
+            .map((y) => formsByYearMap.get(y)),
+        },
+      },
     });
-
   } catch (e) {
     console.error("strategy-dashboard summary error:", e);
     res.status(500).json({ error: e.message });
@@ -994,10 +1008,18 @@ app.get("/api/admin/overview", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    const [[userCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM users`);
-    const [[adminCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM users WHERE role = 'admin'`);
-    const [[formCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM survey_forms`);
-    const [[submissionCount]] = await pool.execute(`SELECT COUNT(*) AS total FROM submissions`);
+    const [[userCount]] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM users`,
+    );
+    const [[adminCount]] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM users WHERE role = 'admin'`,
+    );
+    const [[formCount]] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM survey_forms`,
+    );
+    const [[submissionCount]] = await pool.execute(
+      `SELECT COUNT(*) AS total FROM submissions`,
+    );
 
     res.json({
       users: userCount.total || 0,
@@ -1047,7 +1069,7 @@ app.post("/api/admin/users", async (req, res) => {
 
     const [exists] = await pool.execute(
       `SELECT id FROM users WHERE username = ? LIMIT 1`,
-      [username]
+      [username],
     );
 
     if (exists.length) {
@@ -1057,7 +1079,7 @@ app.post("/api/admin/users", async (req, res) => {
     const [result] = await pool.execute(
       `INSERT INTO users (username, password, display_name, role)
        VALUES (?, ?, ?, ?)`,
-      [username, password, username, role]
+      [username, password, username, role],
     );
 
     res.json({ ok: true, id: result.insertId });
@@ -1189,7 +1211,14 @@ app.post("/api/admin/questions", async (req, res) => {
       `INSERT INTO question_bank
        (category, question_text, used_in_label, datalist_id, question_type, status)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [category, question_text, used_in_label, datalist_id, question_type, status]
+      [
+        category,
+        question_text,
+        used_in_label,
+        datalist_id,
+        question_type,
+        status,
+      ],
     );
 
     res.json({ ok: true, id: result.insertId });

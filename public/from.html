@@ -1183,50 +1183,117 @@
       function getSuggestionListIdBySubgroupTitle(title = "") {
         const t = String(title || "")
           .trim()
-          .toLowerCase();
+          .toLowerCase()
+          .replace(/\s+/g, " ");
 
-        const map = {
-          // LibQUAL+TM
-          "ความรู้สึกที่มีต่อบริการ (affect of service)":
-            "affectOfServiceSuggestions",
-          "การควบคุมสารสนเทศ (information control)":
-            "informationControlSuggestions",
-          "ลักษณะกายภาพของห้องสมุด (library as place)":
-            "libraryAsPlaceSuggestions",
+        if (
+          t.includes("affect of service") ||
+          t.includes("ความรู้สึกที่มีต่อบริการ")
+        ) {
+          return "affectOfServiceSuggestions";
+        }
 
-          // SERVQUAL
-          "สิ่งที่สัมผัสได้ (tangibles)": "tangiblesSuggestions",
-          "ความน่าเชื่อถือ (reliability)": "reliabilitySuggestions",
-          "การตอบสนองของพนักงาน (responsiveness)": "responsivenessSuggestions",
-          "การเอาใจใส่จากพนักงาน (empathy)": "empathySuggestions",
-          "ความไว้วางใจ (assurance)": "assuranceSuggestions",
+        if (
+          t.includes("information control") ||
+          t.includes("การควบคุมสารสนเทศ")
+        ) {
+          return "informationControlSuggestions";
+        }
 
-          // WEBQUAL
-          "การใช้งาน (usability)": "usabilitySuggestions",
-          "คุณภาพของข้อมูล (infomation quality)":
-            "informationQualitySuggestions",
-          "คุณภาพของข้อมูล (information quality)":
-            "informationQualitySuggestions",
-          "การตอบสนองต่อการบริการ (service interaction)":
-            "serviceInteractionSuggestions",
+        if (
+          t.includes("library as place") ||
+          t.includes("ลักษณะกายภาพของห้องสมุด")
+        ) {
+          return "libraryAsPlaceSuggestions";
+        }
 
-          // SITEQUAL
-          "การใช้งานง่าย (ease of use)": "easeOfUseSuggestions",
-          "การออกแบบที่สวยงาม (aesthetic design)": "aestheticDesignSuggestions",
-          "ความเร็วในการประมวลผล (processing speed)":
-            "processingSpeedSuggestions",
-          "การตอบสนองของเว็บไซต์ (interactive responsiveness)":
-            "interactiveResponsivenessSuggestions",
+        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
+          return "tangiblesSuggestions";
+        }
 
-          // ESQUAL
-          "ประสิทธิภาพ (efficiency)": "efficiencySuggestions",
-          "ความพร้อมของระบบ (system availability)":
-            "systemAvailabilitySuggestions",
-          "การปฏิบัติตามสัญญา (fulfillment)": "fulfillmentSuggestions",
-          "ความเป็นส่วนตัว (privacy)": "privacySuggestions",
-        };
+        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
+          return "reliabilitySuggestions";
+        }
 
-        return map[t] || "questionSuggestions";
+        if (
+          t.includes("responsiveness") ||
+          t.includes("การตอบสนองของพนักงาน")
+        ) {
+          return "responsivenessSuggestions";
+        }
+
+        if (t.includes("empathy") || t.includes("การเอาใจใส่จากพนักงาน")) {
+          return "empathySuggestions";
+        }
+
+        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
+          return "assuranceSuggestions";
+        }
+
+        if (t.includes("usability") || t.includes("การใช้งาน")) {
+          return "usabilitySuggestions";
+        }
+
+        if (
+          t.includes("information quality") ||
+          t.includes("infomation quality") ||
+          t.includes("คุณภาพของข้อมูล")
+        ) {
+          return "informationQualitySuggestions";
+        }
+
+        if (
+          t.includes("service interaction") ||
+          t.includes("การตอบสนองต่อการบริการ")
+        ) {
+          return "serviceInteractionSuggestions";
+        }
+
+        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
+          return "easeOfUseSuggestions";
+        }
+
+        if (
+          t.includes("aesthetic design") ||
+          t.includes("การออกแบบที่สวยงาม")
+        ) {
+          return "aestheticDesignSuggestions";
+        }
+
+        if (
+          t.includes("processing speed") ||
+          t.includes("ความเร็วในการประมวลผล")
+        ) {
+          return "processingSpeedSuggestions";
+        }
+
+        if (
+          t.includes("interactive responsiveness") ||
+          t.includes("การตอบสนองของเว็บไซต์")
+        ) {
+          return "interactiveResponsivenessSuggestions";
+        }
+
+        if (t.includes("efficiency") || t.includes("ประสิทธิภาพ")) {
+          return "efficiencySuggestions";
+        }
+
+        if (
+          t.includes("system availability") ||
+          t.includes("ความพร้อมของระบบ")
+        ) {
+          return "systemAvailabilitySuggestions";
+        }
+
+        if (t.includes("fulfillment") || t.includes("การปฏิบัติตามสัญญา")) {
+          return "fulfillmentSuggestions";
+        }
+
+        if (t.includes("privacy") || t.includes("ความเป็นส่วนตัว")) {
+          return "privacySuggestions";
+        }
+
+        return "questionSuggestions";
       }
 
       function addQuestion(
@@ -1916,8 +1983,13 @@
           });
 
           Object.entries(grouped).forEach(([listId, questions]) => {
-            const datalist = document.getElementById(listId);
-            if (!datalist) return;
+            let datalist = document.getElementById(listId);
+
+            if (!datalist) {
+              datalist = document.createElement("datalist");
+              datalist.id = listId;
+              document.body.appendChild(datalist);
+            }
 
             datalist.innerHTML = "";
 

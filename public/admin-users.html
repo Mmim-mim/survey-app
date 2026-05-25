@@ -181,9 +181,9 @@
 
       .form-row {
         display: grid;
-        grid-template-columns: 2fr 1.2fr 1fr 140px;
+        grid-template-columns: 2fr 1.2fr 1fr 140px 180px;
         gap: 10px;
-        margin-bottom: 14px;
+        align-items: center;
       }
 
       input,
@@ -335,11 +335,13 @@
           <input id="newDisplayName" placeholder="ชื่อที่ต้องการให้แสดง" />
           <input id="newUsername" placeholder="username" />
           <input id="newPassword" placeholder="password" type="password" />
+
           <select id="newRole">
             <option value="staff">staff</option>
             <option value="manager">manager</option>
             <option value="admin">admin</option>
           </select>
+
           <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
         </div>
 

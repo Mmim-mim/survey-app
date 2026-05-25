@@ -612,7 +612,7 @@ app.put("/api/forms/:id", async (req, res) => {
     const ownerUsername = String(existing.created_by_username || "").trim();
 
     const isOwner = ownerUsername === reqUsername;
-    
+
 
     if (!isOwner) {
       return res.status(403).json({
@@ -1055,6 +1055,7 @@ app.post("/api/admin/users", async (req, res) => {
     if (!requireAdmin(req, res)) return;
 
     const username = String(req.body.username || "").trim();
+    const display_name = String(req.body.display_name || "").trim();
     const password = String(req.body.password || "").trim();
     const role = String(req.body.role || "staff").trim();
 
@@ -1077,10 +1078,10 @@ app.post("/api/admin/users", async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO users (username, password, display_name, role)
-       VALUES (?, ?, ?, ?)`,
-      [username, password, username, role],
-    );
+  `INSERT INTO users (username, password, display_name, role)
+   VALUES (?, ?, ?, ?)`,
+  [username, password, display_name || username, role]
+);
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {

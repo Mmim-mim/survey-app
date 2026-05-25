@@ -2,6 +2,7 @@ const role = (localStorage.getItem("role") || "").trim();
 
 const userTableBody = document.getElementById("userTableBody");
 const newUsername = document.getElementById("newUsername");
+const newDisplayName = document.getElementById("newDisplayName");
 const newPassword = document.getElementById("newPassword");
 const newRole = document.getElementById("newRole");
 const btnAddUser = document.getElementById("btnAddUser");
@@ -52,9 +53,10 @@ async function loadUsers() {
   userTableBody.innerHTML = users.map((u) => `
     <tr>
       <td>${esc(u.username)}</td>
-    <td>
+      <td>${esc(u.display_name || u.username)}</td>
+      <td>
         <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>
-    </td>
+      </td>
       <td>
         <select onchange="updateUserRole(${u.id}, this.value)">
           <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
@@ -73,10 +75,11 @@ async function loadUsers() {
 
 async function addUser() {
   const body = {
-    username: newUsername.value.trim(),
-    password: newPassword.value.trim(),
-    role: newRole.value,
-  };
+  username: newUsername.value.trim(),
+  display_name: newDisplayName.value.trim(),
+  password: newPassword.value.trim(),
+  role: newRole.value,
+};
 
   if (!body.username || !body.password) {
     alert("กรุณากรอก username และ password");
@@ -89,6 +92,7 @@ async function addUser() {
   });
 
   newUsername.value = "";
+  newDisplayName.value = "";
   newPassword.value = "";
   newRole.value = "staff";
 

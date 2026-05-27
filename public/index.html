@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>แบบฟอร์มการประเมินทั้งหมด</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <style>
       :root {
         --sheet: #fff8f2;
@@ -643,7 +647,7 @@
   <td style="text-align:center;">
   <div class="action-icons">
     <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
-    <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">📋</button>
+    <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์"><i class="fa-regular fa-copy"></i></button>
     ${editButton}
     <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">📄</button>
   </div>
@@ -798,5 +802,4 @@
       loadFormsList();
     </script>
   </body>
-
-  </html>
+</html>

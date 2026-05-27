@@ -630,7 +630,9 @@
               const canEdit = currentUser === ownerUser;
 
               const editButton = canEdit
-                ? `<button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">✏️</button>`
+                ? `<button class="icon-btn" onclick="editForm(${r.id})" title="แก้ไขฟอร์ม">
+       <i class="fa-regular fa-pen-to-square"></i>
+     </button>`
                 : "";
 
               return `
@@ -646,12 +648,16 @@
   <!-- 🔥 จัดการฟอร์ม -->
   <td style="text-align:center;">
   <div class="action-icons">
-    <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">👁️</button>
+    <button class="icon-btn" title="ดูฟอร์ม">
+  <i class="fa-regular fa-eye"></i>
+</button>
     <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">
   <i class="fa-solid fa-paperclip"></i>
 </button>
     ${editButton}
-    <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">📄</button>
+    <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">
+  <i class="fa-regular fa-clone"></i>
+</button>
   </div>
 </td>
 

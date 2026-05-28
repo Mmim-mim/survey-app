@@ -503,6 +503,28 @@ app.get("/api/forms", async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+
+  app.delete("/api/forms/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    await pool.query(
+      "DELETE FROM survey_forms WHERE id = ?",
+      [id]
+    );
+
+    res.json({
+      success: true,
+      message: "ลบฟอร์มสำเร็จ",
+    });
+  } catch (err) {
+    console.error(err);
+
+    res.status(500).json({
+      error: "เกิดข้อผิดพลาดในการลบฟอร์ม",
+    });
+  }
+});
 });
 
 // 3) ดึงฟอร์มตาม id

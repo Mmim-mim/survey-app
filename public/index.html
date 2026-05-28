@@ -402,6 +402,14 @@
         border-color: #c9a34e;
         box-shadow: 0 8px 16px rgba(155, 28, 28, 0.12);
       }
+
+      .danger-btn {
+        color: #d11a2a;
+      }
+
+      .danger-btn:hover {
+        color: #ff4d5e;
+      }
     </style>
   </head>
   <body>
@@ -658,6 +666,9 @@
     <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">
   <i class="fa-regular fa-clone"></i>
 </button>
+<button class="icon-btn danger-btn"onclick="deleteForm(${r.id})"title="ลบฟอร์ม">
+  <i class="fa-regular fa-trash-can"></i>
+</button>
   </div>
 </td>
 
@@ -719,6 +730,31 @@
           localStorage.setItem("copyForm", JSON.stringify(copied));
           window.location.href = "/from.html?mode=copy";
         } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      async function deleteForm(id) {
+        const ok = confirm("ต้องการลบฟอร์มนี้ใช่ไหม?");
+
+        if (!ok) return;
+
+        try {
+          const res = await fetch(`/api/forms/${id}`, {
+            method: "DELETE",
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || "ลบไม่สำเร็จ");
+          }
+
+          alert("ลบฟอร์มสำเร็จ");
+
+          loadForms();
+        } catch (err) {
+          console.error(err);
           alert(err.message);
         }
       }

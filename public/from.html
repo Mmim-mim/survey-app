@@ -1083,11 +1083,7 @@
         <div class="group main-model" data-main-model>
           <div class="ghead">
             <div class="left">
-              <input
-                type="checkbox"
-                class="subtoggle main-model-toggle"
-                checked
-              />
+              <input type="checkbox" class="subtoggle main-model-toggle" />
               <div class="title main-model-title">LibQUAL+TM</div>
             </div>
           </div>
@@ -1401,9 +1397,9 @@
       }
 
       function bindMainModel(block) {
-        const subgroupsRoot = block.querySelector(".subgroups");
         const toggle = block.querySelector(".main-model-toggle");
         const body = block.querySelector(".main-model-body");
+        const titleEl = block.querySelector(".main-model-title");
 
         const update = () => {
           const enabled = toggle.checked;
@@ -1412,6 +1408,15 @@
         };
 
         toggle.addEventListener("change", update);
+
+        if (titleEl) {
+          titleEl.style.cursor = "pointer";
+          titleEl.addEventListener("click", () => {
+            toggle.checked = !toggle.checked;
+            toggle.dispatchEvent(new Event("change"));
+          });
+        }
+
         update();
       }
       function addMainModel(data = {}) {
@@ -1427,12 +1432,16 @@
         titleEl.textContent = data.title || "หัวข้อใหม่";
 
         document.getElementById("mainModels").appendChild(block);
-        bindMainModel(block);
 
-        if (data.enabled === false && toggle) {
-          toggle.checked = false;
+        if (toggle) {
+          if (typeof data.enabled === "boolean") {
+            toggle.checked = data.enabled;
+          } else {
+            toggle.checked = false;
+          }
         }
 
+        bindMainModel(block);
         if (Array.isArray(data.dimensions) && data.dimensions.length) {
           data.dimensions.forEach((dim, i) =>
             addSubgroup(subgroupsRoot, dim, i < data.dimensions.length),

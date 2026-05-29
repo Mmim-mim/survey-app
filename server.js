@@ -500,9 +500,10 @@ app.get("/api/forms", async (req, res) => {
 
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
-  } catch (e) {
+    } catch (e) {
     res.status(500).json({ error: e.message });
   }
+  });
 
   app.delete("/api/forms/:id", async (req, res) => {
   try {
@@ -524,7 +525,6 @@ app.get("/api/forms", async (req, res) => {
       error: "เกิดข้อผิดพลาดในการลบฟอร์ม",
     });
   }
-});
 });
 
 // 3) ดึงฟอร์มตาม id

@@ -824,7 +824,7 @@
           thead.innerHTML = `
     <tr>
       <th class="col-head">${title}</th>
-      <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+      <th>5</th><th>4</th><th>3</th><th>2</th><th>1</th>
     </tr>
   `;
 
@@ -837,7 +837,7 @@
             const tr = document.createElement("tr");
             tr.innerHTML = `
       <td>${q || "-"}</td>
-      ${[1, 2, 3, 4, 5]
+      ${[5, 4, 3, 2, 1]
         .map(
           (level) =>
             `<td style="text-align:center"><input type="radio" name="${namePrefix}_${idx}" value="${level}"></td>`,

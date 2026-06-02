@@ -184,7 +184,7 @@
         grid-template-columns: 2fr 1.2fr 1fr 140px 180px;
         gap: 10px;
         align-items: center;
-        margin-bottom:20px;
+        margin-bottom: 20px;
       }
 
       input,
@@ -337,6 +337,18 @@
           <input id="newUsername" placeholder="username" />
           <input id="newPassword" placeholder="password" type="password" />
 
+          <select id="newDeptName">
+            <option value="">-- เลือกฝ่าย --</option>
+            <option value="ฝ่ายเลขานุการ">ฝ่ายเลขานุการ</option>
+            <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ">
+              ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ
+            </option>
+            <option value="ฝ่ายบริการทรัพยากรสารนิเทศ">
+              ฝ่ายบริการทรัพยากรสารนิเทศ
+            </option>
+            <option value="ฝ่ายเทคโนโลยีสารสนเทศ">ฝ่ายเทคโนโลยีสารสนเทศ</option>
+          </select>
+
           <select id="newRole">
             <option value="staff">staff</option>
             <option value="manager">manager</option>
@@ -352,7 +364,8 @@
               <tr>
                 <th>Username</th>
                 <th>ชื่อที่แสดง</th>
-                <th>Role ปัจจุบัน</th>
+                <th>ฝ่าย</th>
+                <th>Role</th>
                 <th>เปลี่ยน Role</th>
                 <th>Action</th>
               </tr>

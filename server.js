@@ -1060,7 +1060,7 @@ app.get("/api/admin/users", async (req, res) => {
     if (!requireAdmin(req, res)) return;
 
     const [rows] = await pool.execute(`
-      SELECT id, username, display_name, role
+      SELECT id, username, display_name, role, dept_name
       FROM users
       ORDER BY id DESC
     `);
@@ -1079,6 +1079,7 @@ app.post("/api/admin/users", async (req, res) => {
     const username = String(req.body.username || "").trim();
     const display_name = String(req.body.display_name || "").trim();
     const password = String(req.body.password || "").trim();
+    const dept_name = String(req.body.dept_name || "").trim();
     const role = String(req.body.role || "staff").trim();
 
     if (!username || !password) {
@@ -1100,9 +1101,9 @@ app.post("/api/admin/users", async (req, res) => {
     }
 
     const [result] = await pool.execute(
-  `INSERT INTO users (username, password, display_name, role)
-   VALUES (?, ?, ?, ?)`,
-  [username, password, display_name || username, role]
+  `INSERT INTO users (username, password, display_name, role, dept_name)
+   VALUES (?, ?, ?, ?, ?)`,
+  [username, password, display_name || username, role, dept_name || null]
 );
 
     res.json({ ok: true, id: result.insertId });

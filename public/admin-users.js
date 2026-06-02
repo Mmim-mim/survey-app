@@ -4,6 +4,7 @@ const userTableBody = document.getElementById("userTableBody");
 const newUsername = document.getElementById("newUsername");
 const newDisplayName = document.getElementById("newDisplayName");
 const newPassword = document.getElementById("newPassword");
+const newDeptName = document.getElementById("newDeptName");
 const newRole = document.getElementById("newRole");
 const btnAddUser = document.getElementById("btnAddUser");
 const btnRefresh = document.getElementById("btnRefresh");
@@ -54,6 +55,7 @@ async function loadUsers() {
     <tr>
       <td>${esc(u.username)}</td>
       <td>${esc(u.display_name || u.username)}</td>
+      <td>${esc(u.dept_name || "-")}</td>
       <td>
         <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>
       </td>
@@ -78,6 +80,7 @@ async function addUser() {
   username: newUsername.value.trim(),
   display_name: newDisplayName.value.trim(),
   password: newPassword.value.trim(),
+  dept_name: newDeptName.value.trim(),
   role: newRole.value,
 };
 
@@ -94,6 +97,7 @@ async function addUser() {
   newUsername.value = "";
   newDisplayName.value = "";
   newPassword.value = "";
+  newDeptName.value = "";
   newRole.value = "staff";
 
   await loadUsers();

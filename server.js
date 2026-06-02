@@ -1137,6 +1137,40 @@ app.put("/api/admin/users/:id/role", async (req, res) => {
   }
 });
 
+// เปลี่ยนฝ่าย
+app.put("/api/admin/users/:id/dept", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const id = Number(req.params.id);
+    const dept_name = String(req.body.dept_name || "").trim();
+
+    const allowedDepts = [
+      "ฝ่ายเลขานุการ",
+      "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
+      "ฝ่ายบริการทรัพยากรสารนิเทศ",
+      "ฝ่ายเทคโนโลยีสารสนเทศ",
+    ];
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    if (dept_name && !allowedDepts.includes(dept_name)) {
+      return res.status(400).json({ error: "ฝ่ายไม่ถูกต้อง" });
+    }
+
+    await pool.execute(
+      `UPDATE users SET dept_name = ? WHERE id = ?`,
+      [dept_name || null, id]
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ลบผู้ใช้
 app.delete("/api/admin/users/:id", async (req, res) => {
   try {

@@ -47,7 +47,7 @@ async function loadUsers() {
   const users = await api(`/api/admin/users?role=${encodeURIComponent(role)}`);
 
   if (!users.length) {
-    userTableBody.innerHTML = `<tr><td colspan="4" class="empty">ยังไม่มีผู้ใช้</td></tr>`;
+    userTableBody.innerHTML = `<tr><td colspan="6" class="empty">ยังไม่มีผู้ใช้</td></tr>`;
     return;
   }
 
@@ -55,10 +55,23 @@ async function loadUsers() {
     <tr>
       <td>${esc(u.username)}</td>
       <td>${esc(u.display_name || u.username)}</td>
+
       <td>${esc(u.dept_name || "-")}</td>
+
+      <td>
+        <select onchange="updateUserDept(${u.id}, this.value)">
+          <option value="">-- เลือกฝ่าย --</option>
+          <option value="ฝ่ายเลขานุการ" ${u.dept_name === "ฝ่ายเลขานุการ" ? "selected" : ""}>ฝ่ายเลขานุการ</option>
+          <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ${u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ? "selected" : ""}>ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ</option>
+          <option value="ฝ่ายบริการทรัพยากรสารนิเทศ" ${u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ" ? "selected" : ""}>ฝ่ายบริการทรัพยากรสารนิเทศ</option>
+          <option value="ฝ่ายเทคโนโลยีสารสนเทศ" ${u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ" ? "selected" : ""}>ฝ่ายเทคโนโลยีสารสนเทศ</option>
+        </select>
+      </td>
+
       <td>
         <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>
       </td>
+
       <td>
         <select onchange="updateUserRole(${u.id}, this.value)">
           <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
@@ -66,6 +79,7 @@ async function loadUsers() {
           <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
         </select>
       </td>
+
       <td>
         <button class="btn danger" onclick="deleteUser(${u.id}, '${esc(u.username)}')">
           ลบ
@@ -73,6 +87,15 @@ async function loadUsers() {
       </td>
     </tr>
   `).join("");
+}
+
+async function updateUserDept(id, nextDept) {
+  await api(`/api/admin/users/${id}/dept?role=${encodeURIComponent(role)}`, {
+    method: "PUT",
+    body: JSON.stringify({ dept_name: nextDept }),
+  });
+
+  await loadUsers();
 }
 
 async function addUser() {
@@ -123,6 +146,7 @@ async function deleteUser(id, name) {
 }
 
 window.updateUserRole = updateUserRole;
+window.updateUserDept = updateUserDept;
 window.deleteUser = deleteUser;
 
 btnAddUser.addEventListener("click", addUser);

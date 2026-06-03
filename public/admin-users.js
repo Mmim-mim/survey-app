@@ -168,7 +168,7 @@ async function loadUsers() {
               </div>
 
               <div class="table-wrap">
-                <table>
+                <table class="user-table">
                   <thead>
                     <tr>
                       <th>Username</th>

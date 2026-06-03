@@ -339,8 +339,8 @@
           localStorage.setItem("user", data.user?.username || u);
           localStorage.setItem("displayName", data.user?.display_name || "");
           localStorage.setItem("role", data.user?.role || "staff");
-          localStorage.setItem("dept_name", user.dept_name || "");
-
+          localStorage.setItem("dept_name", data.user?.dept_name || "");
+          
           if (data.user?.role === "admin") {
             window.location.href = "admin.html";
           } else {

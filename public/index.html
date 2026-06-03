@@ -573,6 +573,7 @@
         localStorage.removeItem("user");
         localStorage.removeItem("displayName");
         localStorage.removeItem("role");
+        localStorage.removeItem("dept_name");
         window.location.href = "login.html";
       });
 
@@ -606,12 +607,13 @@
         try {
           const username = (localStorage.getItem("user") || "").trim();
           const role = (localStorage.getItem("role") || "staff").trim();
+          const dept_name = (localStorage.getItem("dept_name") || "").trim();
 
           const qs = new URLSearchParams({
             username,
             role,
+            dept_name,
           });
-
           const res = await fetch("/api/forms?" + qs.toString());
           const rows = await res.json();
           if (!res.ok)

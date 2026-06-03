@@ -102,7 +102,7 @@ app.post("/api/login", async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      "SELECT id, username, password, display_name, role FROM users WHERE username = ? LIMIT 1",
+      "SELECT id, username, password, display_name, role, dept_name FROM users WHERE username = ? LIMIT 1",
       [String(username).trim()],
     );
 
@@ -124,7 +124,8 @@ app.post("/api/login", async (req, res) => {
         username: user.username,
         display_name: user.display_name || user.username,
         role: user.role || "staff",
-      },
+        dept_name: user.dept_name || ""
+},
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -480,6 +481,7 @@ app.get("/api/forms", async (req, res) => {
   try {
     const username = String(req.query.username || "").trim();
     const role = String(req.query.role || "staff").trim();
+    const dept_name = String(req.query.dept_name || "").trim();
 
     let sql = `
       SELECT id, created_at, created_by, created_by_username, form_title,
@@ -487,45 +489,31 @@ app.get("/api/forms", async (req, res) => {
              goal_text, kpi_quantity, kpi_quality,
              start_date, end_date
       FROM survey_forms
+      WHERE 1=1
     `;
 
     const params = [];
 
-    if (role !== "manager") {
-      sql += ` WHERE created_by_username = ? `;
+    if (role === "staff") {
+      sql += ` AND created_by_username = ? `;
       params.push(username);
+    }
+
+    if (role === "manager") {
+      sql += ` AND dept_name = ? `;
+      params.push(dept_name);
     }
 
     sql += ` ORDER BY id DESC LIMIT 500`;
 
     const [rows] = await pool.execute(sql, params);
     res.json(rows);
-    } catch (e) {
+  } catch (e) {
     res.status(500).json({ error: e.message });
   }
-  });
-
-  app.delete("/api/forms/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    await pool.query(
-      "DELETE FROM survey_forms WHERE id = ?",
-      [id]
-    );
-
-    res.json({
-      success: true,
-      message: "ลบฟอร์มสำเร็จ",
-    });
-  } catch (err) {
-    console.error(err);
-
-    res.status(500).json({
-      error: "เกิดข้อผิดพลาดในการลบฟอร์ม",
-    });
-  }
 });
+
+
 
 // 3) ดึงฟอร์มตาม id
 app.get("/api/forms/:id", async (req, res) => {

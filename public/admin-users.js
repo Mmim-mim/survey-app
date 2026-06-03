@@ -59,14 +59,36 @@ async function loadUsers() {
       <td>${esc(u.dept_name || "-")}</td>
 
       <td>
+  ${
+    u.role === "admin"
+      ? "-"
+      : `
         <select onchange="updateUserDept(${u.id}, this.value)">
           <option value="">-- เลือกฝ่าย --</option>
-          <option value="ฝ่ายเลขานุการ" ${u.dept_name === "ฝ่ายเลขานุการ" ? "selected" : ""}>ฝ่ายเลขานุการ</option>
-          <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ${u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ? "selected" : ""}>ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ</option>
-          <option value="ฝ่ายบริการทรัพยากรสารนิเทศ" ${u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ" ? "selected" : ""}>ฝ่ายบริการทรัพยากรสารนิเทศ</option>
-          <option value="ฝ่ายเทคโนโลยีสารสนเทศ" ${u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ" ? "selected" : ""}>ฝ่ายเทคโนโลยีสารสนเทศ</option>
+
+          <option value="ฝ่ายเลขานุการ"
+            ${u.dept_name === "ฝ่ายเลขานุการ" ? "selected" : ""}>
+            ฝ่ายเลขานุการ
+          </option>
+
+          <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ"
+            ${u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ? "selected" : ""}>
+            ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ
+          </option>
+
+          <option value="ฝ่ายบริการทรัพยากรสารนิเทศ"
+            ${u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ" ? "selected" : ""}>
+            ฝ่ายบริการทรัพยากรสารนิเทศ
+          </option>
+
+          <option value="ฝ่ายเทคโนโลยีสารสนเทศ"
+            ${u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ" ? "selected" : ""}>
+            ฝ่ายเทคโนโลยีสารสนเทศ
+          </option>
         </select>
-      </td>
+      `
+  }
+</td>
 
       <td>
         <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>

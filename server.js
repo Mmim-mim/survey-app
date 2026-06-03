@@ -102,31 +102,30 @@ app.post("/api/login", async (req, res) => {
     }
 
     const [rows] = await pool.execute(
-      "SELECT id, username, password, display_name, role, dept_name FROM users WHERE username = ? LIMIT 1",
-      [String(username).trim()],
-    );
+  "SELECT id, username, password, display_name, role, dept_name FROM users WHERE username = ? LIMIT 1",
+  [String(username).trim()],
+);
 
-    if (!rows.length) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+if (!rows.length) {
+  return res.status(401).json({ error: "Invalid username or password" });
+}
 
-    const user = rows[0];
+const user = rows[0];
 
-    // เทียบรหัสแบบตรง ๆ (plain text)
-    if (String(user.password) !== String(password)) {
-      return res.status(401).json({ error: "Invalid username or password" });
-    }
+if (String(user.password) !== String(password)) {
+  return res.status(401).json({ error: "Invalid username or password" });
+}
 
-    res.json({
-      ok: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        display_name: user.display_name || user.username,
-        role: user.role || "staff",
-        dept_name: user.dept_name || ""
-},
-    });
+res.json({
+  ok: true,
+  user: {
+    id: user.id,
+    username: user.username,
+    display_name: user.display_name || user.username,
+    role: user.role || "staff",
+    dept_name: user.dept_name || "",
+  },
+});
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -95,39 +95,49 @@ function sd(arr) {
 app.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body || {};
+
     if (!username || !password) {
-      return res
-        .status(400)
-        .json({ error: "username and password are required" });
+      return res.status(400).json({
+        error: "username and password are required",
+      });
     }
 
     const [rows] = await pool.execute(
-  "SELECT id, username, password, display_name, role, dept_name FROM users WHERE username = ? LIMIT 1",
-  [String(username).trim()],
-);
+      `SELECT id, username, password, display_name, role, dept_name
+       FROM users
+       WHERE username = ?
+       LIMIT 1`,
+      [String(username).trim()]
+    );
 
-if (!rows.length) {
-  return res.status(401).json({ error: "Invalid username or password" });
-}
+    if (!rows.length) {
+      return res.status(401).json({
+        error: "Invalid username or password",
+      });
+    }
 
-const user = rows[0];
+    const user = rows[0];
 
-if (String(user.password) !== String(password)) {
-  return res.status(401).json({ error: "Invalid username or password" });
-}
+    if (String(user.password) !== String(password)) {
+      return res.status(401).json({
+        error: "Invalid username or password",
+      });
+    }
 
-res.json({
-  ok: true,
-  user: {
-    id: user.id,
-    username: user.username,
-    display_name: user.display_name || user.username,
-    role: user.role || "staff",
-    dept_name: user.dept_name || "",
-  },
-});
+    return res.json({
+      ok: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        display_name: user.display_name || user.username,
+        role: user.role || "staff",
+        dept_name: user.dept_name || "",
+      },
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({
+      error: e.message,
+    });
   }
 });
 

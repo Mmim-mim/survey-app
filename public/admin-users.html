@@ -289,6 +289,41 @@
         padding: 24px;
       }
 
+      .user-groups {
+        display: grid;
+        gap: 14px;
+      }
+
+      .user-group {
+        overflow: hidden;
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+        background: #fffdf9;
+      }
+
+      .group-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        background: #fff1e6;
+        color: var(--red);
+        font-weight: 900;
+      }
+
+      .group-count {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #f8dfd8;
+        color: var(--red);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .user-group table {
+        min-width: 760px;
+      }
+
       @media (max-width: 900px) {
         .page {
           padding: 84px 18px 28px;
@@ -357,25 +392,8 @@
           <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Username</th>
-                <th>ชื่อที่แสดง</th>
-                <th>ฝ่าย</th>
-                <th>เปลี่ยนฝ่าย</th>
-                <th>Role</th>
-                <th>เปลี่ยน Role</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="userTableBody">
-              <tr>
-                <td colspan="6" class="empty">กำลังโหลด...</td>
-              </tr>
-            </tbody>
-          </table>
+        <div id="userGroups">
+          <div class="empty">กำลังโหลด...</div>
         </div>
       </section>
     </main>

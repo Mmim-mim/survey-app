@@ -1,6 +1,6 @@
 const role = (localStorage.getItem("role") || "").trim();
 
-const userTableBody = document.getElementById("userTableBody");
+const userGroups = document.getElementById("userGroups");
 const newUsername = document.getElementById("newUsername");
 const newDisplayName = document.getElementById("newDisplayName");
 const newPassword = document.getElementById("newPassword");
@@ -47,68 +47,149 @@ async function loadUsers() {
   const users = await api(`/api/admin/users?role=${encodeURIComponent(role)}`);
 
   if (!users.length) {
-    userTableBody.innerHTML = `<tr><td colspan="6" class="empty">ยังไม่มีผู้ใช้</td></tr>`;
+    userGroups.innerHTML = `<div class="empty">ยังไม่มีผู้ใช้</div>`;
     return;
   }
 
-  userTableBody.innerHTML = users.map((u) => `
-    <tr>
-      <td>${esc(u.username)}</td>
-      <td>${esc(u.display_name || u.username)}</td>
+  const deptOptions = [
+    "ฝ่ายเลขานุการ",
+    "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
+    "ฝ่ายบริการทรัพยากรสารนิเทศ",
+    "ฝ่ายเทคโนโลยีสารสนเทศ",
+  ];
 
-      <td>${esc(u.dept_name || "-")}</td>
+  const groups = [
+    {
+      title: "👑 ผู้ดูแลระบบ",
+      users: users.filter((u) => u.role === "admin"),
+      isAdminGroup: true,
+    },
+    {
+      title: "🏛️ ฝ่ายเลขานุการ",
+      users: users.filter(
+        (u) => u.role !== "admin" && u.dept_name === "ฝ่ายเลขานุการ"
+      ),
+    },
+    {
+      title: "📚 ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
+      users: users.filter(
+        (u) =>
+          u.role !== "admin" &&
+          u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ"
+      ),
+    },
+    {
+      title: "🤝 ฝ่ายบริการทรัพยากรสารนิเทศ",
+      users: users.filter(
+        (u) =>
+          u.role !== "admin" &&
+          u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ"
+      ),
+    },
+    {
+      title: "💻 ฝ่ายเทคโนโลยีสารสนเทศ",
+      users: users.filter(
+        (u) => u.role !== "admin" && u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ"
+      ),
+    },
+  ];
 
-      <td>
-  ${
-    u.role === "admin"
-      ? "-"
-      : `
-        <select onchange="updateUserDept(${u.id}, this.value)">
-          <option value="">-- เลือกฝ่าย --</option>
+  function deptSelect(u) {
+    if (u.role === "admin") return "-";
 
-          <option value="ฝ่ายเลขานุการ"
-            ${u.dept_name === "ฝ่ายเลขานุการ" ? "selected" : ""}>
-            ฝ่ายเลขานุการ
-          </option>
-
-          <option value="ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ"
-            ${u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ" ? "selected" : ""}>
-            ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ
-          </option>
-
-          <option value="ฝ่ายบริการทรัพยากรสารนิเทศ"
-            ${u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ" ? "selected" : ""}>
-            ฝ่ายบริการทรัพยากรสารนิเทศ
-          </option>
-
-          <option value="ฝ่ายเทคโนโลยีสารสนเทศ"
-            ${u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ" ? "selected" : ""}>
-            ฝ่ายเทคโนโลยีสารสนเทศ
-          </option>
-        </select>
-      `
+    return `
+      <select onchange="updateUserDept(${u.id}, this.value)">
+        <option value="">-- เลือกฝ่าย --</option>
+        ${deptOptions
+          .map(
+            (dept) => `
+              <option value="${esc(dept)}" ${u.dept_name === dept ? "selected" : ""}>
+                ${esc(dept)}
+              </option>
+            `
+          )
+          .join("")}
+      </select>
+    `;
   }
-</td>
 
-      <td>
-        <span class="badge ${esc(u.role || "staff")}">${esc(u.role || "staff")}</span>
-      </td>
+  function roleSelect(u) {
+    return `
+      <select onchange="updateUserRole(${u.id}, this.value)">
+        <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
+        <option value="manager" ${u.role === "manager" ? "selected" : ""}>manager</option>
+        <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
+      </select>
+    `;
+  }
 
-      <td>
-        <select onchange="updateUserRole(${u.id}, this.value)">
-          <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
-          <option value="manager" ${u.role === "manager" ? "selected" : ""}>manager</option>
-          <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
-        </select>
-      </td>
+  function renderRows(group) {
+    if (!group.users.length) {
+      return `
+        <tr>
+          <td colspan="6" class="empty">ยังไม่มีผู้ใช้ในกลุ่มนี้</td>
+        </tr>
+      `;
+    }
 
-      <td>
-        <button class="btn danger" onclick="deleteUser(${u.id}, '${esc(u.username)}')">
-          ลบ
-        </button>
-      </td>
-    </tr>
-  `).join("");
+    return group.users
+      .map(
+        (u) => `
+          <tr>
+            <td>${esc(u.username)}</td>
+            <td>${esc(u.display_name || u.username)}</td>
+            <td>${group.isAdminGroup ? "-" : deptSelect(u)}</td>
+            <td>
+              <span class="badge ${esc(u.role || "staff")}">
+                ${esc(u.role || "staff")}
+              </span>
+            </td>
+            <td>${roleSelect(u)}</td>
+            <td>
+              <button class="btn danger" onclick="deleteUser(${u.id}, '${esc(u.username)}')">
+                ลบ
+              </button>
+            </td>
+          </tr>
+        `
+      )
+      .join("");
+  }
+
+  userGroups.innerHTML = `
+    <div class="user-groups">
+      ${groups
+        .map(
+          (group) => `
+            <div class="user-group">
+              <div class="group-title">
+                <span>${group.title}</span>
+                <span class="group-count">${group.users.length} คน</span>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>ชื่อที่แสดง</th>
+                      <th>เปลี่ยนฝ่าย</th>
+                      <th>Role</th>
+                      <th>เปลี่ยน Role</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${renderRows(group)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 async function updateUserDept(id, nextDept) {

@@ -493,27 +493,40 @@ app.get("/api/forms", async (req, res) => {
     const dept_name = String(req.query.dept_name || "").trim();
 
     let sql = `
-      SELECT id, created_at, created_by, created_by_username, form_title,
-             dept_name, uni_strategy, center_strategy, center_mission,
-             goal_text, kpi_quantity, kpi_quality,
-             start_date, end_date
-      FROM survey_forms
+      SELECT 
+        f.id,
+        f.created_at,
+        f.created_by,
+        f.created_by_username,
+        f.form_title,
+        f.dept_name,
+        f.uni_strategy,
+        f.center_strategy,
+        f.center_mission,
+        f.goal_text,
+        f.kpi_quantity,
+        f.kpi_quality,
+        f.start_date,
+        f.end_date
+      FROM survey_forms f
+      LEFT JOIN users u
+        ON f.created_by_username = u.username
       WHERE 1=1
     `;
 
     const params = [];
 
     if (role === "staff") {
-      sql += ` AND created_by_username = ? `;
+      sql += ` AND f.created_by_username = ? `;
       params.push(username);
     }
 
     if (role === "manager") {
-      sql += ` AND dept_name = ? `;
+      sql += ` AND u.dept_name = ? `;
       params.push(dept_name);
     }
 
-    sql += ` ORDER BY id DESC LIMIT 500`;
+    sql += ` ORDER BY f.id DESC LIMIT 500`;
 
     const [rows] = await pool.execute(sql, params);
     res.json(rows);

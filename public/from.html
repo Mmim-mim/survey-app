@@ -872,7 +872,7 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">1. ส่วนของข้อมูลผู้ประเมิน</div>
+              <div class="title">ส่วนของข้อมูลผู้ประเมิน</div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -920,7 +920,7 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">2. ส่วนของคำถาม</div>
+              <div class="title">ส่วนของคำถาม</div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -933,7 +933,7 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">3. ความไม่พึงพอใจ</div>
+              <div class="title">ความไม่พึงพอใจ</div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -976,7 +976,7 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">4. ความผูกพัน</div>
+              <div class="title">ความผูกพัน</div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -1017,7 +1017,7 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">5. ข้อเสนอแนะ</div>
+              <div class="title">ข้อเสนอแนะ</div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -1046,7 +1046,7 @@
         <template id="dimension-template">
           <div class="group custom-dimension">
             <div class="dim-row">
-              <span class="num sec-num"></span>
+              <span class="sec-num" style="display: none"></span>
 
               <input
                 type="text"
@@ -1818,14 +1818,7 @@
       }
 
       function renumberDimensions() {
-        const base = 5; // มี 1-5 อยู่แล้ว
-        const dims = document.querySelectorAll(
-          '.custom-dimension[data-role="section"]',
-        );
-        dims.forEach((dim, i) => {
-          const span = dim.querySelector(".sec-num");
-          if (span) span.textContent = base + i + 1 + ".";
-        });
+        // ไม่ต้องแสดงเลขลำดับ
       }
 
       // Toggle section (เปิด/ปิดทั้งส่วน)

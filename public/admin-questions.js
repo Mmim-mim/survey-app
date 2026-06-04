@@ -7,6 +7,10 @@ const statusInput = document.getElementById("statusInput");
 const btnAddQuestion = document.getElementById("btnAddQuestion");
 const btnClearDemo = document.getElementById("btnClearDemo");
 const questionTableBody = document.getElementById("questionTableBody");
+const searchQuestionInput = document.getElementById("searchQuestionInput");
+const filterDropdownSelect = document.getElementById("filterDropdownSelect");
+
+let allQuestions = [];
 
 function guardAdmin() {
   if (role !== "admin") {
@@ -43,12 +47,64 @@ async function api(path, options = {}) {
 }
 
 async function loadQuestions() {
-  const rows = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
+  allQuestions = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
 
+  renderFilterDropdown(allQuestions);
+  applyQuestionFilters();
+}
+
+function renderFilterDropdown(rows) {
+  const currentValue = filterDropdownSelect.value;
+
+  const labels = [
+    ...new Set(
+      rows
+        .map((q) => String(q.used_in_label || "").trim())
+        .filter(Boolean),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "th"));
+
+  filterDropdownSelect.innerHTML = `
+    <option value="">ทั้งหมด</option>
+    ${labels
+      .map(
+        (label) => `
+          <option value="${esc(label)}">
+            ${esc(label)}
+          </option>
+        `,
+      )
+      .join("")}
+  `;
+
+  filterDropdownSelect.value = currentValue;
+}
+
+function applyQuestionFilters() {
+  const keyword = String(searchQuestionInput.value || "")
+    .trim()
+    .toLowerCase();
+
+  const selectedDropdown = String(filterDropdownSelect.value || "").trim();
+
+  const filtered = allQuestions.filter((q) => {
+    const questionText = String(q.question_text || "").toLowerCase();
+    const usedInLabel = String(q.used_in_label || "").trim();
+
+    const matchKeyword = !keyword || questionText.includes(keyword);
+    const matchDropdown = !selectedDropdown || usedInLabel === selectedDropdown;
+
+    return matchKeyword && matchDropdown;
+  });
+
+  renderQuestions(filtered);
+}
+
+function renderQuestions(rows) {
   if (!rows.length) {
     questionTableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+        <td colspan="6" class="empty">ไม่พบคำถามที่ตรงกับเงื่อนไข</td>
       </tr>
     `;
     return;
@@ -122,6 +178,9 @@ btnAddQuestion.addEventListener("click", addQuestion);
 if (btnClearDemo) {
   btnClearDemo.style.display = "none";
 }
+
+searchQuestionInput.addEventListener("input", applyQuestionFilters);
+filterDropdownSelect.addEventListener("change", applyQuestionFilters);
 
 guardAdmin();
 loadQuestions();

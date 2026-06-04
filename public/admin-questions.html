@@ -339,6 +339,30 @@
           grid-template-columns: 1fr;
         }
       }
+
+      .question-filter-bar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 8px 0 18px;
+        padding: 14px;
+        border: 1px solid #ead8c8;
+        border-radius: 16px;
+        background: #fffaf4;
+      }
+
+      .question-filter-bar label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 6px;
+      }
+
+      @media (max-width: 768px) {
+        .question-filter-bar {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
 
@@ -485,6 +509,24 @@
         <div class="panel-head">
           <h2>รายการคำถามกลาง</h2>
           <button class="btn" id="btnClearDemo">ล้างข้อมูลตัวอย่าง</button>
+        </div>
+
+        <div class="question-filter-bar">
+          <div>
+            <label>ค้นหาคำถาม</label>
+            <input
+              type="text"
+              id="searchQuestionInput"
+              placeholder="🔍 ค้นหาคำถาม..."
+            />
+          </div>
+
+          <div>
+            <label>ค้นหา Dropdown / หัวข้อ</label>
+            <select id="filterDropdownSelect">
+              <option value="">ทั้งหมด</option>
+            </select>
+          </div>
         </div>
 
         <div class="table-wrap">

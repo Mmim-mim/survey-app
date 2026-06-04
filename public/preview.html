@@ -364,8 +364,7 @@
       <!-- ส่วนที่ 3: มี/ไม่มี + เหตุผล -->
       <div class="section" id="sec3">
         <div class="title">
-          ความไม่พึงพอใจ (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก
-          “มี”)
+          ความไม่พึงพอใจ (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก “มี”)
         </div>
         <div id="dissTableWrap"></div>
       </div>
@@ -456,9 +455,14 @@
 
         const suggestTitle = document.getElementById("suggestTitle");
         const prompt = (data.suggestion_prompt || "").trim();
-        if (prompt && suggestTitle) {
+
+        if (data.section5_enabled === false || !prompt) {
+          const sec5 = document.getElementById("sec5");
+          if (sec5) sec5.style.display = "none";
+        } else if (suggestTitle) {
           suggestTitle.textContent = prompt;
         }
+
         const suggestInput = document.getElementById("suggestAnswer");
         if (suggestInput) {
           suggestInput.value = data.suggestion || "";
@@ -598,8 +602,7 @@
 
         pfRoot.innerHTML = "";
         if (!selected.length) {
-          pfRoot.innerHTML =
-            '<div class="form-note">- ไม่ได้เลือกฟิลด์ใดจากหน้าแบบฟอร์ม -</div>';
+          document.getElementById("sec1").style.display = "none";
         } else {
           selected.forEach((label) => {
             const make = renderers[label?.trim()];
@@ -854,45 +857,42 @@
           return wrap;
         }
 
-        section2Models.forEach((model, modelIndex) => {
-          const box = document.createElement("div");
-          box.className = "section";
+        section2Models
+          .filter((model) => model.enabled !== false)
+          .forEach((model, modelIndex) => {
+            const enabledDimensions = (model.dimensions || []).filter(
+              (dim) =>
+                dim.enabled !== false &&
+                Array.isArray(dim.questions) &&
+                dim.questions.some((q) => String(q || "").trim()),
+            );
 
-          const head = document.createElement("div");
-          head.className = "title";
-          head.textContent = model.title || `หัวข้อ ${modelIndex + 1}`;
-          box.appendChild(head);
+            if (!enabledDimensions.length) return;
 
-          (model.dimensions || [])
-            .filter((dim) => dim.enabled !== false)
-            .forEach((dim, dimIndex) => {
+            const box = document.createElement("div");
+            box.className = "section";
+
+            const head = document.createElement("div");
+            head.className = "title";
+            head.textContent = model.title || `หัวข้อ ${modelIndex + 1}`;
+            box.appendChild(head);
+
+            enabledDimensions.forEach((dim, dimIndex) => {
+              const questions = dim.questions
+                .map((q) => String(q || "").trim())
+                .filter(Boolean);
+
               const tbl = makeRatingTable(
                 dim.title || `ด้าน ${dimIndex + 1}`,
-                Array.isArray(dim.questions) ? dim.questions : [],
+                questions,
                 `m${modelIndex}_d${dimIndex}`,
               );
+
               if (tbl) box.appendChild(tbl);
             });
 
-          ratingRoot.appendChild(box);
-        });
-
-        const ratingExtra = Array.isArray(data.ratingExtra)
-          ? data.ratingExtra
-          : [];
-        ratingExtra.forEach((g, idx) => {
-          const title =
-            (g.title || "").trim() || `หัวข้อด้านที่เพิ่ม ${idx + 1}`;
-          const items = Array.isArray(g.questions)
-            ? g.questions.map((s) => (s || "").trim()).filter(Boolean)
-            : [];
-          const table = makeRatingTable(title, items, `rextra${idx}`);
-          if (!table) return;
-          ratingRoot.appendChild(table);
-          const spacer = document.createElement("div");
-          spacer.style.height = "10px";
-          ratingRoot.appendChild(spacer);
-        });
+            ratingRoot.appendChild(box);
+          });
 
         /* ---------- ส่วนที่ 3: มี/ไม่มี + เหตุผล ---------- */
         const dissWrap = document.getElementById("dissTableWrap");
@@ -970,7 +970,13 @@
           tbl.appendChild(tbody);
           return tbl;
         }
-        dissWrap.appendChild(makeDissTable("ความไม่พึงพอใจ", dissArr, "diss"));
+        if (dissArr.length) {
+          dissWrap.appendChild(
+            makeDissTable("ความไม่พึงพอใจ", dissArr, "diss"),
+          );
+        } else {
+          document.getElementById("sec3").style.display = "none";
+        }
 
         /* ---------- ส่วนที่ 4: ความผูกพัน → เพิ่มเหตุผลเมื่อเลือก "ใช่" ---------- */
         const engWrap = document.getElementById("engTableWrap");
@@ -1055,9 +1061,13 @@
           return tbl;
         }
 
-        engWrap.appendChild(
-          makeYNTableWithReason("ความผูกพัน", engArr, "eng", "ไม่มี", "มี "),
-        );
+        if (engArr.length) {
+          engWrap.appendChild(
+            makeYNTableWithReason("ความผูกพัน", engArr, "eng", "ไม่มี", "มี "),
+          );
+        } else {
+          document.getElementById("sec4").style.display = "none";
+        }
 
         /* ---------- ส่วนที่ 6+: หัวข้อด้านต่างๆ (ตอบเป็นกล่องข้อความ) ---------- */
         const extraRoot = document.getElementById("extraSections");

@@ -894,6 +894,10 @@
             ratingRoot.appendChild(box);
           });
 
+        if (!ratingRoot.children.length) {
+          document.getElementById("sec2").style.display = "none";
+        }
+
         /* ---------- ส่วนที่ 3: มี/ไม่มี + เหตุผล ---------- */
         const dissWrap = document.getElementById("dissTableWrap");
         const dissSource = Array.isArray(data.dissatisfied)

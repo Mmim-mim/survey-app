@@ -348,13 +348,13 @@
 
       <!-- ส่วนที่ 1 -->
       <div class="section" id="sec1">
-        <div class="title">ส่วนที่ 1. ข้อมูลผู้ประเมิน</div>
+        <div class="title">ข้อมูลผู้ประเมิน</div>
         <div id="profileFields"></div>
       </div>
 
       <!-- ส่วนที่ 2: Rating Scale -->
       <div class="section" id="sec2">
-        <div class="title">ส่วนที่ 2. ส่วนของคำถาม (Rating Scale 5 ระดับ)</div>
+        <div class="title">ส่วนของคำถาม (Rating Scale 5 ระดับ)</div>
         <div class="hint">
           5 = มากที่สุด, 4 = มาก, 3 = ปานกลาง, 2 = น้อย, 1 = น้อยที่สุด
         </div>
@@ -364,7 +364,7 @@
       <!-- ส่วนที่ 3: มี/ไม่มี + เหตุผล -->
       <div class="section" id="sec3">
         <div class="title">
-          ส่วนที่ 3. ความไม่พึงพอใจ (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก
+          ความไม่พึงพอใจ (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก
           “มี”)
         </div>
         <div id="dissTableWrap"></div>
@@ -373,14 +373,14 @@
       <!-- ส่วนที่ 4 -->
       <div class="section" id="sec4">
         <div class="title">
-          ส่วนที่ 4. ความผูกพัน (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก “มี”)
+          ความผูกพัน (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก “มี”)
         </div>
         <div id="engTableWrap"></div>
       </div>
 
       <!-- ส่วนที่ 5 : ข้อเสนอแนะ -->
       <div class="section" id="sec5">
-        <div class="title" id="suggestTitle">ส่วนที่ 5. ข้อเสนอแนะ</div>
+        <div class="title" id="suggestTitle">ข้อเสนอแนะ</div>
 
         <textarea
           id="suggestAnswer"
@@ -457,7 +457,7 @@
         const suggestTitle = document.getElementById("suggestTitle");
         const prompt = (data.suggestion_prompt || "").trim();
         if (prompt && suggestTitle) {
-          suggestTitle.textContent = `ส่วนที่ 5. ${prompt}`;
+          suggestTitle.textContent = prompt;
         }
         const suggestInput = document.getElementById("suggestAnswer");
         if (suggestInput) {
@@ -1077,7 +1077,7 @@
 
             const h = document.createElement("div");
             h.className = "title";
-            h.textContent = `ส่วนที่ ${secNo}. ${titleText}`;
+            h.textContent = titleText;
             sec.appendChild(h);
 
             if (questions.length) {

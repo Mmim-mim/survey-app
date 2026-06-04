@@ -456,11 +456,11 @@
         const suggestTitle = document.getElementById("suggestTitle");
         const prompt = (data.suggestion_prompt || "").trim();
 
-        if (data.section5_enabled === false || !prompt) {
+        if (data.section5_enabled === false) {
           const sec5 = document.getElementById("sec5");
           if (sec5) sec5.style.display = "none";
         } else if (suggestTitle) {
-          suggestTitle.textContent = prompt;
+          suggestTitle.textContent = prompt || "ข้อเสนอแนะ";
         }
 
         const suggestInput = document.getElementById("suggestAnswer");

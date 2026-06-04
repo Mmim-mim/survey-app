@@ -689,6 +689,52 @@ app.put("/api/forms/:id", async (req, res) => {
   }
 });
 
+// 4) ลบฟอร์ม
+// staff / manager ลบได้เฉพาะฟอร์มตัวเอง
+// admin ลบได้ทุกฟอร์ม
+app.delete("/api/forms/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const username = String(req.query.username || "").trim();
+    const role = String(req.query.role || "staff").trim();
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    if (!username && role !== "admin") {
+      return res.status(400).json({ error: "username is required" });
+    }
+
+    const [rows] = await pool.execute(
+      `SELECT id, created_by_username
+       FROM survey_forms
+       WHERE id = ?
+       LIMIT 1`,
+      [id]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: "ไม่พบฟอร์ม" });
+    }
+
+    const form = rows[0];
+    const ownerUsername = String(form.created_by_username || "").trim();
+
+    if (role !== "admin" && ownerUsername !== username) {
+      return res.status(403).json({
+        error: "คุณไม่มีสิทธิ์ลบฟอร์มนี้",
+      });
+    }
+
+    await pool.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 /** -----------------------------
  *  STRATEGY DASHBOARD
  * ----------------------------- */

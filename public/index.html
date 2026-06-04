@@ -742,7 +742,15 @@
         if (!ok) return;
 
         try {
-          const res = await fetch(`/api/forms/${id}`, {
+          const username = (localStorage.getItem("user") || "").trim();
+          const role = (localStorage.getItem("role") || "staff").trim();
+
+          const qs = new URLSearchParams({
+            username,
+            role,
+          });
+
+          const res = await fetch(`/api/forms/${id}?${qs.toString()}`, {
             method: "DELETE",
           });
 
@@ -753,7 +761,6 @@
           }
 
           alert("ลบฟอร์มสำเร็จ");
-
           loadFormsList();
         } catch (err) {
           console.error(err);

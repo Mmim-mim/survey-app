@@ -9,6 +9,7 @@ const btnClearDemo = document.getElementById("btnClearDemo");
 const questionTableBody = document.getElementById("questionTableBody");
 const searchQuestionInput = document.getElementById("searchQuestionInput");
 const filterDropdownSelect = document.getElementById("filterDropdownSelect");
+const sortQuestionSelect = document.getElementById("sortQuestionSelect");
 
 let allQuestions = [];
 
@@ -47,7 +48,9 @@ async function api(path, options = {}) {
 }
 
 async function loadQuestions() {
-  allQuestions = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
+  allQuestions = await api(
+    `/api/admin/questions?role=${encodeURIComponent(role)}`,
+  );
 
   renderFilterDropdown(allQuestions);
   applyQuestionFilters();
@@ -58,9 +61,7 @@ function renderFilterDropdown(rows) {
 
   const labels = [
     ...new Set(
-      rows
-        .map((q) => String(q.used_in_label || "").trim())
-        .filter(Boolean),
+      rows.map((q) => String(q.used_in_label || "").trim()).filter(Boolean),
     ),
   ].sort((a, b) => a.localeCompare(b, "th"));
 
@@ -87,15 +88,41 @@ function applyQuestionFilters() {
 
   const selectedDropdown = String(filterDropdownSelect.value || "").trim();
 
-  const filtered = allQuestions.filter((q) => {
+  const sortType = String(sortQuestionSelect.value || "newest");
+
+  let filtered = allQuestions.filter((q) => {
     const questionText = String(q.question_text || "").toLowerCase();
+
     const usedInLabel = String(q.used_in_label || "").trim();
 
     const matchKeyword = !keyword || questionText.includes(keyword);
+
     const matchDropdown = !selectedDropdown || usedInLabel === selectedDropdown;
 
     return matchKeyword && matchDropdown;
   });
+
+  switch (sortType) {
+    case "oldest":
+      filtered.sort((a, b) => a.id - b.id);
+      break;
+
+    case "az":
+      filtered.sort((a, b) =>
+        String(a.question_text).localeCompare(String(b.question_text), "th"),
+      );
+      break;
+
+    case "za":
+      filtered.sort((a, b) =>
+        String(b.question_text).localeCompare(String(a.question_text), "th"),
+      );
+      break;
+
+    default:
+      filtered.sort((a, b) => b.id - a.id);
+      break;
+  }
 
   renderQuestions(filtered);
 }
@@ -129,7 +156,6 @@ function renderQuestions(rows) {
 }
 
 async function addQuestion() {
-
   const question_text = questionInput.value.trim();
   const datalist_id = usedInInput.value.trim();
   const used_in_label =
@@ -138,9 +164,9 @@ async function addQuestion() {
   const status = statusInput.value;
 
   if (!question_text || !datalist_id) {
-  alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
-  return;
-}
+    alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
+    return;
+  }
   await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
     method: "POST",
     body: JSON.stringify({
@@ -181,6 +207,7 @@ if (btnClearDemo) {
 
 searchQuestionInput.addEventListener("input", applyQuestionFilters);
 filterDropdownSelect.addEventListener("change", applyQuestionFilters);
+sortQuestionSelect.addEventListener("change", applyQuestionFilters);
 
 guardAdmin();
 loadQuestions();

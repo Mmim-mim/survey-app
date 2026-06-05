@@ -342,7 +342,7 @@
 
       .question-filter-bar {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr 1fr 240px;
         gap: 14px;
         margin: 8px 0 18px;
         padding: 14px;
@@ -410,17 +410,11 @@
 
               <option value="dept_name">ฝ่ายที่สังกัด</option>
 
-              <option value="center_mission">
-                พันธกิจศูนย์บรรณสาร
-              </option>
+              <option value="center_mission">พันธกิจศูนย์บรรณสาร</option>
 
-              <option value="uni_strategy">
-                ยุทธศาสตร์มหาวิทยาลัย
-              </option>
+              <option value="uni_strategy">ยุทธศาสตร์มหาวิทยาลัย</option>
 
-              <option value="center_strategy">
-                ยุทธศาสตร์ศูนย์บรรณสาร
-              </option>
+              <option value="center_strategy">ยุทธศาสตร์ศูนย์บรรณสาร</option>
 
               <option value="affectOfServiceSuggestions">
                 LibQUAL+TM > ความรู้สึกที่มีต่อบริการ
@@ -535,6 +529,16 @@
             <label>ค้นหา Dropdown / หัวข้อ</label>
             <select id="filterDropdownSelect">
               <option value="">ทั้งหมด</option>
+            </select>
+          </div>
+
+          <div>
+            <label>เรียงลำดับ</label>
+            <select id="sortQuestionSelect">
+              <option value="newest">ล่าสุดก่อน</option>
+              <option value="oldest">เก่าสุดก่อน</option>
+              <option value="az">คำถาม A-Z</option>
+              <option value="za">คำถาม Z-A</option>
             </select>
           </div>
         </div>

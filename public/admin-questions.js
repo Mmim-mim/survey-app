@@ -51,7 +51,9 @@ async function api(path, options = {}) {
 }
 
 async function loadQuestions() {
-  allQuestions = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
+  allQuestions = await api(
+    `/api/admin/questions?role=${encodeURIComponent(role)}`,
+  );
 
   renderCategoryList(allQuestions);
   applyQuestionFilters();
@@ -61,20 +63,20 @@ function getQuestionCategory(q) {
   const label = String(q.used_in_label || "").trim();
 
   if (label.includes("ฝ่ายที่สังกัด") || label === "ฝ่ายที่สังกัด") {
-  return "ฝ่ายที่สังกัด";
-}
+    return "ฝ่ายที่สังกัด";
+  }
 
-if (label.includes("พันธกิจ")) {
-  return "พันธกิจศูนย์บรรณสาร";
-}
+  if (label.includes("พันธกิจ")) {
+    return "พันธกิจศูนย์บรรณสาร";
+  }
 
-if (label.includes("ยุทธศาสตร์มหาวิทยาลัย")) {
-  return "ยุทธศาสตร์มหาวิทยาลัย";
-}
+  if (label.includes("ยุทธศาสตร์มหาวิทยาลัย")) {
+    return "ยุทธศาสตร์มหาวิทยาลัย";
+  }
 
-if (label.includes("ยุทธศาสตร์ศูนย์บรรณสาร")) {
-  return "ยุทธศาสตร์ศูนย์บรรณสาร";
-}
+  if (label.includes("ยุทธศาสตร์ศูนย์บรรณสาร")) {
+    return "ยุทธศาสตร์ศูนย์บรรณสาร";
+  }
 
   if (label.includes("LibQUAL")) return "LibQUAL+TM";
   if (label.includes("SERVQUAL")) return "SERVQUAL";
@@ -91,20 +93,20 @@ function renderCategoryList(rows) {
   if (!categoryList) return;
 
   const categories = [
-  "ทั้งหมด",
-  "ฝ่ายที่สังกัด",
-  "พันธกิจศูนย์บรรณสาร",
-  "ยุทธศาสตร์มหาวิทยาลัย",
-  "ยุทธศาสตร์ศูนย์บรรณสาร",
-  "LibQUAL+TM",
-  "SERVQUAL",
-  "WEBQUAL",
-  "SiteQUAL",
-  "ESQUAL",
-  "ความไม่พึงพอใจ",
-  "ความผูกพัน",
-  "อื่น ๆ",
-];
+    "ทั้งหมด",
+    "ฝ่ายที่สังกัด",
+    "พันธกิจศูนย์บรรณสาร",
+    "ยุทธศาสตร์มหาวิทยาลัย",
+    "ยุทธศาสตร์ศูนย์บรรณสาร",
+    "LibQUAL+TM",
+    "SERVQUAL",
+    "WEBQUAL",
+    "SiteQUAL",
+    "ESQUAL",
+    "ความไม่พึงพอใจ",
+    "ความผูกพัน",
+    "อื่น ๆ",
+  ];
 
   const countMap = {};
   rows.forEach((q) => {
@@ -140,7 +142,6 @@ function renderCategoryList(rows) {
   });
 }
 
-
 function applyQuestionFilters() {
   const keyword = String(searchQuestionInput.value || "")
     .trim()
@@ -158,8 +159,7 @@ function applyQuestionFilters() {
       questionText.includes(keyword) ||
       usedInLabel.toLowerCase().includes(keyword);
 
-    const matchCategory =
-      !selectedCategory || category === selectedCategory;
+    const matchCategory = !selectedCategory || category === selectedCategory;
 
     return matchKeyword && matchCategory;
   });
@@ -194,7 +194,6 @@ function applyQuestionFilters() {
 
   renderQuestions(filtered);
 }
-
 function renderQuestions(rows) {
   if (checkAllQuestions) {
     checkAllQuestions.checked = false;
@@ -291,7 +290,9 @@ async function deleteSelectedQuestions() {
     return;
   }
 
-  const ok = confirm(`ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`);
+  const ok = confirm(
+    `ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`,
+  );
 
   if (!ok) return;
 
@@ -345,7 +346,6 @@ if (btnDeleteSelected) {
 
 guardAdmin();
 loadQuestions();
-
 
 guardAdmin();
 loadQuestions();

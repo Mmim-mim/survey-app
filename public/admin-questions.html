@@ -371,9 +371,14 @@
 
       .question-layout {
         display: grid;
-        grid-template-columns: 260px 1fr;
+        grid-template-columns: 260px minmax(0, 1fr);
         gap: 14px;
         align-items: start;
+      }
+
+      .question-content {
+        width: 100%;
+        min-width: 0;
       }
 
       .category-panel {
@@ -422,6 +427,35 @@
         padding: 2px 8px;
         color: #7b6b6b;
         font-size: 12px;
+      }
+
+      .bulk-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 0 10px;
+      }
+
+      .bulk-actions .btn.danger {
+        min-width: 120px;
+      }
+
+      .question-check,
+      #checkAllQuestions {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--red);
+        cursor: pointer;
+      }
+
+      .question-content .table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .question-content table {
+        width: 100%;
+        min-width: 920px;
       }
 
       @media (max-width: 900px) {
@@ -621,34 +655,18 @@
             <div class="category-list" id="categoryList"></div>
           </aside>
 
-          <div class="bulk-actions">
-            <button class="btn danger" id="btnDeleteSelected" type="button">
-              ลบที่เลือก
-            </button>
-          </div>
+          <div class="question-content">
+            <div class="bulk-actions">
+              <button class="btn danger" id="btnDeleteSelected" type="button">
+                ลบที่เลือก
+              </button>
+            </div>
 
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-  <th style="width: 52px">
-    <input type="checkbox" id="checkAllQuestions" title="เลือกทั้งหมด" />
-  </th>
-  <th style="width: 70px">ลำดับ</th>
-  <th>คำถาม</th>
-                  <th style="width: 260px">ใช้ใน Dropdown</th>
-                  <th style="width: 130px">ประเภท</th>
-                  <th style="width: 130px">สถานะ</th>
-                  <th style="width: 100px">Action</th>
-                </tr>
-              </thead>
-              <tbody id="questionTableBody">
-                <tr>
-                  <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
-                </tr>
-              </tbody>
-            </table>
-            </div>  
+            <div class="table-wrap">
+              <table>
+                ...
+              </table>
+            </div>
           </div>
         </div>
       </section>

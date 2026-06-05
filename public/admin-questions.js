@@ -59,13 +59,21 @@ async function loadQuestions() {
 function getQuestionCategory(q) {
   const label = String(q.used_in_label || "").trim();
 
-  if (
-    label.includes("ฝ่าย") ||
-    label.includes("พันธกิจ") ||
-    label.includes("ยุทธศาสตร์")
-  ) {
-    return "ข้อมูลโครงการ";
-  }
+  if (label.includes("ฝ่ายที่สังกัด") || label === "ฝ่ายที่สังกัด") {
+  return "ฝ่ายที่สังกัด";
+}
+
+if (label.includes("พันธกิจ")) {
+  return "พันธกิจศูนย์บรรณสาร";
+}
+
+if (label.includes("ยุทธศาสตร์มหาวิทยาลัย")) {
+  return "ยุทธศาสตร์มหาวิทยาลัย";
+}
+
+if (label.includes("ยุทธศาสตร์ศูนย์บรรณสาร")) {
+  return "ยุทธศาสตร์ศูนย์บรรณสาร";
+}
 
   if (label.includes("LibQUAL")) return "LibQUAL+TM";
   if (label.includes("SERVQUAL")) return "SERVQUAL";
@@ -82,17 +90,20 @@ function renderCategoryList(rows) {
   if (!categoryList) return;
 
   const categories = [
-    "ทั้งหมด",
-    "ข้อมูลโครงการ",
-    "LibQUAL+TM",
-    "SERVQUAL",
-    "WEBQUAL",
-    "SiteQUAL",
-    "ESQUAL",
-    "ความไม่พึงพอใจ",
-    "ความผูกพัน",
-    "อื่น ๆ",
-  ];
+  "ทั้งหมด",
+  "ฝ่ายที่สังกัด",
+  "พันธกิจศูนย์บรรณสาร",
+  "ยุทธศาสตร์มหาวิทยาลัย",
+  "ยุทธศาสตร์ศูนย์บรรณสาร",
+  "LibQUAL+TM",
+  "SERVQUAL",
+  "WEBQUAL",
+  "SiteQUAL",
+  "ESQUAL",
+  "ความไม่พึงพอใจ",
+  "ความผูกพัน",
+  "อื่น ๆ",
+];
 
   const countMap = {};
   rows.forEach((q) => {

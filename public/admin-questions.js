@@ -10,7 +10,8 @@ const questionTableBody = document.getElementById("questionTableBody");
 const searchQuestionInput = document.getElementById("searchQuestionInput");
 
 const sortQuestionSelect = document.getElementById("sortQuestionSelect");
-const categoryList = document.getElementById("categoryList");
+const checkAllQuestions = document.getElementById("checkAllQuestions");
+const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
 let allQuestions = [];
 let selectedCategory = "";
@@ -195,10 +196,14 @@ function applyQuestionFilters() {
 }
 
 function renderQuestions(rows) {
+  if (checkAllQuestions) {
+    checkAllQuestions.checked = false;
+  }
+
   if (!rows.length) {
     questionTableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="empty">ไม่พบคำถามที่ตรงกับเงื่อนไข</td>
+        <td colspan="7" class="empty">ไม่พบคำถามที่ตรงกับเงื่อนไข</td>
       </tr>
     `;
     return;
@@ -208,6 +213,14 @@ function renderQuestions(rows) {
     .map((q, index) => {
       return `
         <tr>
+          <td>
+            <input
+              type="checkbox"
+              class="question-check"
+              value="${q.id}"
+              title="เลือกคำถามนี้"
+            />
+          </td>
           <td>${index + 1}</td>
           <td>${esc(q.question_text)}</td>
           <td>${esc(q.used_in_label)}</td>
@@ -264,6 +277,48 @@ async function deleteQuestion(id) {
   await loadQuestions();
 }
 
+function getSelectedQuestionIds() {
+  return Array.from(document.querySelectorAll(".question-check:checked"))
+    .map((el) => Number(el.value))
+    .filter(Boolean);
+}
+
+async function deleteSelectedQuestions() {
+  const ids = getSelectedQuestionIds();
+
+  if (!ids.length) {
+    alert("กรุณาเลือกคำถามที่ต้องการลบ");
+    return;
+  }
+
+  const ok = confirm(`ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`);
+
+  if (!ok) return;
+
+  try {
+    if (btnDeleteSelected) {
+      btnDeleteSelected.disabled = true;
+      btnDeleteSelected.textContent = "กำลังลบ...";
+    }
+
+    for (const id of ids) {
+      await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
+        method: "DELETE",
+      });
+    }
+
+    alert("ลบคำถามที่เลือกเรียบร้อยแล้ว");
+    await loadQuestions();
+  } catch (err) {
+    alert(err.message || "ลบคำถามไม่สำเร็จ");
+  } finally {
+    if (btnDeleteSelected) {
+      btnDeleteSelected.disabled = false;
+      btnDeleteSelected.textContent = "ลบที่เลือก";
+    }
+  }
+}
+
 window.deleteQuestion = deleteQuestion;
 
 btnAddQuestion.addEventListener("click", addQuestion);
@@ -275,6 +330,21 @@ if (btnClearDemo) {
 searchQuestionInput.addEventListener("input", applyQuestionFilters);
 
 sortQuestionSelect.addEventListener("change", applyQuestionFilters);
+
+if (checkAllQuestions) {
+  checkAllQuestions.addEventListener("change", () => {
+    document.querySelectorAll(".question-check").forEach((cb) => {
+      cb.checked = checkAllQuestions.checked;
+    });
+  });
+}
+
+if (btnDeleteSelected) {
+  btnDeleteSelected.addEventListener("click", deleteSelectedQuestions);
+}
+
+guardAdmin();
+loadQuestions();
 
 
 guardAdmin();

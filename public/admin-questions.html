@@ -330,6 +330,24 @@
         padding: 24px;
       }
 
+      .bulk-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 0 10px;
+      }
+
+      .bulk-actions .btn.danger {
+        min-width: 120px;
+      }
+
+      .question-check,
+      #checkAllQuestions {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--red);
+        cursor: pointer;
+      }
+
       @media (max-width: 1100px) {
         .page {
           padding: 84px 18px 28px;
@@ -603,12 +621,21 @@
             <div class="category-list" id="categoryList"></div>
           </aside>
 
+          <div class="bulk-actions">
+            <button class="btn danger" id="btnDeleteSelected" type="button">
+              ลบที่เลือก
+            </button>
+          </div>
+
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th style="width: 70px">ลำดับ</th>
-                  <th>คำถาม</th>
+  <th style="width: 52px">
+    <input type="checkbox" id="checkAllQuestions" title="เลือกทั้งหมด" />
+  </th>
+  <th style="width: 70px">ลำดับ</th>
+  <th>คำถาม</th>
                   <th style="width: 260px">ใช้ใน Dropdown</th>
                   <th style="width: 130px">ประเภท</th>
                   <th style="width: 130px">สถานะ</th>
@@ -617,10 +644,11 @@
               </thead>
               <tbody id="questionTableBody">
                 <tr>
-                  <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+                  <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
                 </tr>
               </tbody>
             </table>
+            </div>  
           </div>
         </div>
       </section>

@@ -342,13 +342,74 @@
 
       .question-filter-bar {
         display: grid;
-        grid-template-columns: 1fr 1fr 240px;
+        grid-template-columns: 1fr 240px;
         gap: 14px;
         margin: 8px 0 18px;
         padding: 14px;
         border: 1px solid #ead8c8;
         border-radius: 16px;
         background: #fffaf4;
+      }
+
+      .question-layout {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .category-panel {
+        border: 1px solid #f0dfd0;
+        border-radius: 16px;
+        background: #fffaf4;
+        padding: 12px;
+      }
+
+      .category-title {
+        color: var(--red);
+        font-weight: 900;
+        margin-bottom: 10px;
+      }
+
+      .category-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .category-btn {
+        width: 100%;
+        border: 1px solid #ead8c8;
+        background: #fff;
+        border-radius: 12px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-family: inherit;
+        font-weight: 800;
+        color: #7a1414;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .category-btn.active {
+        background: #fff1e6;
+        border-color: #c9a34e;
+        box-shadow: 0 0 0 3px rgba(201, 163, 78, 0.18);
+      }
+
+      .category-count {
+        background: #fff;
+        border: 1px solid #ead8c8;
+        border-radius: 999px;
+        padding: 2px 8px;
+        color: #7b6b6b;
+        font-size: 12px;
+      }
+
+      @media (max-width: 900px) {
+        .question-layout {
+          grid-template-columns: 1fr;
+        }
       }
 
       .question-filter-bar label {
@@ -526,13 +587,6 @@
           </div>
 
           <div>
-            <label>ค้นหา Dropdown / หัวข้อ</label>
-            <select id="filterDropdownSelect">
-              <option value="">ทั้งหมด</option>
-            </select>
-          </div>
-
-          <div>
             <label>เรียงลำดับ</label>
             <select id="sortQuestionSelect">
               <option value="newest">ล่าสุดก่อน</option>
@@ -543,24 +597,31 @@
           </div>
         </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 70px">ลำดับ</th>
-                <th>คำถาม</th>
-                <th style="width: 260px">ใช้ใน Dropdown</th>
-                <th style="width: 130px">ประเภท</th>
-                <th style="width: 130px">สถานะ</th>
-                <th style="width: 100px">Action</th>
-              </tr>
-            </thead>
-            <tbody id="questionTableBody">
-              <tr>
-                <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="question-layout">
+          <aside class="category-panel">
+            <div class="category-title">หมวดหมู่ทั้งหมด</div>
+            <div class="category-list" id="categoryList"></div>
+          </aside>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 70px">ลำดับ</th>
+                  <th>คำถาม</th>
+                  <th style="width: 260px">ใช้ใน Dropdown</th>
+                  <th style="width: 130px">ประเภท</th>
+                  <th style="width: 130px">สถานะ</th>
+                  <th style="width: 100px">Action</th>
+                </tr>
+              </thead>
+              <tbody id="questionTableBody">
+                <tr>
+                  <td colspan="6" class="empty">ยังไม่มีคำถามกลาง</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>

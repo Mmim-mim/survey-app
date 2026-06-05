@@ -8,10 +8,12 @@ const btnAddQuestion = document.getElementById("btnAddQuestion");
 const btnClearDemo = document.getElementById("btnClearDemo");
 const questionTableBody = document.getElementById("questionTableBody");
 const searchQuestionInput = document.getElementById("searchQuestionInput");
-const filterDropdownSelect = document.getElementById("filterDropdownSelect");
+
 const sortQuestionSelect = document.getElementById("sortQuestionSelect");
+const categoryList = document.getElementById("categoryList");
 
 let allQuestions = [];
+let selectedCategory = "";
 
 function guardAdmin() {
   if (role !== "admin") {
@@ -48,58 +50,106 @@ async function api(path, options = {}) {
 }
 
 async function loadQuestions() {
-  allQuestions = await api(
-    `/api/admin/questions?role=${encodeURIComponent(role)}`,
-  );
+  allQuestions = await api(`/api/admin/questions?role=${encodeURIComponent(role)}`);
 
-  renderFilterDropdown(allQuestions);
+  renderCategoryList(allQuestions);
   applyQuestionFilters();
 }
 
-function renderFilterDropdown(rows) {
-  const currentValue = filterDropdownSelect.value;
+function getQuestionCategory(q) {
+  const label = String(q.used_in_label || "").trim();
 
-  const labels = [
-    ...new Set(
-      rows.map((q) => String(q.used_in_label || "").trim()).filter(Boolean),
-    ),
-  ].sort((a, b) => a.localeCompare(b, "th"));
+  if (
+    label.includes("ฝ่าย") ||
+    label.includes("พันธกิจ") ||
+    label.includes("ยุทธศาสตร์")
+  ) {
+    return "ข้อมูลโครงการ";
+  }
 
-  filterDropdownSelect.innerHTML = `
-    <option value="">ทั้งหมด</option>
-    ${labels
-      .map(
-        (label) => `
-          <option value="${esc(label)}">
-            ${esc(label)}
-          </option>
-        `,
-      )
-      .join("")}
-  `;
+  if (label.includes("LibQUAL")) return "LibQUAL+TM";
+  if (label.includes("SERVQUAL")) return "SERVQUAL";
+  if (label.includes("WEBQUAL")) return "WEBQUAL";
+  if (label.includes("SiteQUAL")) return "SiteQUAL";
+  if (label.includes("ESQUAL")) return "ESQUAL";
+  if (label.includes("ความไม่พึงพอใจ")) return "ความไม่พึงพอใจ";
+  if (label.includes("ความผูกพัน")) return "ความผูกพัน";
 
-  filterDropdownSelect.value = currentValue;
+  return "อื่น ๆ";
 }
+
+function renderCategoryList(rows) {
+  if (!categoryList) return;
+
+  const categories = [
+    "ทั้งหมด",
+    "ข้อมูลโครงการ",
+    "LibQUAL+TM",
+    "SERVQUAL",
+    "WEBQUAL",
+    "SiteQUAL",
+    "ESQUAL",
+    "ความไม่พึงพอใจ",
+    "ความผูกพัน",
+    "อื่น ๆ",
+  ];
+
+  const countMap = {};
+  rows.forEach((q) => {
+    const cat = getQuestionCategory(q);
+    countMap[cat] = (countMap[cat] || 0) + 1;
+  });
+
+  categoryList.innerHTML = categories
+    .map((cat) => {
+      const value = cat === "ทั้งหมด" ? "" : cat;
+      const count = cat === "ทั้งหมด" ? rows.length : countMap[cat] || 0;
+      const active = selectedCategory === value ? "active" : "";
+
+      return `
+        <button
+          type="button"
+          class="category-btn ${active}"
+          data-category="${esc(value)}"
+        >
+          <span>${esc(cat)}</span>
+          <span class="category-count">${count}</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  categoryList.querySelectorAll(".category-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedCategory = btn.dataset.category || "";
+      renderCategoryList(allQuestions);
+      applyQuestionFilters();
+    });
+  });
+}
+
 
 function applyQuestionFilters() {
   const keyword = String(searchQuestionInput.value || "")
     .trim()
     .toLowerCase();
 
-  const selectedDropdown = String(filterDropdownSelect.value || "").trim();
-
   const sortType = String(sortQuestionSelect.value || "newest");
 
   let filtered = allQuestions.filter((q) => {
     const questionText = String(q.question_text || "").toLowerCase();
-
     const usedInLabel = String(q.used_in_label || "").trim();
+    const category = getQuestionCategory(q);
 
-    const matchKeyword = !keyword || questionText.includes(keyword);
+    const matchKeyword =
+      !keyword ||
+      questionText.includes(keyword) ||
+      usedInLabel.toLowerCase().includes(keyword);
 
-    const matchDropdown = !selectedDropdown || usedInLabel === selectedDropdown;
+    const matchCategory =
+      !selectedCategory || category === selectedCategory;
 
-    return matchKeyword && matchDropdown;
+    return matchKeyword && matchCategory;
   });
 
   switch (sortType) {
@@ -109,13 +159,19 @@ function applyQuestionFilters() {
 
     case "az":
       filtered.sort((a, b) =>
-        String(a.question_text).localeCompare(String(b.question_text), "th"),
+        String(a.question_text || "").localeCompare(
+          String(b.question_text || ""),
+          "th",
+        ),
       );
       break;
 
     case "za":
       filtered.sort((a, b) =>
-        String(b.question_text).localeCompare(String(a.question_text), "th"),
+        String(b.question_text || "").localeCompare(
+          String(a.question_text || ""),
+          "th",
+        ),
       );
       break;
 
@@ -206,8 +262,9 @@ if (btnClearDemo) {
 }
 
 searchQuestionInput.addEventListener("input", applyQuestionFilters);
-filterDropdownSelect.addEventListener("change", applyQuestionFilters);
+
 sortQuestionSelect.addEventListener("change", applyQuestionFilters);
+
 
 guardAdmin();
 loadQuestions();

@@ -10,6 +10,7 @@ const questionTableBody = document.getElementById("questionTableBody");
 const searchQuestionInput = document.getElementById("searchQuestionInput");
 
 const sortQuestionSelect = document.getElementById("sortQuestionSelect");
+const categoryList = document.getElementById("categoryList");
 const checkAllQuestions = document.getElementById("checkAllQuestions");
 const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
@@ -347,5 +348,4 @@ if (btnDeleteSelected) {
 guardAdmin();
 loadQuestions();
 
-guardAdmin();
-loadQuestions();
+

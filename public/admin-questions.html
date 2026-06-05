@@ -664,7 +664,29 @@
 
             <div class="table-wrap">
               <table>
-                ...
+                <thead>
+                  <tr>
+                    <th style="width: 52px">
+                      <input
+                        type="checkbox"
+                        id="checkAllQuestions"
+                        title="เลือกทั้งหมด"
+                      />
+                    </th>
+                    <th style="width: 70px">ลำดับ</th>
+                    <th>คำถาม</th>
+                    <th style="width: 260px">ใช้ใน Dropdown</th>
+                    <th style="width: 130px">ประเภท</th>
+                    <th style="width: 130px">สถานะ</th>
+                    <th style="width: 100px">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody id="questionTableBody">
+                  <tr>
+                    <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
+                  </tr>
+                </tbody>
               </table>
             </div>
           </div>

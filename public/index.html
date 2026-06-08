@@ -783,7 +783,7 @@
 </button>
 <button
   class="icon-btn danger-btn"
-  onclick="openDeleteConfirm(${r.id}, ${JSON.stringify(r.form_title || "-")})"
+  onclick='openDeleteConfirm(${r.id}, ${JSON.stringify(r.form_title || "-")})'
   title="ลบฟอร์ม"
 >
   <i class="fa-regular fa-trash-can"></i>
@@ -991,6 +991,38 @@
       if (role !== "admin") {
         adminMenu.style.display = "none";
       }
+
+      document
+        .getElementById("confirmCancelBtn")
+        ?.addEventListener("click", () => {
+          closeDeleteConfirm();
+        });
+
+      document
+        .getElementById("confirmDeleteBtn")
+        ?.addEventListener("click", async () => {
+          if (!pendingDeleteFormId) return;
+
+          const btn = document.getElementById("confirmDeleteBtn");
+
+          try {
+            btn.disabled = true;
+            btn.textContent = "กำลังลบ...";
+
+            await deleteForm(pendingDeleteFormId);
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "ยืนยันการลบ";
+          }
+        });
+
+      document
+        .getElementById("confirmOverlay")
+        ?.addEventListener("click", (e) => {
+          if (e.target.id === "confirmOverlay") {
+            closeDeleteConfirm();
+          }
+        });
 
       // เรียกตอนเปิดหน้า
       loadFormsList();

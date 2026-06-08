@@ -523,6 +523,29 @@
       .confirm-delete:hover {
         filter: brightness(0.95);
       }
+
+      .success-toast {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: #fff;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        border-radius: 16px;
+        padding: 14px 22px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+        font-weight: 900;
+        z-index: 10000;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.25s ease;
+      }
+
+      .success-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
   </head>
   <body>
@@ -639,6 +662,8 @@
         </div>
       </div>
     </div>
+
+    <div id="successToast" class="success-toast">✅ ลบฟอร์มสำเร็จ</div>
 
     <script>
       const body = document.body;
@@ -909,6 +934,17 @@
         }
       }
 
+      function showSuccessToast() {
+        const toast = document.getElementById("successToast");
+
+        toast?.classList.add("show");
+
+        setTimeout(() => {
+          toast?.classList.remove("show");
+          window.location.href = "index.html";
+        }, 1500);
+      }
+
       async function deleteForm(id) {
         try {
           const username = (localStorage.getItem("user") || "").trim();
@@ -932,9 +968,7 @@
 
           closeDeleteConfirm();
 
-          alert("ลบฟอร์มสำเร็จ");
-
-          await loadFormsList();
+          showSuccessToast();
         } catch (err) {
           console.error(err);
 

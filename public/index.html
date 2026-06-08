@@ -410,6 +410,119 @@
       .danger-btn:hover {
         color: #ff4d5e;
       }
+
+      .confirm-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        padding: 20px;
+      }
+
+      .confirm-overlay.show {
+        display: flex;
+      }
+
+      .confirm-box {
+        width: 100%;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 28px 26px 24px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+        animation: confirmPop 0.18s ease;
+      }
+
+      @keyframes confirmPop {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .confirm-icon {
+        width: 62px;
+        height: 62px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+      }
+
+      .confirm-box h3 {
+        margin: 0 0 10px;
+        color: #8b1515;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .confirm-box p {
+        margin: 0 0 16px;
+        color: #7b6b6b;
+        font-size: 15px;
+        font-weight: 600;
+      }
+
+      .confirm-form-name {
+        background: #fff1f1;
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 18px;
+        color: #7b6b6b;
+        font-size: 14px;
+      }
+
+      .confirm-form-name strong {
+        display: block;
+        margin-top: 4px;
+        color: #b91c1c;
+        font-weight: 900;
+      }
+
+      .confirm-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        border-top: 1px solid #f0dfd0;
+        padding-top: 18px;
+      }
+
+      .confirm-cancel,
+      .confirm-delete {
+        height: 44px;
+        border-radius: 12px;
+        font-family: inherit;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .confirm-cancel {
+        background: #fff;
+        color: #555;
+        border: 1px solid #d6d6d6;
+      }
+
+      .confirm-delete {
+        background: linear-gradient(90deg, #8b1515, #c93a3a);
+        color: #fff;
+        border: none;
+      }
+
+      .confirm-delete:hover {
+        filter: brightness(0.95);
+      }
     </style>
   </head>
   <body>
@@ -668,7 +781,11 @@
     <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">
   <i class="fa-regular fa-clone"></i>
 </button>
-<button class="icon-btn danger-btn"onclick="deleteForm(${r.id})"title="ลบฟอร์ม">
+<button
+  class="icon-btn danger-btn"
+  onclick="openDeleteConfirm(${r.id}, ${JSON.stringify(r.form_title || "-")})"
+  title="ลบฟอร์ม"
+>
   <i class="fa-regular fa-trash-can"></i>
 </button>
   </div>
@@ -736,11 +853,34 @@
         }
       }
 
+      let pendingDeleteFormId = null;
+
+      function openDeleteConfirm(id, formTitle = "-") {
+        pendingDeleteFormId = id;
+
+        const overlay = document.getElementById("confirmOverlay");
+        const formName = document.getElementById("confirmFormName");
+
+        if (formName) {
+          formName.textContent = formTitle || "-";
+        }
+
+        if (overlay) {
+          overlay.classList.add("show");
+        }
+      }
+
+      function closeDeleteConfirm() {
+        pendingDeleteFormId = null;
+
+        const overlay = document.getElementById("confirmOverlay");
+
+        if (overlay) {
+          overlay.classList.remove("show");
+        }
+      }
+
       async function deleteForm(id) {
-        const ok = confirm("ต้องการลบฟอร์มนี้ใช่ไหม?");
-
-        if (!ok) return;
-
         try {
           const username = (localStorage.getItem("user") || "").trim();
           const role = (localStorage.getItem("role") || "staff").trim();
@@ -760,11 +900,12 @@
             throw new Error(data.error || "ลบไม่สำเร็จ");
           }
 
+          closeDeleteConfirm();
           alert("ลบฟอร์มสำเร็จ");
           loadFormsList();
         } catch (err) {
           console.error(err);
-          alert(err.message);
+          alert(err.message || "ลบฟอร์มไม่สำเร็จ");
         }
       }
 
@@ -854,5 +995,29 @@
       // เรียกตอนเปิดหน้า
       loadFormsList();
     </script>
+    <div id="confirmOverlay" class="confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-icon">🗑️</div>
+
+        <h3 id="confirmTitle">ยืนยันการลบฟอร์ม</h3>
+
+        <p id="confirmMessage">คุณต้องการลบฟอร์มนี้ใช่หรือไม่?</p>
+
+        <div class="confirm-form-name">
+          <span>ชื่อฟอร์ม:</span>
+          <strong id="confirmFormName">-</strong>
+        </div>
+
+        <div class="confirm-actions">
+          <button type="button" class="confirm-cancel" id="confirmCancelBtn">
+            ยกเลิก
+          </button>
+
+          <button type="button" class="confirm-delete" id="confirmDeleteBtn">
+            ยืนยันการลบ
+          </button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

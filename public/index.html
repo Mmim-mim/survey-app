@@ -614,6 +614,32 @@
       </div>
     </div>
 
+    <!-- Popup ยืนยันการลบ -->
+    <div id="confirmOverlay" class="confirm-overlay">
+      <div class="confirm-box">
+        <div class="confirm-icon">🗑️</div>
+
+        <h3 id="confirmTitle">ยืนยันการลบฟอร์ม</h3>
+
+        <p id="confirmMessage">คุณต้องการลบฟอร์มนี้ใช่หรือไม่?</p>
+
+        <div class="confirm-form-name">
+          <span>ชื่อฟอร์ม:</span>
+          <strong id="confirmFormName">-</strong>
+        </div>
+
+        <div class="confirm-actions">
+          <button type="button" class="confirm-cancel" id="confirmCancelBtn">
+            ยกเลิก
+          </button>
+
+          <button type="button" class="confirm-delete" id="confirmDeleteBtn">
+            ยืนยันการลบ
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       const body = document.body;
       const overlay = document.getElementById("overlay");
@@ -856,9 +882,12 @@
       let pendingDeleteFormId = null;
 
       function openDeleteConfirm(id, formTitle = "-") {
+        console.log("Delete Form ID = ", id);
+
         pendingDeleteFormId = id;
 
         const overlay = document.getElementById("confirmOverlay");
+
         const formName = document.getElementById("confirmFormName");
 
         if (formName) {
@@ -883,6 +912,7 @@
       async function deleteForm(id) {
         try {
           const username = (localStorage.getItem("user") || "").trim();
+
           const role = (localStorage.getItem("role") || "staff").trim();
 
           const qs = new URLSearchParams({
@@ -901,10 +931,13 @@
           }
 
           closeDeleteConfirm();
+
           alert("ลบฟอร์มสำเร็จ");
-          loadFormsList();
+
+          await loadFormsList();
         } catch (err) {
           console.error(err);
+
           alert(err.message || "ลบฟอร์มไม่สำเร็จ");
         }
       }
@@ -998,24 +1031,27 @@
           closeDeleteConfirm();
         });
 
-      document
-        .getElementById("confirmDeleteBtn")
-        ?.addEventListener("click", async () => {
-          if (!pendingDeleteFormId) return;
+      const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-          const btn = document.getElementById("confirmDeleteBtn");
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", async () => {
+          if (!pendingDeleteFormId) {
+            return;
+          }
 
           try {
-            btn.disabled = true;
-            btn.textContent = "กำลังลบ...";
+            confirmDeleteBtn.disabled = true;
+
+            confirmDeleteBtn.innerHTML = "กำลังลบ...";
 
             await deleteForm(pendingDeleteFormId);
           } finally {
-            btn.disabled = false;
-            btn.textContent = "ยืนยันการลบ";
+            confirmDeleteBtn.disabled = false;
+
+            confirmDeleteBtn.innerHTML = "ยืนยันการลบ";
           }
         });
-
+      }
       document
         .getElementById("confirmOverlay")
         ?.addEventListener("click", (e) => {
@@ -1027,29 +1063,5 @@
       // เรียกตอนเปิดหน้า
       loadFormsList();
     </script>
-    <div id="confirmOverlay" class="confirm-overlay">
-      <div class="confirm-box">
-        <div class="confirm-icon">🗑️</div>
-
-        <h3 id="confirmTitle">ยืนยันการลบฟอร์ม</h3>
-
-        <p id="confirmMessage">คุณต้องการลบฟอร์มนี้ใช่หรือไม่?</p>
-
-        <div class="confirm-form-name">
-          <span>ชื่อฟอร์ม:</span>
-          <strong id="confirmFormName">-</strong>
-        </div>
-
-        <div class="confirm-actions">
-          <button type="button" class="confirm-cancel" id="confirmCancelBtn">
-            ยกเลิก
-          </button>
-
-          <button type="button" class="confirm-delete" id="confirmDeleteBtn">
-            ยืนยันการลบ
-          </button>
-        </div>
-      </div>
-    </div>
   </body>
 </html>

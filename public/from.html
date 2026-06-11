@@ -618,6 +618,71 @@
         border-color: #c9a34e;
         box-shadow: 0 8px 16px rgba(155, 28, 28, 0.08);
       }
+
+      .save-success-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+      }
+
+      .save-success-overlay.show {
+        display: flex;
+      }
+
+      .save-success-box {
+        width: 100%;
+        max-width: 380px;
+        background: #fff;
+        border-radius: 18px;
+        padding: 30px 26px 28px;
+        text-align: center;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+        animation: saveSuccessPop 0.18s ease;
+      }
+
+      @keyframes saveSuccessPop {
+        from {
+          opacity: 0;
+          transform: translateY(10px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .save-success-icon {
+        width: 62px;
+        height: 62px;
+        margin: 0 auto 14px;
+        border-radius: 50%;
+        background: #dcfce7;
+        color: #16a34a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        font-weight: 900;
+      }
+
+      .save-success-box h3 {
+        margin: 0 0 10px;
+        color: #166534;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .save-success-box p {
+        margin: 0;
+        color: #7b6b6b;
+        font-size: 15px;
+        font-weight: 600;
+      }
     </style>
   </head>
 
@@ -1063,6 +1128,17 @@
       </template>
     </div>
 
+    <!-- Popup บันทึกฟอร์มสำเร็จ -->
+    <div id="saveSuccessOverlay" class="save-success-overlay">
+      <div class="save-success-box">
+        <div class="save-success-icon">✓</div>
+
+        <h3>บันทึกฟอร์มสำเร็จ</h3>
+
+        <p>บันทึกข้อมูลเรียบร้อยแล้ว กำลังกลับหน้าแบบฟอร์มทั้งหมด</p>
+      </div>
+    </div>
+
     <script>
       function renumber(stack) {
         stack
@@ -1476,10 +1552,10 @@
           const row = document.createElement("div");
           row.className = "item";
           row.innerHTML = `
-      <span class="num">${index + 1}.</span>
-      <input class="input" type="text" name="${inputName}" placeholder="กรอกคำถาม..." />
-      ${index >= 2 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
-    `;
+            <span class="num">${index + 1}.</span>
+            <input class="input" type="text" name="${inputName}" placeholder="กรอกคำถาม..." />
+            ${index >= 2 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+          `;
           row.querySelector("input").value = text || "";
           root.appendChild(row);
 
@@ -1662,10 +1738,10 @@
               const row = document.createElement("div");
               row.className = "item";
               row.innerHTML = `
-          <span class="num">${i + 1}.</span>
-          <input class="input dim-question" type="text" placeholder="กรอกคำถาม..." />
-          ${i > 0 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
-        `;
+                <span class="num">${i + 1}.</span>
+                <input class="input dim-question" type="text" placeholder="กรอกคำถาม..." />
+                ${i > 0 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+              `;
               row.querySelector(".dim-question").value = q || "";
               stack.appendChild(row);
 
@@ -1796,10 +1872,10 @@
         const div = document.createElement("div");
         div.className = "item";
         div.innerHTML = `
-    <span class="num">${idx}.</span>
-    <input class="input dim-question" type="text" name="${name}" list="${listId}" placeholder="กรอกคำถาม...">
-    <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
-  `;
+          <span class="num">${idx}.</span>
+          <input class="input dim-question" type="text" name="${name}" list="${listId}" placeholder="กรอกคำถาม...">
+          <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+        `;
         list.appendChild(div);
         attachDelete(div.querySelector(".del"), list);
       }
@@ -1848,10 +1924,10 @@
           const row = document.createElement("div");
           row.className = "item";
           row.innerHTML = `
-    <span class="num">${idx}.</span>
-    <input class="input dim-question" type="text" list="${listId}" placeholder="กรอกคำถาม...">
-    <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
-  `;
+          <span class="num">${idx}.</span>
+          <input class="input dim-question" type="text" list="${listId}" placeholder="กรอกคำถาม...">
+          <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+        `;
           stack.appendChild(row);
           attachDelete(row.querySelector(".del"), stack);
         });
@@ -1970,6 +2046,17 @@
         }
       }
 
+      function showSaveSuccessPopup() {
+        const popup = document.getElementById("saveSuccessOverlay");
+
+        popup.classList.add("show");
+
+        setTimeout(() => {
+          popup.classList.remove("show");
+          window.location.href = "index.html";
+        }, 1500);
+      }
+
       window.addEventListener("DOMContentLoaded", async () => {
         try {
           await loadQuestionBankIntoDatalists();
@@ -2054,7 +2141,7 @@
                 throw new Error(json?.error || "อัปเดตฟอร์มไม่สำเร็จ");
               }
 
-              alert("อัปเดตฟอร์มเรียบร้อยแล้ว");
+              showSaveSuccessPopup();
             } else {
               res = await fetch("/api/forms", {
                 method: "POST",
@@ -2067,11 +2154,9 @@
                 throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
               }
 
-              alert("บันทึกฟอร์มเรียบร้อยแล้ว");
+              localStorage.removeItem("surveyDraft");
+              showSaveSuccessPopup();
             }
-
-            localStorage.removeItem("surveyDraft");
-            window.location.href = "index.html";
           } catch (err) {
             alert(err.message || "เกิดข้อผิดพลาด");
           } finally {

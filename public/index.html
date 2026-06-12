@@ -843,7 +843,15 @@
 </td>
 
   <!-- ผลการดำเนินงาน -->
-  <td style="text-align:center;">-</td>
+  <td style="text-align:center;">
+  <button
+    class="icon-btn"
+    onclick="openResult(${r.id})"
+    title="ผลการดำเนินงาน"
+  >
+    <i class="fa-solid fa-chart-column"></i>
+  </button>
+</td>
 </tr>
 `;
             })
@@ -869,6 +877,10 @@
         navigator.clipboard.writeText(url).then(() => {
           alert("คัดลอกลิงก์แล้ว");
         });
+      }
+
+      function openResult(id) {
+        window.location.href = `result.html?id=${id}`;
       }
 
       async function copyForm(id) {

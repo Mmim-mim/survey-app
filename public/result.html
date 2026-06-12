@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ผลการดำเนินงาน</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #fff8f2, #fff1e6);
+      color: #2a1a1a;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .topbar {
+      background: #fff;
+      border: 1px solid #ead8c8;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+    }
+
+    .back {
+      text-decoration: none;
+      color: #8b1515;
+      font-weight: 800;
+    }
+
+    h1 {
+      margin: 12px 0 4px;
+      color: #8b1515;
+    }
+
+    .sub {
+      color: #7b6b6b;
+      font-weight: 600;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .card,
+    .panel {
+      background: #fff;
+      border: 1px solid #ead8c8;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+    }
+
+    .label {
+      color: #7b6b6b;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .value {
+      font-size: 36px;
+      font-weight: 900;
+      color: #8b1515;
+      margin-top: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 12px;
+      background: #dcfce7;
+      color: #166534;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-weight: 900;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .score-big {
+      text-align: center;
+      font-size: 86px;
+      font-weight: 900;
+      color: #8b1515;
+    }
+
+    .level-text {
+      text-align: center;
+      color: #166534;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #8b1515;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: #fff1e6;
+      color: #8b1515;
+      text-align: left;
+      padding: 12px;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #f0dfd0;
+    }
+
+    .good {
+      color: #166534;
+      font-weight: 900;
+    }
+
+    .medium {
+      color: #b45309;
+      font-weight: 900;
+    }
+
+    .comment {
+      background: #fffaf4;
+      border-left: 5px solid #8b1515;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 10px;
+      color: #4b3a3a;
+      font-weight: 600;
+    }
+
+    @media (max-width: 900px) {
+      .cards,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="topbar">
+      <a class="back" href="index.html">← กลับหน้าแบบฟอร์มทั้งหมด</a>
+      <h1>📊 ผลการดำเนินงาน</h1>
+      <div class="sub" id="formTitle">
+        แบบประเมินความพึงพอใจการใช้บริการ
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label">คะแนนเฉลี่ยรวม</div>
+        <div class="value">4.62</div>
+      </div>
+
+      <div class="card">
+        <div class="label">ระดับผลประเมิน</div>
+        <div class="badge">ดีมาก</div>
+      </div>
+
+      <div class="card">
+        <div class="label">จำนวนผู้ตอบ</div>
+        <div class="value">128</div>
+      </div>
+
+      <div class="card">
+        <div class="label">หัวข้อที่ประเมิน</div>
+        <div class="value">24</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>คะแนนรวม</h2>
+        <div class="score-big">4.62</div>
+        <div class="level-text">⭐⭐⭐⭐⭐ ดีมาก</div>
+      </div>
+
+      <div class="panel">
+        <h2>หัวข้อที่ควรปรับปรุง</h2>
+        <table>
+          <tr>
+            <th>หัวข้อ</th>
+            <th>คะแนน</th>
+          </tr>
+          <tr>
+            <td>เว็บไซต์</td>
+            <td class="medium">3.80</td>
+          </tr>
+          <tr>
+            <td>ความสะดวก</td>
+            <td class="medium">4.02</td>
+          </tr>
+          <tr>
+            <td>ระยะเวลา</td>
+            <td class="medium">4.15</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>ตารางคะแนนรายหัวข้อ</h2>
+      <table>
+        <tr>
+          <th>หัวข้อ</th>
+          <th>คะแนนเฉลี่ย</th>
+          <th>ผลประเมิน</th>
+        </tr>
+        <tr>
+          <td>ความรวดเร็วในการให้บริการ</td>
+          <td>4.82</td>
+          <td class="good">ดีมาก</td>
+        </tr>
+        <tr>
+          <td>ความสุภาพของเจ้าหน้าที่</td>
+          <td>4.76</td>
+          <td class="good">ดีมาก</td>
+        </tr>
+        <tr>
+          <td>ความสะดวกในการใช้งาน</td>
+          <td>4.22</td>
+          <td class="good">ดี</td>
+        </tr>
+        <tr>
+          <td>เว็บไซต์</td>
+          <td>3.80</td>
+          <td class="medium">ดี</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="panel" style="margin-top: 18px">
+      <h2>ข้อเสนอแนะจากผู้ตอบ</h2>
+      <div class="comment">เจ้าหน้าที่ให้บริการดีมาก รวดเร็ว และเป็นกันเอง</div>
+      <div class="comment">อยากให้เพิ่มปลั๊กไฟสำหรับนักศึกษา</div>
+      <div class="comment">เว็บไซต์ค้นหาหนังสือยังใช้งานยาก</div>
+    </div>
+  </div>
+</body>
+</html>

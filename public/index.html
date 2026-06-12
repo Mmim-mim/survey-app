@@ -1032,12 +1032,7 @@
         } catch (err) {
           console.warn("load result badge failed:", err);
 
-          box.outerHTML = `
-      <div class="result-badge result-empty">
-        <span class="score">-</span>
-        <span class="level">ไม่มีข้อมูล</span>
-      </div>
-    `;
+          box.outerHTML = renderResultBadge(0, 0, formId);
         }
       }
 
@@ -1081,26 +1076,30 @@
       function renderResultBadge(score, totalResponses = 0, formId) {
         if (!totalResponses || Number(score) === 0) {
           return `
-  <button
-    type="button"
-    class="result-badge ${meta.className} result-clickable"
-    onclick="openResult(${formId})"
-    title="คลิกเพื่อดูผลการดำเนินงาน"
-  >
-    <span class="score">${Number(score).toFixed(2)}</span>
-    <span class="level">${meta.text}</span>
-
-  </button>
-`;
+      <button
+        type="button"
+        class="result-badge result-empty result-clickable"
+        onclick="openResult(${formId})"
+        title="คลิกเพื่อดูผลการดำเนินงาน"
+      >
+        <span class="score">-</span>
+        <span class="level">ไม่มีข้อมูล</span>
+      </button>
+    `;
         }
 
         const meta = getEvaluationMeta(score);
 
         return `
-    <div class="result-badge ${meta.className}">
+    <button
+      type="button"
+      class="result-badge ${meta.className} result-clickable"
+      onclick="openResult(${formId})"
+      title="คลิกเพื่อดูผลการดำเนินงาน"
+    >
       <span class="score">${Number(score).toFixed(2)}</span>
       <span class="level">${meta.text}</span>
-    </div>
+    </button>
   `;
       }
 

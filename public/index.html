@@ -843,7 +843,7 @@
 </td>
 
   <!-- ผลการดำเนินงาน -->
-  <td style="text-align:center;">
+<td style="text-align:center;">
   <button
     class="icon-btn"
     onclick="openResult(${r.id})"
@@ -882,7 +882,7 @@
       function openResult(id) {
         window.location.href = `result.html?id=${id}`;
       }
-
+      
       async function copyForm(id) {
         try {
           const res = await fetch(`/api/forms/${id}`);

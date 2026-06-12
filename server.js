@@ -1375,6 +1375,239 @@ app.get("/api/question-bank/active", async (req, res) => {
   }
 });
 
+app.get("/api/forms/:id/results", async (req, res) => {
+  try {
+    const formId = req.params.id;
+
+    const [forms] = await pool.execute(
+      `SELECT id, form_title
+       FROM survey_forms
+       WHERE id = ?
+       LIMIT 1`,
+      [formId],
+    );
+
+    if (!forms.length) {
+      return res.status(404).json({
+        error: "ไม่พบฟอร์มนี้",
+      });
+    }
+
+    const form = forms[0];
+    const formTitle = form.form_title || "";
+
+    const [subs] = await pool.execute(
+      `SELECT id, created_at, created_by, form_title, payload_json
+       FROM submissions
+       WHERE form_title = ?
+       ORDER BY created_at DESC`,
+      [formTitle],
+    );
+
+    const allScores = [];
+    const questionMap = new Map();
+    const groupMap = new Map();
+    const suggestions = [];
+    const levelCounts = {
+      "ต้องปรับปรุงเร่งด่วน": 0,
+      "ต้องปรับปรุง": 0,
+      "พอใช้": 0,
+      "ดี": 0,
+      "ดีมาก": 0,
+    };
+
+    function getLevel(score) {
+      const s = Number(score) || 0;
+
+      if (s <= 1.5) return "ต้องปรับปรุงเร่งด่วน";
+      if (s <= 2.5) return "ต้องปรับปรุง";
+      if (s <= 3.5) return "พอใช้";
+      if (s <= 4.5) return "ดี";
+      return "ดีมาก";
+    }
+
+    function addScore(group, question, score) {
+      const n = Number(score);
+
+      if (!Number.isFinite(n) || n <= 0) return;
+
+      const groupName = String(group || "ไม่ระบุหมวด").trim();
+      const questionText = String(question || "ไม่ระบุคำถาม").trim();
+
+      allScores.push(n);
+
+      const qKey = `${groupName}__${questionText}`;
+
+      if (!questionMap.has(qKey)) {
+        questionMap.set(qKey, {
+          group: groupName,
+          question: questionText,
+          scores: [],
+        });
+      }
+
+      questionMap.get(qKey).scores.push(n);
+
+      if (!groupMap.has(groupName)) {
+        groupMap.set(groupName, []);
+      }
+
+      groupMap.get(groupName).push(n);
+    }
+
+    function walkForScores(value, parentGroup = "") {
+      if (Array.isArray(value)) {
+        value.forEach((item) => walkForScores(item, parentGroup));
+        return;
+      }
+
+      if (!value || typeof value !== "object") return;
+
+      const group =
+        value.groupTitle ||
+        value.group ||
+        value.category ||
+        value.sectionTitle ||
+        value.modelTitle ||
+        parentGroup ||
+        "ไม่ระบุหมวด";
+
+      const question =
+        value.questionText ||
+        value.question ||
+        value.label ||
+        value.title ||
+        "";
+
+      const score =
+        value.score ||
+        value.rating ||
+        value.value ||
+        value.answer_score ||
+        null;
+
+      if (question && score) {
+        addScore(group, question, score);
+      }
+
+      Object.entries(value).forEach(([key, child]) => {
+        if (
+          key === "score" ||
+          key === "rating" ||
+          key === "value" ||
+          key === "answer_score"
+        ) {
+          return;
+        }
+
+        walkForScores(child, group);
+      });
+    }
+
+    function collectSuggestions(payload) {
+      const found = [];
+
+      function walk(value, keyName = "") {
+        if (Array.isArray(value)) {
+          value.forEach((v) => walk(v, keyName));
+          return;
+        }
+
+        if (!value || typeof value !== "object") {
+          if (
+            typeof value === "string" &&
+            value.trim() &&
+            (
+              keyName.toLowerCase().includes("suggest") ||
+              keyName.includes("ข้อเสนอแนะ")
+            )
+          ) {
+            found.push(value.trim());
+          }
+          return;
+        }
+
+        Object.entries(value).forEach(([k, v]) => walk(v, k));
+      }
+
+      walk(payload);
+
+      return found;
+    }
+
+    subs.forEach((row) => {
+      let payload = {};
+
+      try {
+        payload =
+          typeof row.payload_json === "string"
+            ? JSON.parse(row.payload_json)
+            : row.payload_json || {};
+      } catch (_) {
+        payload = {};
+      }
+
+      walkForScores(payload);
+
+      collectSuggestions(payload).forEach((s) => {
+        if (s && !suggestions.includes(s)) suggestions.push(s);
+      });
+    });
+
+    const average =
+      allScores.length > 0
+        ? allScores.reduce((sum, n) => sum + n, 0) / allScores.length
+        : 0;
+
+    const question_scores = Array.from(questionMap.values()).map((item) => {
+      const avg =
+        item.scores.reduce((sum, n) => sum + n, 0) / item.scores.length;
+
+      return {
+        group: item.group,
+        question: item.question,
+        average: Number(avg.toFixed(2)),
+      };
+    });
+
+    const group_scores = Array.from(groupMap.entries()).map(
+      ([group, scores]) => {
+        const avg = scores.reduce((sum, n) => sum + n, 0) / scores.length;
+
+        return {
+          group,
+          average: Number(avg.toFixed(2)),
+        };
+      },
+    );
+
+    question_scores.forEach((q) => {
+      const level = getLevel(q.average);
+      if (levelCounts[level] !== undefined) {
+        levelCounts[level] += 1;
+      }
+    });
+
+    res.json({
+      form_id: form.id,
+      form_title: formTitle,
+      total_responses: subs.length,
+      total_questions: question_scores.length,
+      average_score: Number(average.toFixed(2)),
+      evaluation_level: getLevel(average),
+      group_scores,
+      question_scores,
+      suggestions,
+      level_counts: levelCounts,
+    });
+  } catch (err) {
+    console.error("GET /api/forms/:id/results error:", err);
+    res.status(500).json({
+      error: err.message || "โหลดผลการดำเนินงานไม่สำเร็จ",
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ผลการดำเนินงาน</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     * {
       box-sizing: border-box;
@@ -13,29 +15,34 @@
 
     body {
       margin: 0;
+      padding: 24px;
       background: linear-gradient(135deg, #fff8f2, #fff1e6);
       color: #2a1a1a;
-      padding: 24px;
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: auto;
     }
 
-    .topbar {
+    .topbar,
+    .card,
+    .panel {
       background: #fff;
       border: 1px solid #ead8c8;
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 18px;
+      border-radius: 20px;
       box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
     }
 
+    .topbar {
+      padding: 22px;
+      margin-bottom: 18px;
+    }
+
     .back {
-      text-decoration: none;
       color: #8b1515;
-      font-weight: 800;
+      text-decoration: none;
+      font-weight: 900;
     }
 
     h1 {
@@ -45,7 +52,7 @@
 
     .sub {
       color: #7b6b6b;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .cards {
@@ -55,36 +62,31 @@
       margin-bottom: 18px;
     }
 
-    .card,
-    .panel {
-      background: #fff;
-      border: 1px solid #ead8c8;
-      border-radius: 18px;
+    .card {
       padding: 20px;
-      box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
     }
 
     .label {
       color: #7b6b6b;
+      font-weight: 800;
       font-size: 14px;
-      font-weight: 700;
     }
 
     .value {
+      margin-top: 8px;
       font-size: 36px;
       font-weight: 900;
       color: #8b1515;
-      margin-top: 8px;
     }
 
     .badge {
       display: inline-block;
       margin-top: 12px;
-      background: #dcfce7;
-      color: #166534;
       padding: 10px 18px;
       border-radius: 999px;
       font-weight: 900;
+      background: #dcfce7;
+      color: #166534;
     }
 
     .grid {
@@ -92,6 +94,15 @@
       grid-template-columns: 1fr 1fr;
       gap: 16px;
       margin-bottom: 18px;
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    h2 {
+      color: #8b1515;
+      margin-top: 0;
     }
 
     .score-big {
@@ -103,19 +114,20 @@
 
     .level-text {
       text-align: center;
-      color: #166534;
       font-size: 24px;
       font-weight: 900;
+      color: #166534;
     }
 
-    h2 {
-      margin-top: 0;
-      color: #8b1515;
+    canvas {
+      max-height: 320px;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 16px;
     }
 
     th {
@@ -128,16 +140,7 @@
     td {
       padding: 12px;
       border-bottom: 1px solid #f0dfd0;
-    }
-
-    .good {
-      color: #166534;
-      font-weight: 900;
-    }
-
-    .medium {
-      color: #b45309;
-      font-weight: 900;
+      vertical-align: top;
     }
 
     .comment {
@@ -147,13 +150,38 @@
       border-radius: 12px;
       margin-bottom: 10px;
       color: #4b3a3a;
-      font-weight: 600;
+      font-weight: 700;
+    }
+
+    .criteria {
+      display: grid;
+      gap: 8px;
+      color: #4b3a3a;
+      font-weight: 700;
+    }
+
+    .criteria div {
+      background: #fffaf4;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #ead8c8;
+    }
+
+    .empty {
+      color: #7b6b6b;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
     }
 
     @media (max-width: 900px) {
       .cards,
       .grid {
         grid-template-columns: 1fr;
+      }
+
+      .score-big {
+        font-size: 64px;
       }
     }
   </style>
@@ -162,102 +190,101 @@
 <body>
   <div class="container">
     <div class="topbar">
-      <a class="back" href="index.html">← กลับหน้าแบบฟอร์มทั้งหมด</a>
+      <a href="index.html" class="back">← กลับหน้าแบบฟอร์มทั้งหมด</a>
       <h1>📊 ผลการดำเนินงาน</h1>
-      <div class="sub" id="formTitle">
-        แบบประเมินความพึงพอใจการใช้บริการ
-      </div>
+      <div class="sub" id="formTitle">กำลังโหลดข้อมูล...</div>
     </div>
 
     <div class="cards">
       <div class="card">
         <div class="label">คะแนนเฉลี่ยรวม</div>
-        <div class="value">4.62</div>
+        <div class="value" id="avgScore">-</div>
       </div>
 
       <div class="card">
-        <div class="label">ระดับผลประเมิน</div>
-        <div class="badge">ดีมาก</div>
+        <div class="label">ผลการประเมิน</div>
+        <div class="badge" id="levelText">-</div>
       </div>
 
       <div class="card">
         <div class="label">จำนวนผู้ตอบ</div>
-        <div class="value">128</div>
+        <div class="value" id="totalResponses">-</div>
       </div>
 
       <div class="card">
-        <div class="label">หัวข้อที่ประเมิน</div>
-        <div class="value">24</div>
+        <div class="label">จำนวนหัวข้อ</div>
+        <div class="value" id="totalQuestions">-</div>
       </div>
     </div>
 
     <div class="grid">
       <div class="panel">
         <h2>คะแนนรวม</h2>
-        <div class="score-big">4.62</div>
-        <div class="level-text">⭐⭐⭐⭐⭐ ดีมาก</div>
+        <div class="score-big" id="scoreBig">-</div>
+        <div class="level-text" id="levelBig">-</div>
+      </div>
+
+      <div class="panel">
+        <h2>กราฟโดนัทระดับผลประเมิน</h2>
+        <canvas id="levelChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>กราฟแท่งคะแนนรายหมวด</h2>
+        <canvas id="groupChart"></canvas>
       </div>
 
       <div class="panel">
         <h2>หัวข้อที่ควรปรับปรุง</h2>
         <table>
-          <tr>
-            <th>หัวข้อ</th>
-            <th>คะแนน</th>
-          </tr>
-          <tr>
-            <td>เว็บไซต์</td>
-            <td class="medium">3.80</td>
-          </tr>
-          <tr>
-            <td>ความสะดวก</td>
-            <td class="medium">4.02</td>
-          </tr>
-          <tr>
-            <td>ระยะเวลา</td>
-            <td class="medium">4.15</td>
-          </tr>
+          <thead>
+            <tr>
+              <th>หัวข้อ</th>
+              <th>คะแนน</th>
+              <th>ผลประเมิน</th>
+            </tr>
+          </thead>
+          <tbody id="weakTable"></tbody>
         </table>
       </div>
     </div>
 
     <div class="panel">
-      <h2>ตารางคะแนนรายหัวข้อ</h2>
+      <h2>ตารางคะแนนรายข้อ</h2>
       <table>
-        <tr>
-          <th>หัวข้อ</th>
-          <th>คะแนนเฉลี่ย</th>
-          <th>ผลประเมิน</th>
-        </tr>
-        <tr>
-          <td>ความรวดเร็วในการให้บริการ</td>
-          <td>4.82</td>
-          <td class="good">ดีมาก</td>
-        </tr>
-        <tr>
-          <td>ความสุภาพของเจ้าหน้าที่</td>
-          <td>4.76</td>
-          <td class="good">ดีมาก</td>
-        </tr>
-        <tr>
-          <td>ความสะดวกในการใช้งาน</td>
-          <td>4.22</td>
-          <td class="good">ดี</td>
-        </tr>
-        <tr>
-          <td>เว็บไซต์</td>
-          <td>3.80</td>
-          <td class="medium">ดี</td>
-        </tr>
+        <thead>
+          <tr>
+            <th>หมวด</th>
+            <th>คำถาม</th>
+            <th>คะแนนเฉลี่ย</th>
+            <th>ผลประเมิน</th>
+          </tr>
+        </thead>
+        <tbody id="questionTable"></tbody>
       </table>
     </div>
 
-    <div class="panel" style="margin-top: 18px">
-      <h2>ข้อเสนอแนะจากผู้ตอบ</h2>
-      <div class="comment">เจ้าหน้าที่ให้บริการดีมาก รวดเร็ว และเป็นกันเอง</div>
-      <div class="comment">อยากให้เพิ่มปลั๊กไฟสำหรับนักศึกษา</div>
-      <div class="comment">เว็บไซต์ค้นหาหนังสือยังใช้งานยาก</div>
+    <div class="grid" style="margin-top: 18px">
+      <div class="panel">
+        <h2>ข้อเสนอแนะจากผู้ตอบ</h2>
+        <div id="suggestions"></div>
+      </div>
+
+      <div class="panel">
+        <h2>เกณฑ์การแปลผล</h2>
+        <div class="criteria">
+          <div>0.00 - 1.50 การดำเนินงานต้องปรับปรุงเร่งด่วน</div>
+          <div>1.51 - 2.50 การดำเนินการต้องปรับปรุง</div>
+          <div>2.51 - 3.50 การดำเนินงานระดับพอใช้</div>
+          <div>3.51 - 4.50 การดำเนินงานระดับดี</div>
+          <div>4.51 - 5.00 การดำเนินงานระดับดีมาก</div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <script src="result.js"></script>
 </body>
 </html>

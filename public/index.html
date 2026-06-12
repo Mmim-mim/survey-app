@@ -612,6 +612,29 @@
         color: #94a3b8;
         border-color: #e2e8f0;
       }
+
+      .copy-toast {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: #fff;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        border-radius: 16px;
+        padding: 14px 22px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+        font-weight: 900;
+        z-index: 99999;
+        opacity: 0;
+        pointer-events: none;
+        transition: 0.25s ease;
+      }
+
+      .copy-toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
     </style>
   </head>
   <body>
@@ -730,6 +753,7 @@
     </div>
 
     <div id="successToast" class="success-toast">✅ ลบฟอร์มสำเร็จ</div>
+    <div id="copyToast" class="copy-toast">✅ คัดลอกลิงก์เรียบร้อยแล้ว</div>
 
     <script>
       const body = document.body;
@@ -955,8 +979,18 @@
         const url = `${window.location.origin}/preview.html?formId=${id}`;
 
         navigator.clipboard.writeText(url).then(() => {
-          alert("คัดลอกลิงก์แล้ว");
+          showCopyToast();
         });
+      }
+
+      function showCopyToast() {
+        const toast = document.getElementById("copyToast");
+
+        toast?.classList.add("show");
+
+        setTimeout(() => {
+          toast?.classList.remove("show");
+        }, 1500);
       }
 
       function openResult(id) {

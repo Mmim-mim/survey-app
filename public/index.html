@@ -1027,6 +1027,7 @@
           box.outerHTML = renderResultBadge(
             data.average_score,
             data.total_responses,
+            formId,
           );
         } catch (err) {
           console.warn("load result badge failed:", err);
@@ -1077,17 +1078,18 @@
         };
       }
 
-      function renderResultBadge(score, totalResponses = 0) {
+      function renderResultBadge(score, totalResponses = 0, formId) {
         if (!totalResponses || Number(score) === 0) {
           return `
   <button
+    type="button"
     class="result-badge ${meta.className} result-clickable"
     onclick="openResult(${formId})"
     title="คลิกเพื่อดูผลการดำเนินงาน"
   >
     <span class="score">${Number(score).toFixed(2)}</span>
     <span class="level">${meta.text}</span>
-    <span class="result-view-text">ดูผลการดำเนินงาน</span>
+
   </button>
 `;
         }

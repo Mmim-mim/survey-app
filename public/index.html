@@ -635,6 +635,24 @@
         opacity: 1;
         transform: translateX(-50%) translateY(0);
       }
+
+      .result-clickable {
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+      }
+
+      .result-clickable:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(155, 28, 28, 0.16);
+      }
+
+      .result-view-text {
+        display: block;
+        font-size: 11px;
+        margin-top: 4px;
+        opacity: 0.85;
+      }
     </style>
   </head>
   <body>
@@ -934,23 +952,16 @@
 
   <!-- ผลการดำเนินงาน -->
 <td style="text-align:center;">
-  <div class="result-cell">
-    <button
-      class="icon-btn"
-      onclick="openResult(${r.id})"
-      title="ผลการดำเนินงาน"
-    >
-      <i class="fa-solid fa-chart-column"></i>
-    </button>
-
-    <div
-      id="resultBadge-${r.id}"
-      class="result-badge result-empty"
-    >
-      <span class="score">...</span>
-      <span class="level">กำลังโหลด</span>
-    </div>
-  </div>
+  <button
+    id="resultBadge-${r.id}"
+    class="result-badge result-empty result-clickable"
+    onclick="openResult(${r.id})"
+    title="คลิกเพื่อดูผลการดำเนินงาน"
+  >
+    <span class="score">...</span>
+    <span class="level">กำลังโหลด</span>
+    <span class="result-view-text">ดูผลการดำเนินงาน</span>
+  </button>
 </td>
 </tr>
 `;
@@ -1069,11 +1080,16 @@
       function renderResultBadge(score, totalResponses = 0) {
         if (!totalResponses || Number(score) === 0) {
           return `
-      <div class="result-badge result-empty">
-        <span class="score">-</span>
-        <span class="level">ยังไม่มีผล</span>
-      </div>
-    `;
+  <button
+    class="result-badge ${meta.className} result-clickable"
+    onclick="openResult(${formId})"
+    title="คลิกเพื่อดูผลการดำเนินงาน"
+  >
+    <span class="score">${Number(score).toFixed(2)}</span>
+    <span class="level">${meta.text}</span>
+    <span class="result-view-text">ดูผลการดำเนินงาน</span>
+  </button>
+`;
         }
 
         const meta = getEvaluationMeta(score);

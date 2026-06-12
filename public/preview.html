@@ -1360,10 +1360,63 @@
               throw new Error(json?.error || "บันทึกไม่สำเร็จ");
             }
 
-            alert("ส่งแบบประเมินเรียบร้อย ✅ (บันทึกลงฐานข้อมูลแล้ว)");
-            // จะล้าง localStorage เดิมก็ได้ถ้ามิมต้องการ
-            // localStorage.removeItem("surveyRatings"); ... etc
-            window.location.href = "index.html";
+            sessionStorage.setItem("submitted", "true");
+
+            document.body.innerHTML = `
+<div style="
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#fff8f2,#fff1e6);
+  padding:20px;
+">
+
+  <div style="
+    max-width:600px;
+    width:100%;
+    background:#fff;
+    border-radius:24px;
+    padding:50px;
+    text-align:center;
+    box-shadow:0 15px 40px rgba(0,0,0,.08);
+  ">
+
+    <div style="
+      width:90px;
+      height:90px;
+      margin:auto;
+      border-radius:50%;
+      background:#dcfce7;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:48px;
+    ">
+      ✅
+    </div>
+
+    <h1 style="
+      color:#9b1c1c;
+      margin-top:20px;
+      margin-bottom:15px;
+    ">
+      ส่งแบบประเมินเรียบร้อยแล้ว
+    </h1>
+
+    <p style="
+      color:#666;
+      font-size:18px;
+      line-height:1.8;
+    ">
+      ขอบคุณสำหรับความคิดเห็นของท่าน<br>
+      ระบบได้รับคำตอบของท่านเรียบร้อยแล้ว
+    </p>
+
+  </div>
+
+</div>
+`;
           } catch (err) {
             console.error(err);
             alert("ส่งไม่สำเร็จ: " + err.message);

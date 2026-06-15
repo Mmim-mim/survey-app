@@ -98,6 +98,7 @@
 
     .panel {
       padding: 22px;
+      margin-bottom: 18px;
     }
 
     h2 {
@@ -155,6 +156,7 @@
 
     .criteria {
       display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       color: #4b3a3a;
       font-weight: 700;
@@ -165,6 +167,8 @@
       padding: 10px 12px;
       border-radius: 12px;
       border: 1px solid #ead8c8;
+      text-align: center;
+      font-size: 13px;
     }
 
     .empty {
@@ -176,7 +180,8 @@
 
     @media (max-width: 900px) {
       .cards,
-      .grid {
+      .grid,
+      .criteria {
         grid-template-columns: 1fr;
       }
 
@@ -266,21 +271,19 @@
       </table>
     </div>
 
-    <div class="grid" style="margin-top: 18px">
-      <div class="panel">
-        <h2>ข้อเสนอแนะจากผู้ตอบ</h2>
-        <div id="suggestions"></div>
-      </div>
+    <div class="panel">
+      <h2>ข้อเสนอแนะเพิ่มเติมจากผู้ตอบแบบประเมิน</h2>
+      <div id="suggestions"></div>
+    </div>
 
-      <div class="panel">
-        <h2>เกณฑ์การแปลผล</h2>
-        <div class="criteria">
-          <div>0.00 - 1.50 การดำเนินงานต้องปรับปรุงเร่งด่วน</div>
-          <div>1.51 - 2.50 การดำเนินการต้องปรับปรุง</div>
-          <div>2.51 - 3.50 การดำเนินงานระดับพอใช้</div>
-          <div>3.51 - 4.50 การดำเนินงานระดับดี</div>
-          <div>4.51 - 5.00 การดำเนินงานระดับดีมาก</div>
-        </div>
+    <div class="panel">
+      <h2>เกณฑ์การแปลผล</h2>
+      <div class="criteria">
+        <div>0.00 - 1.50<br>ต้องปรับปรุงเร่งด่วน</div>
+        <div>1.51 - 2.50<br>ต้องปรับปรุง</div>
+        <div>2.51 - 3.50<br>พอใช้</div>
+        <div>3.51 - 4.50<br>ดี</div>
+        <div>4.51 - 5.00<br>ดีมาก</div>
       </div>
     </div>
   </div>

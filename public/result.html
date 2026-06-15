@@ -189,6 +189,70 @@
           font-size: 64px;
         }
       }
+
+      /* ===== ข้อมูลผู้ตอบแบบพับเปิด ===== */
+      .respondent-panel {
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .respondent-toggle {
+        width: 100%;
+        padding: 18px 22px;
+        border: none;
+        background: #fff;
+        color: #8b1515;
+        font-size: 18px;
+        font-weight: 900;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .respondent-toggle:hover {
+        background: #fff8f2;
+      }
+
+      .respondent-box {
+        display: none;
+        padding: 0 22px 22px;
+      }
+
+      .respondent-box.show {
+        display: block;
+      }
+
+      .respondent-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .respondent-grid h3 {
+        color: #8b1515;
+        font-size: 15px;
+        margin: 0 0 10px;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        background: #fffaf4;
+        border: 1px solid #ead8c8;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        font-weight: 800;
+        color: #4b3a3a;
+      }
+
+      @media (max-width: 900px) {
+        .respondent-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
 
@@ -219,6 +283,36 @@
         <div class="card">
           <div class="label">จำนวนหัวข้อ</div>
           <div class="value" id="totalQuestions">-</div>
+        </div>
+      </div>
+
+      <div class="panel respondent-panel">
+        <button
+          class="respondent-toggle"
+          type="button"
+          onclick="toggleRespondentBox()"
+        >
+          <span>👥 ข้อมูลผู้ตอบแบบประเมิน</span>
+          <span id="respondentArrow">ดูเพิ่มเติม ▼</span>
+        </button>
+
+        <div id="respondentBox" class="respondent-box">
+          <div class="respondent-grid">
+            <div>
+              <h3>สถานภาพผู้ประเมิน</h3>
+              <div id="statusSummary"></div>
+            </div>
+
+            <div>
+              <h3>ระดับการศึกษา</h3>
+              <div id="educationSummary"></div>
+            </div>
+
+            <div>
+              <h3>สำนักวิชา/หน่วยงาน</h3>
+              <div id="facultySummary"></div>
+            </div>
+          </div>
         </div>
       </div>
 

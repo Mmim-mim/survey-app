@@ -1468,6 +1468,8 @@ function collectRespondentProfile(payload) {
       "ดีมาก": 0,
     };
 
+    
+
     function getLevel(score) {
       const s = Number(score) || 0;
 
@@ -1599,14 +1601,13 @@ function collectRespondentProfile(payload) {
         payload = {};
       }
 
-      walkForScores(payload);
       collectRespondentProfile(payload);
+walkForScores(payload);
 
-      collectSuggestions(payload).forEach((s) => {
-        if (s && !suggestions.includes(s)) suggestions.push(s);
-      });
-    });
-
+collectSuggestions(payload).forEach((s) => {
+  if (s && !suggestions.includes(s)) suggestions.push(s);
+});
+});
     const average =
       allScores.length > 0
         ? allScores.reduce((sum, n) => sum + n, 0) / allScores.length
@@ -1651,9 +1652,10 @@ function collectRespondentProfile(payload) {
       group_scores,
       question_scores,
       suggestions,
-      level_counts: levelCounts,
+      
       level_counts: levelCounts,
       respondent_summary: respondentSummary,
+
     });
   } catch (err) {
     console.error("GET /api/forms/:id/results error:", err);

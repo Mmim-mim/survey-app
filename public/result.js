@@ -104,6 +104,44 @@ function renderWeakTable(rows = []) {
     .join("");
 }
 
+function toggleRespondentBox() {
+  const box = document.getElementById("respondentBox");
+  const arrow = document.getElementById("respondentArrow");
+
+  if (!box || !arrow) return;
+
+  box.classList.toggle("show");
+
+  arrow.textContent = box.classList.contains("show")
+    ? "ซ่อน ▲"
+    : "ดูเพิ่มเติม ▼";
+}
+
+function renderSummaryList(id, data = {}) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  const entries = Object.entries(data).filter(([label, count]) => {
+    return label && Number(count) > 0;
+  });
+
+  if (!entries.length) {
+    box.innerHTML = `<div class="empty">ไม่มีข้อมูล</div>`;
+    return;
+  }
+
+  box.innerHTML = entries
+    .map(([label, count]) => {
+      return `
+        <div class="summary-item">
+          <span>${label}</span>
+          <span>${count} คน</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
 function renderSuggestions(items = []) {
   const box = document.getElementById("suggestions");
 
@@ -268,14 +306,18 @@ async function loadResult() {
     document.getElementById("levelBig").style.color = level.color;
 
     renderQuestionTable(data.question_scores || []);
-    renderWeakTable(data.question_scores || []);
-    renderSuggestions(data.suggestions || []);
-    renderGroupChart(data.group_scores || []);
-    renderLevelChart(data.level_counts || {});
-    renderCountChart("statusChart", "status", data.respondent_summary?.status || {}, "doughnut");
-    renderCountChart("levelProfileChart", "levelProfile", data.respondent_summary?.education_level || {}, "bar");
-    renderCountChart("facultyChart", "faculty", data.respondent_summary?.faculty || {}, "bar");
-    
+renderWeakTable(data.question_scores || []);
+renderSuggestions(data.suggestions || []);
+renderGroupChart(data.group_scores || []);
+renderLevelChart(data.level_counts || {});
+
+renderSummaryList("statusSummary", data.respondent_summary?.status || {});
+renderSummaryList(
+  "educationSummary",
+  data.respondent_summary?.education_level || {}
+);
+renderSummaryList("facultySummary", data.respondent_summary?.faculty || {});
+
   } catch (err) {
     console.error(err);
     alert(err.message || "เกิดข้อผิดพลาด");

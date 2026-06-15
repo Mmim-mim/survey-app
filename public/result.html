@@ -1,293 +1,310 @@
 <!doctype html>
 <html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ผลการดำเนินงาน</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ผลการดำเนินงาน</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: "Noto Sans Thai", system-ui, sans-serif;
-    }
+    <style>
+      * {
+        box-sizing: border-box;
+        font-family: "Noto Sans Thai", system-ui, sans-serif;
+      }
 
-    body {
-      margin: 0;
-      padding: 24px;
-      background: linear-gradient(135deg, #fff8f2, #fff1e6);
-      color: #2a1a1a;
-    }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: linear-gradient(135deg, #fff8f2, #fff1e6);
+        color: #2a1a1a;
+      }
 
-    .container {
-      max-width: 1280px;
-      margin: auto;
-    }
+      .container {
+        max-width: 1280px;
+        margin: auto;
+      }
 
-    .topbar,
-    .card,
-    .panel {
-      background: #fff;
-      border: 1px solid #ead8c8;
-      border-radius: 20px;
-      box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
-    }
+      .topbar,
+      .card,
+      .panel {
+        background: #fff;
+        border: 1px solid #ead8c8;
+        border-radius: 20px;
+        box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+      }
 
-    .topbar {
-      padding: 22px;
-      margin-bottom: 18px;
-    }
+      .topbar {
+        padding: 22px;
+        margin-bottom: 18px;
+      }
 
-    .back {
-      color: #8b1515;
-      text-decoration: none;
-      font-weight: 900;
-    }
+      .back {
+        color: #8b1515;
+        text-decoration: none;
+        font-weight: 900;
+      }
 
-    h1 {
-      margin: 12px 0 4px;
-      color: #8b1515;
-    }
+      h1 {
+        margin: 12px 0 4px;
+        color: #8b1515;
+      }
 
-    .sub {
-      color: #7b6b6b;
-      font-weight: 700;
-    }
+      .sub {
+        color: #7b6b6b;
+        font-weight: 700;
+      }
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 18px;
-    }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 18px;
+      }
 
-    .card {
-      padding: 20px;
-    }
+      .card {
+        padding: 20px;
+      }
 
-    .label {
-      color: #7b6b6b;
-      font-weight: 800;
-      font-size: 14px;
-    }
+      .label {
+        color: #7b6b6b;
+        font-weight: 800;
+        font-size: 14px;
+      }
 
-    .value {
-      margin-top: 8px;
-      font-size: 36px;
-      font-weight: 900;
-      color: #8b1515;
-    }
+      .value {
+        margin-top: 8px;
+        font-size: 36px;
+        font-weight: 900;
+        color: #8b1515;
+      }
 
-    .badge {
-      display: inline-block;
-      margin-top: 12px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      font-weight: 900;
-      background: #dcfce7;
-      color: #166534;
-    }
+      .badge {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-weight: 900;
+        background: #dcfce7;
+        color: #166534;
+      }
 
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
 
-    .panel {
-      padding: 22px;
-      margin-bottom: 18px;
-    }
+      .panel {
+        padding: 22px;
+        margin-bottom: 18px;
+      }
 
-    h2 {
-      color: #8b1515;
-      margin-top: 0;
-    }
-
-    .score-big {
-      text-align: center;
-      font-size: 86px;
-      font-weight: 900;
-      color: #8b1515;
-    }
-
-    .level-text {
-      text-align: center;
-      font-size: 24px;
-      font-weight: 900;
-      color: #166534;
-    }
-
-    canvas {
-      max-height: 320px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      overflow: hidden;
-      border-radius: 16px;
-    }
-
-    th {
-      background: #fff1e6;
-      color: #8b1515;
-      text-align: left;
-      padding: 12px;
-    }
-
-    td {
-      padding: 12px;
-      border-bottom: 1px solid #f0dfd0;
-      vertical-align: top;
-    }
-
-    .comment {
-      background: #fffaf4;
-      border-left: 5px solid #8b1515;
-      padding: 12px 14px;
-      border-radius: 12px;
-      margin-bottom: 10px;
-      color: #4b3a3a;
-      font-weight: 700;
-    }
-
-    .criteria {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      color: #4b3a3a;
-      font-weight: 700;
-    }
-
-    .criteria div {
-      background: #fffaf4;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #ead8c8;
-      text-align: center;
-      font-size: 13px;
-    }
-
-    .empty {
-      color: #7b6b6b;
-      font-weight: 700;
-      text-align: center;
-      padding: 20px;
-    }
-
-    @media (max-width: 900px) {
-      .cards,
-      .grid,
-      .criteria {
-        grid-template-columns: 1fr;
+      h2 {
+        color: #8b1515;
+        margin-top: 0;
       }
 
       .score-big {
-        font-size: 64px;
+        text-align: center;
+        font-size: 86px;
+        font-weight: 900;
+        color: #8b1515;
       }
-    }
-  </style>
-</head>
 
-<body>
-  <div class="container">
-    <div class="topbar">
-      <a href="index.html" class="back">← กลับหน้าแบบฟอร์มทั้งหมด</a>
-      <h1>📊 ผลการดำเนินงาน</h1>
-      <div class="sub" id="formTitle">กำลังโหลดข้อมูล...</div>
-    </div>
+      .level-text {
+        text-align: center;
+        font-size: 24px;
+        font-weight: 900;
+        color: #166534;
+      }
 
-    <div class="cards">
-      <div class="card">
-        <div class="label">คะแนนเฉลี่ยรวม</div>
-        <div class="value" id="avgScore">-</div>
+      canvas {
+        max-height: 320px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border-radius: 16px;
+      }
+
+      th {
+        background: #fff1e6;
+        color: #8b1515;
+        text-align: left;
+        padding: 12px;
+      }
+
+      td {
+        padding: 12px;
+        border-bottom: 1px solid #f0dfd0;
+        vertical-align: top;
+      }
+
+      .comment {
+        background: #fffaf4;
+        border-left: 5px solid #8b1515;
+        padding: 12px 14px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        color: #4b3a3a;
+        font-weight: 700;
+      }
+
+      .criteria {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        color: #4b3a3a;
+        font-weight: 700;
+      }
+
+      .criteria div {
+        background: #fffaf4;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid #ead8c8;
+        text-align: center;
+        font-size: 13px;
+      }
+
+      .empty {
+        color: #7b6b6b;
+        font-weight: 700;
+        text-align: center;
+        padding: 20px;
+      }
+
+      @media (max-width: 900px) {
+        .cards,
+        .grid,
+        .criteria {
+          grid-template-columns: 1fr;
+        }
+
+        .score-big {
+          font-size: 64px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="topbar">
+        <a href="index.html" class="back">← กลับหน้าแบบฟอร์มทั้งหมด</a>
+        <h1>📊 ผลการดำเนินงาน</h1>
+        <div class="sub" id="formTitle">กำลังโหลดข้อมูล...</div>
       </div>
 
-      <div class="card">
-        <div class="label">ผลการประเมิน</div>
-        <div class="badge" id="levelText">-</div>
+      <div class="cards">
+        <div class="card">
+          <div class="label">คะแนนเฉลี่ยรวม</div>
+          <div class="value" id="avgScore">-</div>
+        </div>
+
+        <div class="card">
+          <div class="label">ผลการประเมิน</div>
+          <div class="badge" id="levelText">-</div>
+        </div>
+
+        <div class="card">
+          <div class="label">จำนวนผู้ตอบ</div>
+          <div class="value" id="totalResponses">-</div>
+        </div>
+
+        <div class="card">
+          <div class="label">จำนวนหัวข้อ</div>
+          <div class="value" id="totalQuestions">-</div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="label">จำนวนผู้ตอบ</div>
-        <div class="value" id="totalResponses">-</div>
+      <div class="grid">
+        <div class="panel">
+          <h2>คะแนนรวม</h2>
+          <div class="score-big" id="scoreBig">-</div>
+          <div class="level-text" id="levelBig">-</div>
+        </div>
+
+        <div class="panel">
+          <h2>กราฟโดนัทระดับผลประเมิน</h2>
+          <canvas id="levelChart"></canvas>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="label">จำนวนหัวข้อ</div>
-        <div class="value" id="totalQuestions">-</div>
-      </div>
-    </div>
+      <div class="grid">
+        <div class="panel">
+          <h2>สรุปผู้ตอบตามสถานภาพ</h2>
+          <canvas id="statusChart"></canvas>
+        </div>
 
-    <div class="grid">
+        <div class="panel">
+          <h2>สรุปผู้ตอบตามระดับการศึกษา</h2>
+          <canvas id="levelProfileChart"></canvas>
+        </div>
+      </div>
+
       <div class="panel">
-        <h2>คะแนนรวม</h2>
-        <div class="score-big" id="scoreBig">-</div>
-        <div class="level-text" id="levelBig">-</div>
+        <h2>สรุปผู้ตอบตามสำนักวิชา/หน่วยงานที่สังกัด</h2>
+        <canvas id="facultyChart"></canvas>
+      </div>
+
+      <div class="grid">
+        <div class="panel">
+          <h2>กราฟแท่งคะแนนรายหมวด</h2>
+          <canvas id="groupChart"></canvas>
+        </div>
+
+        <div class="panel">
+          <h2>หัวข้อที่ควรปรับปรุง</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>หัวข้อ</th>
+                <th>คะแนน</th>
+                <th>ผลประเมิน</th>
+              </tr>
+            </thead>
+            <tbody id="weakTable"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="panel">
-        <h2>กราฟโดนัทระดับผลประเมิน</h2>
-        <canvas id="levelChart"></canvas>
-      </div>
-    </div>
-
-    <div class="grid">
-      <div class="panel">
-        <h2>กราฟแท่งคะแนนรายหมวด</h2>
-        <canvas id="groupChart"></canvas>
-      </div>
-
-      <div class="panel">
-        <h2>หัวข้อที่ควรปรับปรุง</h2>
+        <h2>ตารางคะแนนรายข้อ</h2>
         <table>
           <thead>
             <tr>
-              <th>หัวข้อ</th>
-              <th>คะแนน</th>
+              <th>หมวด</th>
+              <th>คำถาม</th>
+              <th>คะแนนเฉลี่ย</th>
               <th>ผลประเมิน</th>
             </tr>
           </thead>
-          <tbody id="weakTable"></tbody>
+          <tbody id="questionTable"></tbody>
         </table>
       </div>
-    </div>
 
-    <div class="panel">
-      <h2>ตารางคะแนนรายข้อ</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>หมวด</th>
-            <th>คำถาม</th>
-            <th>คะแนนเฉลี่ย</th>
-            <th>ผลประเมิน</th>
-          </tr>
-        </thead>
-        <tbody id="questionTable"></tbody>
-      </table>
-    </div>
+      <div class="panel">
+        <h2>ข้อเสนอแนะเพิ่มเติมจากผู้ตอบแบบประเมิน</h2>
+        <div id="suggestions"></div>
+      </div>
 
-    <div class="panel">
-      <h2>ข้อเสนอแนะเพิ่มเติมจากผู้ตอบแบบประเมิน</h2>
-      <div id="suggestions"></div>
-    </div>
-
-    <div class="panel">
-      <h2>เกณฑ์การแปลผล</h2>
-      <div class="criteria">
-        <div>0.00 - 1.50<br>ต้องปรับปรุงเร่งด่วน</div>
-        <div>1.51 - 2.50<br>ต้องปรับปรุง</div>
-        <div>2.51 - 3.50<br>พอใช้</div>
-        <div>3.51 - 4.50<br>ดี</div>
-        <div>4.51 - 5.00<br>ดีมาก</div>
+      <div class="panel">
+        <h2>เกณฑ์การแปลผล</h2>
+        <div class="criteria">
+          <div>0.00 - 1.50<br />ต้องปรับปรุงเร่งด่วน</div>
+          <div>1.51 - 2.50<br />ต้องปรับปรุง</div>
+          <div>2.51 - 3.50<br />พอใช้</div>
+          <div>3.51 - 4.50<br />ดี</div>
+          <div>4.51 - 5.00<br />ดีมาก</div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="result.js"></script>
-</body>
+    <script src="result.js"></script>
+  </body>
 </html>

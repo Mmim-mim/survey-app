@@ -1408,6 +1408,58 @@ app.get("/api/forms/:id/results", async (req, res) => {
     const questionMap = new Map();
     const groupMap = new Map();
     const suggestions = [];
+    const respondentSummary = {
+  status: {},
+  education_level: {},
+  faculty: {},
+  major: {},
+};
+
+function addCount(map, value) {
+  const key = String(value || "").trim() || "ไม่ระบุ";
+  map[key] = (map[key] || 0) + 1;
+}
+
+function collectRespondentProfile(payload) {
+  const profile = payload.profile || payload.respondent || payload.user || {};
+
+  const status =
+    profile.status ||
+    profile.respondent_status ||
+    profile.user_status ||
+    profile.type ||
+    payload.status ||
+    payload.respondent_status;
+
+  const educationLevel =
+    profile.level ||
+    profile.education_level ||
+    profile.degree ||
+    payload.level ||
+    payload.education_level;
+
+  const faculty =
+    profile.faculty ||
+    profile.dept ||
+    profile.department ||
+    profile.organization ||
+    profile.school ||
+    payload.faculty ||
+    payload.dept ||
+    payload.department;
+
+  const major =
+    profile.major ||
+    profile.program ||
+    profile.branch ||
+    payload.major ||
+    payload.program;
+
+  addCount(respondentSummary.status, status);
+  addCount(respondentSummary.education_level, educationLevel);
+  addCount(respondentSummary.faculty, faculty);
+  addCount(respondentSummary.major, major);
+}
     const levelCounts = {
       "ต้องปรับปรุงเร่งด่วน": 0,
       "ต้องปรับปรุง": 0,
@@ -1548,6 +1600,7 @@ app.get("/api/forms/:id/results", async (req, res) => {
       }
 
       walkForScores(payload);
+      collectRespondentProfile(payload);
 
       collectSuggestions(payload).forEach((s) => {
         if (s && !suggestions.includes(s)) suggestions.push(s);
@@ -1599,6 +1652,8 @@ app.get("/api/forms/:id/results", async (req, res) => {
       question_scores,
       suggestions,
       level_counts: levelCounts,
+      level_counts: levelCounts,
+      respondent_summary: respondentSummary,
     });
   } catch (err) {
     console.error("GET /api/forms/:id/results error:", err);

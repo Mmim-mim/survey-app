@@ -3,6 +3,9 @@ const formId = params.get("id");
 
 let groupChartInstance = null;
 let levelChartInstance = null;
+let statusChartInstance = null;
+let levelProfileChartInstance = null;
+let facultyChartInstance = null;
 
 function getEvaluationLevel(score) {
   const s = Number(score) || 0;
@@ -173,6 +176,68 @@ function renderLevelChart(levelCounts = {}) {
   });
 }
 
+function renderCountChart(canvasId, chartRefName, summary = {}, type = "bar") {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  const labels = Object.keys(summary);
+  const values = Object.values(summary);
+
+  if (!labels.length) {
+    return;
+  }
+
+  if (chartRefName === "status" && statusChartInstance) {
+    statusChartInstance.destroy();
+  }
+
+  if (chartRefName === "levelProfile" && levelProfileChartInstance) {
+    levelProfileChartInstance.destroy();
+  }
+
+  if (chartRefName === "faculty" && facultyChartInstance) {
+    facultyChartInstance.destroy();
+  }
+
+  const chart = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "จำนวนผู้ตอบ",
+          data: values,
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      indexAxis: chartRefName === "faculty" ? "y" : "x",
+      scales:
+        type === "bar"
+          ? {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  precision: 0,
+                },
+              },
+              x: {
+                ticks: {
+                  autoSkip: false,
+                },
+              },
+            }
+          : {},
+    },
+  });
+
+  if (chartRefName === "status") statusChartInstance = chart;
+  if (chartRefName === "levelProfile") levelProfileChartInstance = chart;
+  if (chartRefName === "faculty") facultyChartInstance = chart;
+}
+
 async function loadResult() {
   if (!formId) {
     alert("ไม่พบรหัสฟอร์ม");
@@ -207,6 +272,10 @@ async function loadResult() {
     renderSuggestions(data.suggestions || []);
     renderGroupChart(data.group_scores || []);
     renderLevelChart(data.level_counts || {});
+    renderCountChart("statusChart", "status", data.respondent_summary?.status || {}, "doughnut");
+    renderCountChart("levelProfileChart", "levelProfile", data.respondent_summary?.education_level || {}, "bar");
+    renderCountChart("facultyChart", "faculty", data.respondent_summary?.faculty || {}, "bar");
+    
   } catch (err) {
     console.error(err);
     alert(err.message || "เกิดข้อผิดพลาด");

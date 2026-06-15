@@ -4,7 +4,7 @@ const formId = params.get("id");
 let groupChartInstance = null;
 let levelChartInstance = null;
 let statusChartInstance = null;
-let levelProfileChartInstance = null;
+let educationChartInstance = null;
 let facultyChartInstance = null;
 
 function getEvaluationLevel(score) {
@@ -276,6 +276,55 @@ function renderCountChart(canvasId, chartRefName, summary = {}, type = "bar") {
   if (chartRefName === "faculty") facultyChartInstance = chart;
 }
 
+function renderRespondentChart(canvasId, summary = {}, type = "bar") {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return;
+
+  const labels = Object.keys(summary || {});
+  const values = Object.values(summary || {});
+
+  if (!labels.length) return;
+
+  let oldChart = null;
+
+  if (canvasId === "statusChart") oldChart = statusChartInstance;
+  if (canvasId === "levelProfileChart") oldChart = educationChartInstance;
+  if (canvasId === "facultyChart") oldChart = facultyChartInstance;
+
+  if (oldChart) oldChart.destroy();
+
+  const chart = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "จำนวนผู้ตอบ",
+          data: values,
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      indexAxis: canvasId === "facultyChart" ? "y" : "x",
+      scales:
+        type === "bar"
+          ? {
+              y: {
+                beginAtZero: true,
+                ticks: { precision: 0 },
+              },
+            }
+          : {},
+    },
+  });
+
+  if (canvasId === "statusChart") statusChartInstance = chart;
+  if (canvasId === "levelProfileChart") educationChartInstance = chart;
+  if (canvasId === "facultyChart") facultyChartInstance = chart;
+}
+
 async function loadResult() {
   if (!formId) {
     alert("ไม่พบรหัสฟอร์ม");
@@ -310,6 +359,24 @@ renderWeakTable(data.question_scores || []);
 renderSuggestions(data.suggestions || []);
 renderGroupChart(data.group_scores || []);
 renderLevelChart(data.level_counts || {});
+
+renderRespondentChart(
+  "statusChart",
+  data.respondent_summary?.status || {},
+  "doughnut"
+);
+
+renderRespondentChart(
+  "levelProfileChart",
+  data.respondent_summary?.education_level || {},
+  "bar"
+);
+
+renderRespondentChart(
+  "facultyChart",
+  data.respondent_summary?.faculty || {},
+  "bar"
+);
 
 renderSummaryList("statusSummary", data.respondent_summary?.status || {});
 renderSummaryList(

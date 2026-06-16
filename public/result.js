@@ -391,4 +391,73 @@ renderSummaryList("facultySummary", data.respondent_summary?.faculty || {});
   }
 }
 
+async function downloadPDF() {
+  const btn = document.querySelector(".pdf-btn");
+  const container = document.querySelector(".container");
+
+  if (!container) {
+    alert("ไม่พบเนื้อหาสำหรับสร้าง PDF");
+    return;
+  }
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "กำลังสร้าง PDF...";
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#fff8f2",
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 10;
+
+    const imgWidth = pageWidth - margin * 2;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = margin;
+
+    pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+
+    heightLeft -= pageHeight - margin * 2;
+
+    while (heightLeft > 0) {
+      pdf.addPage();
+      position = heightLeft - imgHeight + margin;
+      pdf.addImage(imgData, "PNG", margin, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight - margin * 2;
+    }
+
+    const title =
+      document.getElementById("formTitle")?.textContent?.trim() ||
+      "result-report";
+
+    const safeTitle = title
+      .replace(/[\\/:*?"<>|]/g, "")
+      .slice(0, 80);
+
+    pdf.save(`รายงานผลการประเมิน-${safeTitle}.pdf`);
+  } catch (err) {
+    console.error(err);
+    alert("สร้าง PDF ไม่สำเร็จ: " + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "📄 ดาวน์โหลด PDF";
+    }
+  }
+}
+
 loadResult();

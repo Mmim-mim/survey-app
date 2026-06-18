@@ -83,7 +83,7 @@ function getQuestionCategory(q) {
   if (label.includes("SERVQUAL")) return "SERVQUAL";
   if (label.includes("WEBQUAL")) return "WEBQUAL";
   if (label.includes("SiteQUAL")) return "SiteQUAL";
-  if (label.includes("ESQUAL")) return "ESQUAL";
+  if (label.includes("EQUAL")) return "EQUAL";
   if (label.includes("ความไม่พึงพอใจ")) return "ความไม่พึงพอใจ";
   if (label.includes("ความผูกพัน")) return "ความผูกพัน";
 
@@ -103,7 +103,7 @@ function renderCategoryList(rows) {
     "SERVQUAL",
     "WEBQUAL",
     "SiteQUAL",
-    "ESQUAL",
+    "EQUAL",
     "ความไม่พึงพอใจ",
     "ความผูกพัน",
     "อื่น ๆ",

@@ -1247,23 +1247,36 @@
           return "interactiveResponsivenessSuggestions";
         }
 
-        if (t.includes("efficiency") || t.includes("ประสิทธิภาพ")) {
+        if (t.includes("efficiency") || t.includes("ประสิทธิภาพของระบบ")) {
           return "efficiencySuggestions";
         }
 
         if (
           t.includes("system availability") ||
-          t.includes("ความพร้อมของระบบ")
+          t.includes("คุณภาพและความถูกต้องของระบบ")
         ) {
           return "systemAvailabilitySuggestions";
         }
 
-        if (t.includes("fulfillment") || t.includes("การปฏิบัติตามสัญญา")) {
+        if (
+          t.includes("fulfillment") ||
+          t.includes("ความง่ายและความเป็นมิตรต่อผู้ใช้งาน")
+        ) {
           return "fulfillmentSuggestions";
         }
 
-        if (t.includes("privacy") || t.includes("ความเป็นส่วนตัว")) {
+        if (
+          t.includes("privacy") ||
+          t.includes("ความยืดหยุ่นและการปรับตัวของระบบ")
+        ) {
           return "privacySuggestions";
+        }
+
+        if (
+          t.includes("data integration") ||
+          t.includes("การเชื่อมโยงข้อมูลและการนำส่ง")
+        ) {
+          return "dataIntegrationDeliverySuggestions";
         }
 
         return "questionSuggestions";
@@ -1470,10 +1483,11 @@
         {
           title: "ESQUAL",
           dimensions: [
-            { title: "ประสิทธิภาพ (Efficiency)" },
-            { title: "ความพร้อมของระบบ (System Availability)" },
-            { title: "การปฏิบัติตามสัญญา (Fulfillment)" },
-            { title: "ความเป็นส่วนตัว (Privacy)" },
+            { title: "ประสิทธิภาพของระบบ" },
+            { title: "คุณภาพและความถูกต้องของระบบ" },
+            { title: "ความง่ายและความเป็นมิตรต่อผู้ใช้งาน" },
+            { title: "ความยืดหยุ่นและการปรับตัวของระบบ" },
+            { title: "การเชื่อมโยงข้อมูลและการนำส่ง" },
           ],
         },
       ];
@@ -2399,6 +2413,18 @@
     <datalist id="privacySuggestions">
       <option value="เว็บไซต์มีการดูแลความปลอดภัยของข้อมูลผู้ใช้"></option>
       <option value="ผู้ใช้มั่นใจว่าข้อมูลส่วนบุคคลได้รับการปกป้อง"></option>
+    </datalist>
+
+    <datalist id="dataIntegrationDeliverySuggestions">
+      <option
+        value="ระบบสามารถเชื่อมโยงข้อมูลกับหน่วยงานหรือระบบอื่นได้อย่างมีประสิทธิภาพ"
+      ></option>
+      <option
+        value="ข้อมูลที่ส่งออกหรือรับเข้าระหว่างระบบมีความถูกต้องครบถ้วน"
+      ></option>
+      <option value="ระบบสนับสนุนการแลกเปลี่ยนข้อมูลได้อย่างสะดวก"></option>
+      <option value="การนำส่งข้อมูลเป็นไปตามรูปแบบที่ต้องการ"></option>
+      <option value="ระบบช่วยลดความซ้ำซ้อนในการจัดการข้อมูล"></option>
     </datalist>
 
     <!-- ----- ส่วนที่ 3 ----- -->

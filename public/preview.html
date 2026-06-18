@@ -290,13 +290,15 @@
 
       .form-input,
       .reason input,
-      #suggestAnswer {
+      #suggestAnswer,
+      #dissatisfactionAnswer {
         border-color: #e0c6b5 !important;
       }
 
       .form-input:focus,
       .reason input:focus,
-      #suggestAnswer:focus {
+      #suggestAnswer:focus,
+      #dissatisfactionAnswer:focus {
         outline: none;
         border-color: #c9a34e !important;
         box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.2);
@@ -361,12 +363,22 @@
         <div id="ratingTables"></div>
       </div>
 
-      <!-- ส่วนที่ 3: มี/ไม่มี + เหตุผล -->
+      <!-- ส่วนที่ 3: ความไม่พึงพอใจแบบข้อความ -->
       <div class="section" id="sec3">
-        <div class="title">
-          ความไม่พึงพอใจ (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก “มี”)
-        </div>
-        <div id="dissTableWrap"></div>
+        <div class="title" id="dissTitle">ความไม่พึงพอใจ</div>
+
+        <textarea
+          id="dissatisfactionAnswer"
+          style="
+            width: 100%;
+            min-height: 100px;
+            resize: vertical;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+          "
+          placeholder="พิมพ์ความคิดเห็นเกี่ยวกับความไม่พึงพอใจ..."
+        ></textarea>
       </div>
 
       <!-- ส่วนที่ 4 -->
@@ -898,88 +910,10 @@
           document.getElementById("sec2").style.display = "none";
         }
 
-        /* ---------- ส่วนที่ 3: มี/ไม่มี + เหตุผล ---------- */
-        const dissWrap = document.getElementById("dissTableWrap");
-        const dissSource = Array.isArray(data.dissatisfied)
-          ? data.dissatisfied
-          : Array.isArray(data.q31)
-            ? data.q31
-            : Array.isArray(data.diss)
-              ? data.diss
-              : data.q31
-                ? [data.q31]
-                : [];
-
-        const dissArr = dissSource
-          .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
-          .map((s) => s.trim())
-          .filter(Boolean);
-        function makeDissTable(title, items, namePrefix) {
-          if (!items || !items.length) {
-            const empty = document.createElement("div");
-            empty.style.opacity = ".7";
-            empty.textContent = "- ไม่มีรายการ -";
-            return empty;
-          }
-          const tbl = document.createElement("table"),
-            thead = document.createElement("thead"),
-            tbody = document.createElement("tbody");
-          thead.innerHTML = `
-        <tr>
-          <th class="col-head">${title}</th>
-          <th style="width:120px">ไม่มี</th>
-          <th style="width:120px">มี</th>
-        </tr>`;
-          const sub = document.createElement("tr");
-          sub.className = "q-head";
-          sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
-          tbody.appendChild(sub);
-
-          items.forEach((q, idx) => {
-            const name = `${namePrefix}_${idx}`;
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-          <td>${q || "-"}</td>
-          <td class="yn-cell">
-            <input type="radio" name="${name}" value="no" id="${name}_no">
-            <label class="yn-label" for="${name}_no">ไม่มี</label>
-          </td>
-          <td class="yn-cell has-reason">
-            <input type="radio" name="${name}" value="yes" id="${name}_yes">
-            <label class="yn-label" for="${name}_yes">มี</label>
-            <span class="reason"><input type="text" placeholder="เหตุผล..." name="${name}_reason"></span>
-          </td>
-        `;
-            tbody.appendChild(tr);
-
-            const yes = tr.querySelector(`#${name}_yes`);
-            const no = tr.querySelector(`#${name}_no`);
-            const reason = tr.querySelector(".reason");
-            const inputReason = tr.querySelector(
-              `input[name="${name}_reason"]`,
-            );
-            function sync() {
-              if (yes.checked) {
-                reason.style.display = "inline-block";
-              } else {
-                reason.style.display = "none";
-                inputReason.value = "";
-              }
-            }
-            yes.addEventListener("change", sync);
-            no.addEventListener("change", sync);
-            sync();
-          });
-          tbl.appendChild(thead);
-          tbl.appendChild(tbody);
-          return tbl;
-        }
-        if (dissArr.length) {
-          dissWrap.appendChild(
-            makeDissTable("ความไม่พึงพอใจ", dissArr, "diss"),
-          );
-        } else {
-          document.getElementById("sec3").style.display = "none";
+        /* ---------- ส่วนที่ 3: ความไม่พึงพอใจแบบ Textarea ---------- */
+        const dissTitle = document.getElementById("dissTitle");
+        if (dissTitle) {
+          dissTitle.textContent = "ความไม่พึงพอใจ";
         }
 
         /* ---------- ส่วนที่ 4: ความผูกพัน → เพิ่มเหตุผลเมื่อเลือก "ใช่" ---------- */
@@ -1232,42 +1166,10 @@
             });
           });
 
-          // ===== 2) ส่วนที่ 3 ความไม่พึงพอใจ: yes/no + reason =====
-          const diss = [];
-          let invalid = null;
-
-          document
-            .querySelectorAll("#dissTableWrap table tbody tr:not(.q-head)")
-            .forEach((row, idx) => {
-              const qText =
-                row.querySelector("td")?.textContent?.trim() ||
-                `ข้อ ${idx + 1}`;
-              const checked = row.querySelector("input[type=radio]:checked");
-              const yn = checked ? checked.value : null; // "yes" or "no" or null
-
-              const reasonInput =
-                row.querySelector(`input[name^="diss_${idx}_reason"]`) ||
-                row.querySelector(`input[name$="_reason"]`);
-
-              const reason = yn === "yes" ? reasonInput?.value || "" : "";
-
-              if (yn === "yes" && (!reason || !reason.trim()) && !invalid) {
-                invalid = reasonInput;
-              }
-
-              diss.push({
-                questionIndex: idx,
-                questionText: qText,
-                yn,
-                reason,
-              });
-            });
-
-          if (invalid) {
-            alert('กรุณากรอกเหตุผลสำหรับรายการในส่วนที่ 3 ที่เลือก "มี"');
-            invalid.focus();
-            return;
-          }
+          // ===== 2) ส่วนที่ 3 ความไม่พึงพอใจ: textarea =====
+          const dissatisfaction_text =
+            document.getElementById("dissatisfactionAnswer")?.value?.trim() ||
+            "";
 
           // ===== 3) ส่วนที่ 4 ความผูกพัน: yes/no + reason =====
           const engagement = [];
@@ -1333,9 +1235,13 @@
             },
             section2_models: data.section2_models || [],
             ratings,
-            diss,
+
+            // เก็บความไม่พึงพอใจเป็นข้อความ
+            dissatisfaction_text,
+
             engagement,
-            suggestion: document.getElementById("suggestAnswer")?.value || "",
+            suggestion:
+              document.getElementById("suggestAnswer")?.value?.trim() || "",
           };
 
           // ===== 6) ส่งขึ้น server เพื่อบันทึกลง MySQL =====

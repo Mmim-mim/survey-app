@@ -1559,35 +1559,55 @@ function collectRespondentProfile(payload) {
     }
 
     function collectSuggestions(payload) {
-      const found = [];
+  const found = [];
 
-      function walk(value, keyName = "") {
-        if (Array.isArray(value)) {
-          value.forEach((v) => walk(v, keyName));
-          return;
-        }
+  function pushText(label, text) {
+    const clean = String(text || "").trim();
+    if (!clean) return;
 
-        if (!value || typeof value !== "object") {
-          if (
-            typeof value === "string" &&
-            value.trim() &&
-            (
-              keyName.toLowerCase().includes("suggest") ||
-              keyName.includes("ข้อเสนอแนะ")
-            )
-          ) {
-            found.push(value.trim());
-          }
-          return;
-        }
+    const displayText = label ? `${label}: ${clean}` : clean;
+    found.push(displayText);
+  }
 
-        Object.entries(value).forEach(([k, v]) => walk(v, k));
-      }
+  // อ่าน key ใหม่โดยตรง
+  if (payload.dissatisfaction_text) {
+    pushText("ความไม่พึงพอใจ", payload.dissatisfaction_text);
+  }
 
-      walk(payload);
+  if (payload.suggestion) {
+    pushText("ข้อเสนอแนะ", payload.suggestion);
+  }
 
-      return found;
+  // รองรับโครงสร้างเดิมด้วย
+  function walk(value, keyName = "") {
+    if (Array.isArray(value)) {
+      value.forEach((v) => walk(v, keyName));
+      return;
     }
+
+    if (!value || typeof value !== "object") {
+      if (
+        typeof value === "string" &&
+        value.trim() &&
+        (
+          keyName.toLowerCase().includes("suggest") ||
+          keyName.toLowerCase().includes("dissatisfaction") ||
+          keyName.includes("ข้อเสนอแนะ") ||
+          keyName.includes("ความไม่พึงพอใจ")
+        )
+      ) {
+        pushText("", value);
+      }
+      return;
+    }
+
+    Object.entries(value).forEach(([k, v]) => walk(v, k));
+  }
+
+  walk(payload);
+
+  return [...new Set(found)];
+}
 
     subs.forEach((row) => {
       let payload = {};

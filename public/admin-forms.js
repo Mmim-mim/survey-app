@@ -192,9 +192,9 @@ function renderForms() {
 
       return `
   <tr>
-    <td>
-      <input type="checkbox" class="form-check" value="${esc(f.id)}" />
-    </td>
+    <td class="checkbox-col">
+  <input type="checkbox" class="form-check" value="${esc(f.id)}" />
+</td>
 
     <td>
       <div class="form-title">${esc(f.form_title || "-")}</div>

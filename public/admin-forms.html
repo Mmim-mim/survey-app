@@ -306,6 +306,20 @@
         margin: 0 0 12px;
       }
 
+      .checkbox-col {
+        width: 60px;
+        min-width: 60px;
+        max-width: 60px;
+        text-align: center;
+      }
+
+      .checkbox-col input,
+      .form-check {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+      }
+
       .table-card {
         background: var(--card);
         border: 1px solid var(--line);
@@ -572,7 +586,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>
+                  <th class="checkbox-col">
                     <input type="checkbox" id="selectAllForms" />
                   </th>
                   <th>ชื่อฟอร์ม</th>

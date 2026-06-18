@@ -519,6 +519,10 @@
           </div>
 
           <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
+
+          <button class="btn danger" id="btnDeleteSelected" type="button">
+            🗑️ ลบที่เลือก
+          </button>
         </section>
 
         <section class="stat-grid">
@@ -560,6 +564,9 @@
             <table>
               <thead>
                 <tr>
+                  <th>
+                    <input type="checkbox" id="selectAllForms" />
+                  </th>
                   <th>ชื่อฟอร์ม</th>
                   <th>เจ้าของ</th>
                   <th>ยุทธศาสตร์</th>
@@ -570,7 +577,7 @@
               </thead>
               <tbody id="formTableBody">
                 <tr>
-                  <td colspan="6" class="empty">กำลังโหลด...</td>
+                  <td colspan="7" class="empty">กำลังโหลด...</td>
                 </tr>
               </tbody>
             </table>

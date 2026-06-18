@@ -191,12 +191,15 @@ function renderForms() {
       const owner = f.created_by_username || f.created_by || "-";
 
       return `
-        <tr>
-          <td>
-            <div class="form-title">${esc(f.form_title || "-")}</div>
-            <div class="muted">ID: ${esc(f.id || "-")}</div>
-          </td>
+  <tr>
+    <td>
+      <input type="checkbox" class="form-check" value="${esc(f.id)}" />
+    </td>
 
+    <td>
+      <div class="form-title">${esc(f.form_title || "-")}</div>
+      <div class="muted">ID: ${esc(f.id || "-")}</div>
+    </td>
           <td>${getOwnerBadge(owner)}</td>
 
           <td>
@@ -238,7 +241,7 @@ async function loadForms() {
     console.error(err);
     formTableBody.innerHTML = `
       <tr>
-        <td colspan="6" class="empty">เกิดข้อผิดพลาด: ${esc(err.message)}</td>
+        <td colspan="7" class="empty">เกิดข้อผิดพลาด: ${esc(err.message)}</td>
       </tr>
     `;
   }
@@ -261,6 +264,40 @@ searchInput.addEventListener("input", renderForms);
 ownerFilter.addEventListener("change", renderForms);
 strategyFilter.addEventListener("change", renderForms);
 sortFilter.addEventListener("change", renderForms);
+
+document.getElementById("selectAllForms")?.addEventListener("change", (e) => {
+  document.querySelectorAll(".form-check").forEach((checkbox) => {
+    checkbox.checked = e.target.checked;
+  });
+});
+
+document.getElementById("btnDeleteSelected")?.addEventListener("click", async () => {
+  const selectedIds = Array.from(
+    document.querySelectorAll(".form-check:checked")
+  ).map((checkbox) => checkbox.value);
+
+  if (!selectedIds.length) {
+    alert("กรุณาเลือกฟอร์มที่ต้องการลบ");
+    return;
+  }
+
+  if (!confirm(`ต้องการลบฟอร์มที่เลือกทั้งหมด ${selectedIds.length} รายการใช่หรือไม่?`)) {
+    return;
+  }
+
+  try {
+    for (const id of selectedIds) {
+      await api(`/api/admin/forms/${id}?role=${encodeURIComponent(role)}`, {
+        method: "DELETE",
+      });
+    }
+
+    alert("ลบฟอร์มที่เลือกเรียบร้อยแล้ว");
+    await loadForms();
+  } catch (err) {
+    alert("ลบไม่สำเร็จ: " + err.message);
+  }
+});
 
 guardAdmin();
 loadForms();

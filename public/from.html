@@ -948,32 +948,20 @@
           </div>
 
           <div class="group">
-            <div class="stack" id="engage">
-              <div class="item">
-                <span class="num">1.</span
-                ><input
-                  class="input"
-                  type="text"
-                  name="q41[]"
-                  list="engagementSuggestions"
-                  placeholder="กรอกคำถาม..."
-                />
-              </div>
-              <div class="item">
-                <span class="num">2.</span
-                ><input
-                  class="input"
-                  type="text"
-                  name="q41[]"
-                  list="engagementSuggestions"
-                  placeholder="กรอกคำถาม..."
-                />
-              </div>
+            <div style="font-weight: 800; color: #7a1414; margin-bottom: 12px">
+              ผู้ตอบจะเห็นตัวเลือก:
             </div>
-            <div class="center">
-              <button type="button" class="btn soft" data-add="#engage">
-                + เพิ่มหัวข้อ
-              </button>
+
+            <div class="chips">
+              <label class="chip">
+                <input type="radio" disabled />
+                ใช่
+              </label>
+
+              <label class="chip">
+                <input type="radio" disabled />
+                ไม่ใช่
+              </label>
             </div>
           </div>
         </div>
@@ -1656,7 +1644,8 @@
               ?.value?.trim() || "",
 
           section4_enabled: getSectionEnabled(4),
-          q41: getInputValues('#engage input[name="q41[]"]'),
+          engagement_question:
+            "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่",
 
           section5_enabled: getSectionEnabled(5),
           suggestion_prompt:
@@ -1706,8 +1695,9 @@
           '[name="dissatisfaction_text"]',
           data.dissatisfaction_text || "",
         );
+
         toggleSectionBySec(4, data.section4_enabled !== false);
-        addSimpleRows("#engage", data.q41 || [], "q41[]");
+
 
         toggleSectionBySec(5, data.section5_enabled !== false);
         setValue('[name="suggestion_prompt"]', data.suggestion_prompt);
@@ -1888,8 +1878,7 @@
         "#q21": "q21[]",
         "#q22": "q22[]",
         "#q23": "q23[]",
-        "#dissat": "dissatisfied[]",
-        "#engage": "engagement[]",
+        
       };
 
       document.querySelectorAll("[data-add]").forEach((b) => {

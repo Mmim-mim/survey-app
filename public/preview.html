@@ -384,9 +384,20 @@
       <!-- ส่วนที่ 4 -->
       <div class="section" id="sec4">
         <div class="title">
-          ความผูกพัน (เลือก “มี/ไม่มี” และกรอกเหตุผลเมื่อเลือก “มี”)
+          ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่
         </div>
-        <div id="engTableWrap"></div>
+
+        <div class="form-row">
+          <label class="form-radio">
+            <input type="radio" name="engagement_answer" value="yes" />
+            <span>ใช่</span>
+          </label>
+
+          <label class="form-radio">
+            <input type="radio" name="engagement_answer" value="no" />
+            <span>ไม่ใช่</span>
+          </label>
+        </div>
       </div>
 
       <!-- ส่วนที่ 5 : ข้อเสนอแนะ -->
@@ -916,95 +927,12 @@
           dissTitle.textContent = "ความไม่พึงพอใจ";
         }
 
-        /* ---------- ส่วนที่ 4: ความผูกพัน → เพิ่มเหตุผลเมื่อเลือก "ใช่" ---------- */
-        const engWrap = document.getElementById("engTableWrap");
-        const engSource = Array.isArray(data.engagement)
-          ? data.engagement
-          : Array.isArray(data.q41)
-            ? data.q41
-            : data.q41
-              ? [data.q41]
-              : [];
-
-        const engArr = engSource
-          .map((x) => (typeof x === "string" ? x : x?.questionText || ""))
-          .map((s) => s.trim())
-          .filter(Boolean);
-        function makeYNTableWithReason(
-          title,
-          items,
-          namePrefix,
-          leftText,
-          rightText,
-        ) {
-          if (!items || !items.length) {
-            const empty = document.createElement("div");
-            empty.style.opacity = ".7";
-            empty.textContent = "- ไม่มีรายการ -";
-            return empty;
-          }
-          const tbl = document.createElement("table"),
-            thead = document.createElement("thead"),
-            tbody = document.createElement("tbody");
-          thead.innerHTML = `
-        <tr>
-          <th class="col-head">${title}</th>
-          <th style="width:120px">${leftText}</th>
-          <th style="width:120px">${rightText}</th>
-        </tr>`;
-          const sub = document.createElement("tr");
-          sub.className = "q-head";
-          sub.innerHTML = `<td>หัวข้อเลือก</td><td></td><td></td>`;
-          tbody.appendChild(sub);
-
-          items.forEach((q, idx) => {
-            const name = `${namePrefix}_${idx}`;
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-          <td>${q || "-"}</td>
-          <td class="yn-cell">
-            <input type="radio" name="${name}" value="no" id="${name}_no">
-            <label class="yn-label" for="${name}_no">${leftText}</label>
-          </td>
-          <td class="yn-cell has-reason">
-            <input type="radio" name="${name}" value="yes" id="${name}_yes">
-            <label class="yn-label" for="${name}_yes">${rightText}</label>
-            <span class="reason"><input type="text" placeholder="เหตุผล..." name="${name}_reason"></span>
-          </td>
-        `;
-            tbody.appendChild(tr);
-
-            const yes = tr.querySelector(`#${name}_yes`);
-            const no = tr.querySelector(`#${name}_no`);
-            const reason = tr.querySelector(".reason");
-            const inputReason = tr.querySelector(
-              `input[name="${name}_reason"]`,
-            );
-
-            function sync() {
-              if (yes.checked) {
-                reason.style.display = "inline-block";
-              } else {
-                reason.style.display = "none";
-                inputReason.value = "";
-              }
-            }
-            yes.addEventListener("change", sync);
-            no.addEventListener("change", sync);
-            sync();
-          });
-
-          tbl.appendChild(thead);
-          tbl.appendChild(tbody);
-          return tbl;
-        }
-
-        if (engArr.length) {
-          engWrap.appendChild(
-            makeYNTableWithReason("ความผูกพัน", engArr, "eng", "ไม่มี", "มี "),
-          );
-        } else {
-          document.getElementById("sec4").style.display = "none";
+        /* ---------- ส่วนที่ 4: บอกต่อกิจกรรม ใช่/ไม่ใช่ ---------- */
+        const sec4Title = document.querySelector("#sec4 .title");
+        if (sec4Title) {
+          sec4Title.textContent =
+            data.engagement_question ||
+            "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่";
         }
 
         /* ---------- ส่วนที่ 6+: หัวข้อด้านต่างๆ (ตอบเป็นกล่องข้อความ) ---------- */
@@ -1171,42 +1099,17 @@
             document.getElementById("dissatisfactionAnswer")?.value?.trim() ||
             "";
 
-          // ===== 3) ส่วนที่ 4 ความผูกพัน: yes/no + reason =====
-          const engagement = [];
-          let invalidEng = null;
+          // ===== 3) ส่วนที่ 4 บอกต่อกิจกรรม: ใช่/ไม่ใช่ =====
+          const engagement_answer =
+            document.querySelector('[name="engagement_answer"]:checked')
+              ?.value || "";
 
-          document
-            .querySelectorAll("#engTableWrap table tbody tr:not(.q-head)")
-            .forEach((row, idx) => {
-              const qText =
-                row.querySelector("td")?.textContent?.trim() ||
-                `ข้อ ${idx + 1}`;
-              const checked = row.querySelector("input[type=radio]:checked");
-              const yn = checked ? checked.value : null; // "yes" or "no" or null
-
-              const reasonInput =
-                row.querySelector(`input[name^="eng_${idx}_reason"]`) ||
-                row.querySelector(`input[name$="_reason"]`);
-
-              const reason = yn === "yes" ? reasonInput?.value || "" : "";
-
-              if (yn === "yes" && (!reason || !reason.trim()) && !invalidEng) {
-                invalidEng = reasonInput;
-              }
-
-              engagement.push({
-                questionIndex: idx,
-                questionText: qText,
-                yn,
-                reason,
-              });
-            });
-
-          if (invalidEng) {
-            alert('กรุณากรอกเหตุผลสำหรับรายการในส่วนที่ 4 ที่เลือก "มี"');
-            invalidEng.focus();
-            return;
-          }
+          const engagement = {
+            questionText:
+              data.engagement_question ||
+              "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่",
+            answer: engagement_answer,
+          };
 
           // ===== 4) เก็บข้อมูลโปรไฟล์ (เอาไว้ filter dashboard) =====
           const pf_fullname =

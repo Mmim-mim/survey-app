@@ -300,6 +300,12 @@
         line-height: 1.1;
       }
 
+      .bulk-action-row {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 0 12px;
+      }
+
       .table-card {
         background: var(--card);
         border: 1px solid var(--line);
@@ -519,10 +525,6 @@
           </div>
 
           <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
-
-          <button class="btn danger" id="btnDeleteSelected" type="button">
-            🗑️ ลบที่เลือก
-          </button>
         </section>
 
         <section class="stat-grid">
@@ -558,6 +560,12 @@
             </div>
           </div>
         </section>
+
+        <div class="bulk-action-row">
+          <button class="btn danger" id="btnDeleteSelected" type="button">
+            🗑️ ลบที่เลือก
+          </button>
+        </div>
 
         <section class="table-card">
           <div class="table-wrap">

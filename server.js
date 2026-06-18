@@ -40,13 +40,31 @@ function parseSubmissionPayload(payloadJson) {
   const profile = p.profile || {};
   const ratings = Array.isArray(p.ratings) ? p.ratings : [];
 
-  const comments = Array.isArray(p.comments)
-    ? p.comments
-    : Array.isArray(p.suggestions)
-      ? p.suggestions
-      : typeof p.suggestion === "string" && p.suggestion.trim()
-        ? [p.suggestion.trim()]
-        : [];
+  const comments = [];
+
+if (Array.isArray(p.comments)) {
+  comments.push(...p.comments);
+}
+
+if (Array.isArray(p.suggestions)) {
+  comments.push(...p.suggestions);
+}
+
+if (typeof p.dissatisfaction_text === "string" && p.dissatisfaction_text.trim()) {
+  comments.push({
+    text: p.dissatisfaction_text.trim(),
+    type: "dissatisfaction",
+    label: "ความไม่พึงพอใจ",
+  });
+}
+
+if (typeof p.suggestion === "string" && p.suggestion.trim()) {
+  comments.push({
+    text: p.suggestion.trim(),
+    type: "suggestion",
+    label: "ข้อเสนอแนะ",
+  });
+}
 
   return {
     fiscal_year: Number(p.fiscal_year) || null,

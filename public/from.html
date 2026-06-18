@@ -914,42 +914,25 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">ท่านมีความไม่พึ่งพอใจต่อการจัดกิจกรรม (โปรดระบุ)</div>
+              <div class="title">
+                ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)
+              </div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
 
-          <div class="group">
-            <div class="stack" id="dissat">
-              <div class="item">
-                <span class="num">1.</span>
-                <input
-                  class="input"
-                  type="text"
-                  name="q31[]"
-                  list="dissSuggestions"
-                  placeholder="กรอกคำถาม."
-                />
-              </div>
-
-              <div class="item">
-                <span class="num">2.</span>
-                <input
-                  class="input"
-                  type="text"
-                  name="q31[]"
-                  list="dissSuggestions"
-                  placeholder="กรอกคำถาม."
-                />
-              </div>
-            </div>
-
-            <div class="center">
-              <button type="button" class="btn soft" data-add="#dissat">
-                + เพิ่มหัวข้อ
-              </button>
-            </div>
-          </div>
+          <textarea
+            class="input"
+            name="dissatisfaction_text"
+            placeholder="กรอกความคิดเห็นเพิ่มเติม"
+            style="
+              width: 100%;
+              min-height: 120px;
+              resize: vertical;
+              padding: 14px 16px;
+              border-radius: 12px;
+            "
+          ></textarea>
         </div>
 
         <!-- ------ ส่วนที่ 4 ----- -->
@@ -957,7 +940,9 @@
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
-              <div class="title">ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่</div>
+              <div class="title">
+                ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่
+              </div>
             </div>
             <div class="hint">เปิด/ปิดทั้งส่วน</div>
           </div>
@@ -1651,7 +1636,10 @@
           section2_models: collectSection2Models(),
 
           section3_enabled: getSectionEnabled(3),
-          q31: getInputValues('#dissat input[name="q31[]"]'),
+          dissatisfaction_text:
+            document
+              .querySelector('[name="dissatisfaction_text"]')
+              ?.value?.trim() || "",
 
           section4_enabled: getSectionEnabled(4),
           q41: getInputValues('#engage input[name="q41[]"]'),
@@ -1700,8 +1688,10 @@
         }
 
         toggleSectionBySec(3, data.section3_enabled !== false);
-        addSimpleRows("#dissat", data.q31 || [], "q31[]");
-
+        setValue(
+          '[name="dissatisfaction_text"]',
+          data.dissatisfaction_text || "",
+        );
         toggleSectionBySec(4, data.section4_enabled !== false);
         addSimpleRows("#engage", data.q41 || [], "q41[]");
 

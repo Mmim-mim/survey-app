@@ -10,7 +10,6 @@ const centerStrategyAll = document.getElementById("centerStrategyAll");
 const uniStrategyMulti = document.getElementById("uniStrategyMulti");
 const centerStrategyMulti = document.getElementById("centerStrategyMulti");
 
-
 const fDateFrom = document.getElementById("fDateFrom");
 const fDateTo = document.getElementById("fDateTo");
 const btnRefresh = document.getElementById("btnRefresh");
@@ -55,7 +54,12 @@ function esc(s) {
     .replaceAll("'", "&#039;");
 }
 
-function setSelectOptions(selectEl, items, includeAll = true, allText = "ทั้งหมด") {
+function setSelectOptions(
+  selectEl,
+  items,
+  includeAll = true,
+  allText = "ทั้งหมด",
+) {
   const list = [];
   if (includeAll) list.push(`<option value="">${allText}</option>`);
   for (const item of items) {
@@ -108,7 +112,7 @@ function renderMultiOptions(container, items, selectedArr, btnEl, allEl) {
         <input type="checkbox" value="${esc(item)}" />
         <span>${esc(item)}</span>
       </label>
-    `
+    `,
     )
     .join("");
 
@@ -160,15 +164,17 @@ function buildCharts() {
     type: "line",
     data: {
       labels: [],
-      datasets: [{
-        label: "ค่าเฉลี่ยความพึงพอใจ",
-        data: [],
-        borderColor: "#9b1c1c",
-        backgroundColor: "rgba(155, 28, 28, 0.12)",
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: "#9b1c1c",
-      }],
+      datasets: [
+        {
+          label: "ค่าเฉลี่ยความพึงพอใจ",
+          data: [],
+          borderColor: "#9b1c1c",
+          backgroundColor: "rgba(155, 28, 28, 0.12)",
+          tension: 0.35,
+          pointRadius: 4,
+          pointBackgroundColor: "#9b1c1c",
+        },
+      ],
     },
     options: chartOptions(),
   });
@@ -177,64 +183,63 @@ function buildCharts() {
     type: "bar",
     data: {
       labels: [],
-      datasets: [{
-        label: "ค่าเฉลี่ย",
-        data: [],
-        backgroundColor: "#9b1c1c",
-        borderRadius: 10,
-        borderSkipped: false,
-      }],
+      datasets: [
+        {
+          label: "ค่าเฉลี่ย",
+          data: [],
+          backgroundColor: "#9b1c1c",
+          borderRadius: 10,
+          borderSkipped: false,
+        },
+      ],
     },
     options: chartOptions(true),
   });
 
-  centerStrategyChart = new Chart(document.getElementById("centerStrategyChart"), {
+  centerStrategyChart = new Chart(
+    document.getElementById("centerStrategyChart"),
+    {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "ค่าเฉลี่ย",
+            data: [],
+            backgroundColor: "#c9a34e",
+            borderRadius: 10,
+            borderSkipped: false,
+          },
+        ],
+      },
+      options: chartOptions(true),
+    },
+  );
+
+  formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
     type: "bar",
     data: {
       labels: [],
-      datasets: [{
-        label: "ค่าเฉลี่ย",
-        data: [],
-        backgroundColor: "#c9a34e",
-        borderRadius: 10,
-        borderSkipped: false,
-      }],
-    },
-    options: chartOptions(true),
-  });
-
- formsByYearChart = new Chart(document.getElementById("formsByYearChart"), {
-  type: "bar",
-  data: {
-    labels: [],
-    datasets: [{
-      label: "จำนวนฟอร์ม",
-      data: [],
-      backgroundColor: "#9b1c1c",
-      borderRadius: 10,
-      borderSkipped: false,
-    }],
-  },
-  options: {
-  ...chartOptions(),
-  plugins: {
-    ...chartOptions().plugins,
-    datalabels: {
-        anchor: "end",
-        align: "top",
-        color: "#111",
-        font: {
-          weight: "bold",
-          size: 14
+      datasets: [
+        {
+          label: "จำนวนฟอร์ม",
+          data: [],
+          backgroundColor: "#9b1c1c",
+          borderRadius: 10,
+          borderSkipped: false,
         },
-        formatter: function(value) {
-          return value + " รายการ"; // 👈 แสดงเลข เช่น 13
-        }
-      }
-    }
-  },
-  plugins: [ChartDataLabels] // 👈 สำคัญมาก
-});
+      ],
+    },
+    options: {
+      ...chartOptions(),
+      plugins: {
+        legend: {
+          display: false,
+        },
+      },
+    },
+    // plugins: [ChartDataLabels], // 👈 สำคัญมาก
+  });
 }
 
 async function loadOptions() {
@@ -249,7 +254,7 @@ async function loadOptions() {
     json.uniStrategies || [],
     selectedUniStrategies,
     uniStrategyBtn,
-    uniStrategyAll
+    uniStrategyAll,
   );
 
   renderMultiOptions(
@@ -257,21 +262,19 @@ async function loadOptions() {
     json.centerStrategies || [],
     selectedCenterStrategies,
     centerStrategyBtn,
-    centerStrategyAll
+    centerStrategyAll,
   );
 
   renderMultiOptions(
-  yearOptions,
-  (json.fiscalYears || []).map(String),
-  selectedYears,
-  yearBtn,
-  yearAll
-);
+    yearOptions,
+    (json.fiscalYears || []).map(String),
+    selectedYears,
+    yearBtn,
+    yearAll,
+  );
 }
 function avgRows(rows) {
-  const nums = (rows || [])
-    .map((r) => Number(r.avg))
-    .filter(Number.isFinite);
+  const nums = (rows || []).map((r) => Number(r.avg)).filter(Number.isFinite);
 
   if (!nums.length) return 0;
 
@@ -310,7 +313,7 @@ function renderStrategySplit(rows) {
     wrapper: uniStrategyCards,
     badge: uniGroupCount,
     type: "uni",
-    title: "ยุทธศาสตร์มหาวิทยาลัย"
+    title: "ยุทธศาสตร์มหาวิทยาลัย",
   });
 
   renderStrategyGroup({
@@ -319,7 +322,7 @@ function renderStrategySplit(rows) {
     wrapper: centerStrategyCards,
     badge: centerGroupCount,
     type: "center",
-    title: "ยุทธศาสตร์ศูนย์บรรณสาร"
+    title: "ยุทธศาสตร์ศูนย์บรรณสาร",
   });
 }
 
@@ -359,7 +362,7 @@ function renderStrategyGroup({ rows, key, wrapper, badge, type, title }) {
               <td>${Number(r.avg || 0).toFixed(2)}</td>
               <td>${r.respondents || 0}</td>
             </tr>
-          `
+          `,
         )
         .join("");
 
@@ -455,7 +458,9 @@ function renderTable(rows) {
     return;
   }
 
-  strategyTableBody.innerHTML = rows.map((r, i) => `
+  strategyTableBody.innerHTML = rows
+    .map(
+      (r, i) => `
     <tr>
       <td>${i + 1}</td>
       <td>${esc(r.form_title || "-")}</td>
@@ -465,7 +470,9 @@ function renderTable(rows) {
       <td>${Number(r.avg || 0).toFixed(2)}</td>
       <td>${r.respondents || 0}</td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function renderComments(rows) {
@@ -474,14 +481,18 @@ function renderComments(rows) {
     return;
   }
 
-  commentList.innerHTML = rows.map((c) => `
+  commentList.innerHTML = rows
+    .map(
+      (c) => `
     <div class="comment-item">
       <div class="comment-meta">
         ${esc(c.created_by || "-")} • ${esc(c.form_title || "-")} • ${new Date(c.created_at).toLocaleString("th-TH")}
       </div>
       <div>${esc(c.text || "-")}</div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function updateCharts(charts) {
@@ -494,7 +505,8 @@ function updateCharts(charts) {
   uniStrategyChart.update();
 
   centerStrategyChart.data.labels = charts?.centerStrategy?.labels || [];
-  centerStrategyChart.data.datasets[0].data = charts?.centerStrategy?.values || [];
+  centerStrategyChart.data.datasets[0].data =
+    charts?.centerStrategy?.values || [];
   centerStrategyChart.update();
 
   formsByYearChart.data.labels = charts?.formsByYear?.labels || [];
@@ -523,10 +535,10 @@ async function loadSummary() {
   kpiAvg.textContent = Number(json.kpi?.avgSatisfaction || 0).toFixed(2);
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
-    renderStrategySplit(json.table || []);
-    renderTable(json.table || []);
-    renderComments(json.comments || []);
-    updateCharts(json.charts || {});
+  renderStrategySplit(json.table || []);
+  renderTable(json.table || []);
+  renderComments(json.comments || []);
+  updateCharts(json.charts || {});
 }
 
 async function refreshDashboard() {
@@ -548,7 +560,7 @@ async function refreshDashboard() {
       uniStrategyBtn,
       uniStrategyAll,
       uniStrategyOptions,
-      selectedUniStrategies
+      selectedUniStrategies,
     );
 
     setupMultiDropdown(
@@ -556,23 +568,17 @@ async function refreshDashboard() {
       centerStrategyBtn,
       centerStrategyAll,
       centerStrategyOptions,
-      selectedCenterStrategies
+      selectedCenterStrategies,
     );
-    
-    setupMultiDropdown(
-  yearMulti,
-  yearBtn,
-  yearAll,
-  yearOptions,
-  selectedYears
-);
+
+    setupMultiDropdown(yearMulti, yearBtn, yearAll, yearOptions, selectedYears);
 
     await loadOptions();
     await refreshDashboard();
 
     [fDateFrom, fDateTo].forEach((el) => {
-  el.addEventListener("change", refreshDashboard);
-});
+      el.addEventListener("change", refreshDashboard);
+    });
 
     btnRefresh.addEventListener("click", refreshDashboard);
   } catch (err) {

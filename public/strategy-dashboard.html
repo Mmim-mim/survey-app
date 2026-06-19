@@ -33,6 +33,113 @@
         box-sizing: border-box;
       }
 
+      /* ===== Sidebar เหมือน dashboard.html ===== */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -260px;
+        width: 260px;
+        height: 100vh;
+        background: linear-gradient(
+          180deg,
+          #b22b2b 0%,
+          #e07a66 50%,
+          #f7d9bd 100%
+        );
+        color: #fff;
+        border-right: 1px solid #d1d5db;
+        transition: left 0.3s ease;
+        z-index: 2000;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .sidebar-header {
+        font-weight: 700;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      .sidebar a {
+        display: block;
+        padding: 12px 20px;
+        color: #fff;
+        text-decoration: none;
+      }
+
+      .sidebar a:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+      }
+
+      .sidebar a.active {
+        background: rgba(255, 255, 255, 0.18);
+        font-weight: bold;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        display: none;
+        z-index: 1500;
+      }
+
+      body.sidebar-open .sidebar {
+        left: 0;
+      }
+
+      body.sidebar-open .overlay {
+        display: block;
+      }
+
+      body.sidebar-open .page {
+        margin-left: 260px;
+        transform: scale(0.96);
+        filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.25));
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex: 0 0 auto;
+      }
+
+      .burger {
+        width: 18px;
+        height: 12px;
+        position: relative;
+        display: block;
+      }
+
+      .burger::before,
+      .burger::after,
+      .burger span {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: #111;
+      }
+
+      .burger::before {
+        top: 0;
+      }
+
+      .burger span {
+        top: 5px;
+      }
+
+      .burger::after {
+        bottom: 0;
+      }
+
       body {
         margin: 0;
         font-family: "Noto Sans Thai", system-ui, sans-serif;
@@ -55,6 +162,10 @@
         max-width: 1500px;
         margin: 0 auto;
         padding: 28px;
+        transition:
+          transform 0.3s ease,
+          margin-left 0.3s ease,
+          filter 0.3s ease;
       }
 
       .header {
@@ -743,12 +854,32 @@
   </head>
 
   <body>
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar">
+      <div class="sidebar-header">เมนู</div>
+
+      <a href="index.html">หน้าแรก</a>
+      <a href="from.html">เพิ่มข้อมูล</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="strategy-dashboard.html" class="active">Strategy Dashboard</a>
+      <a href="admin.html" id="adminMenu">👑 Admin</a>
+      <a href="login.html" id="btnLogout">ออกจากระบบ</a>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
     <div class="page">
       <div class="header">
-        <div>
-          <h1>Dashboard ยุทธศาสตร์</h1>
-          <div class="sub">
-            วิเคราะห์ผลการประเมินตามยุทธศาสตร์มหาวิทยาลัยและยุทธศาสตร์ศูนย์บรรณสาร
+        <div style="display: flex; align-items: center; gap: 14px">
+          <button id="btnMenu" class="icon-btn" type="button" aria-label="menu">
+            <span class="burger" aria-hidden="true"><span></span></span>
+          </button>
+
+          <div>
+            <h1>Dashboard ยุทธศาสตร์</h1>
+            <div class="sub">
+              วิเคราะห์ผลการประเมินตามยุทธศาสตร์มหาวิทยาลัยและยุทธศาสตร์ศูนย์บรรณสาร
+            </div>
           </div>
         </div>
 
@@ -936,6 +1067,35 @@
         </div>
       </div>
     </div>
+
+    <script>
+      const body = document.body;
+      const btnMenu = document.getElementById("btnMenu");
+      const overlay = document.getElementById("overlay");
+
+      btnMenu?.addEventListener("click", () => {
+        body.classList.toggle("sidebar-open");
+      });
+
+      overlay?.addEventListener("click", () => {
+        body.classList.remove("sidebar-open");
+      });
+
+      const sidebarRole = localStorage.getItem("role") || "";
+      const adminMenu = document.getElementById("adminMenu");
+
+      if (sidebarRole !== "admin" && adminMenu) {
+        adminMenu.style.display = "none";
+      }
+
+      document.getElementById("btnLogout")?.addEventListener("click", (e) => {
+        e.preventDefault();
+
+        localStorage.clear();
+
+        window.location.href = "login.html";
+      });
+    </script>
 
     <script src="strategy-dashboard.js"></script>
   </body>

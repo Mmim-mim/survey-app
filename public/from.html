@@ -1505,6 +1505,31 @@
         if (el) el.value = value ?? "";
       }
 
+      function toDateInputValue(value) {
+        if (!value) return "";
+
+        const text = String(value).trim();
+
+        // กรณีเป็น YYYY-MM-DD อยู่แล้ว
+        if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+          return text;
+        }
+
+        // กรณีมาจาก MySQL/JSON เช่น 2026-06-18T00:00:00.000Z
+        if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+          return text.slice(0, 10);
+        }
+
+        const d = new Date(text);
+        if (isNaN(d)) return "";
+
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+
+        return `${yyyy}-${mm}-${dd}`;
+      }
+
       function setCheckboxValues(name, values = []) {
         const set = new Set(Array.isArray(values) ? values : []);
         document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
@@ -1666,8 +1691,8 @@
         setValue("#goal_text", data.goal_text);
         setValue("#kpi_quantity", data.kpi_quantity);
         setValue("#kpi_quality", data.kpi_quality);
-        setValue("#start_date", data.start_date);
-        setValue("#end_date", data.end_date);
+        setValue("#start_date", toDateInputValue(data.start_date));
+        setValue("#end_date", toDateInputValue(data.end_date));
 
         setValue("#dept_name", data.dept_name);
         setValue("#uni_strategy", data.uni_strategy);
@@ -1697,7 +1722,6 @@
         );
 
         toggleSectionBySec(4, data.section4_enabled !== false);
-
 
         toggleSectionBySec(5, data.section5_enabled !== false);
         setValue('[name="suggestion_prompt"]', data.suggestion_prompt);
@@ -1878,7 +1902,6 @@
         "#q21": "q21[]",
         "#q22": "q22[]",
         "#q23": "q23[]",
-        
       };
 
       document.querySelectorAll("[data-add]").forEach((b) => {

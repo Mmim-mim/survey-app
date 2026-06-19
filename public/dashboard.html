@@ -654,10 +654,10 @@
         body.classList.remove("sidebar-open");
       });
 
-      const role = localStorage.getItem("role") || "";
+      const sidebarRole = localStorage.getItem("role") || "";
       const adminMenu = document.getElementById("adminMenu");
 
-      if (role !== "admin" && adminMenu) {
+      if (sidebarRole !== "admin" && adminMenu) {
         adminMenu.style.display = "none";
       }
 

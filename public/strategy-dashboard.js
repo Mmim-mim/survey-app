@@ -216,10 +216,10 @@ function buildCharts() {
     }],
   },
   options: {
-    ...chartOptions(), // 👈 เอาของเดิมมาใช้ด้วย
-    plugins: {
-      ...chartOptions().plugins, // 👈 กันของเดิมหาย
-      datalabels: {
+  ...chartOptions(),
+  plugins: {
+    ...chartOptions().plugins,
+    datalabels: {
         anchor: "end",
         align: "top",
         color: "#111",

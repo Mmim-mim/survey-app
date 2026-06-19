@@ -177,7 +177,13 @@ function buildCharts() {
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          display: false,
+          position: "bottom",
+          labels: {
+            color: "#2a1a1a",
+            font: {
+              family: "Noto Sans Thai",
+            },
+          },
         },
       },
       scales: {

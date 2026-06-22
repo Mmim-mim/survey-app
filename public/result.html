@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ผลการดำเนินงาน</title>
-    <link rel="icon" type="image/png" href="/info/public/images/logo.png">
+    <link rel="icon" type="image/png" href="/info/public/images/logo.png" />
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -257,6 +257,73 @@
         }
       }
 
+      /* ===== ข้อมูลโครงการ ===== */
+      .project-info-panel {
+        padding: 22px;
+        margin-bottom: 18px;
+      }
+
+      .project-info-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #8b1515;
+        font-size: 18px;
+        font-weight: 900;
+        margin-bottom: 14px;
+      }
+
+      .project-info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px 28px;
+        background: #fffdf9;
+        border: 1px solid #ead8c8;
+        border-radius: 16px;
+        padding: 18px;
+      }
+
+      .project-info-item {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 10px;
+        align-items: start;
+      }
+
+      .project-info-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #fff1e6;
+        color: #8b1515;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+      }
+
+      .project-info-label {
+        color: #4b3a3a;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+
+      .project-info-value {
+        color: #4b3a3a;
+        font-weight: 700;
+        line-height: 1.7;
+      }
+
+      .project-info-value.highlight {
+        color: #8b1515;
+        font-weight: 900;
+      }
+
+      @media (max-width: 900px) {
+        .project-info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .pdf-btn {
         border: none;
         border-radius: 12px;
@@ -315,6 +382,54 @@
         <div class="card">
           <div class="label">จำนวนหัวข้อ</div>
           <div class="value" id="totalQuestions">-</div>
+        </div>
+      </div>
+
+      <!-- ข้อมูลโครงการ -->
+      <div
+        class="panel project-info-panel"
+        id="projectInfoPanel"
+        style="display: none"
+      >
+        <div class="project-info-head">
+          <span>📋</span>
+          <span>ข้อมูลโครงการ</span>
+        </div>
+
+        <div class="project-info-grid">
+          <div class="project-info-item">
+            <div class="project-info-icon">📅</div>
+            <div>
+              <div class="project-info-label">ช่วงเวลาดำเนินกิจกรรม</div>
+              <div class="project-info-value highlight" id="projectPeriod">
+                -
+              </div>
+            </div>
+          </div>
+
+          <div class="project-info-item">
+            <div class="project-info-icon">📊</div>
+            <div>
+              <div class="project-info-label">KPI เชิงปริมาณ</div>
+              <div class="project-info-value" id="projectKpiQuantity">-</div>
+            </div>
+          </div>
+
+          <div class="project-info-item">
+            <div class="project-info-icon">🎯</div>
+            <div>
+              <div class="project-info-label">เป้าหมาย</div>
+              <div class="project-info-value" id="projectGoal">-</div>
+            </div>
+          </div>
+
+          <div class="project-info-item">
+            <div class="project-info-icon">⭐</div>
+            <div>
+              <div class="project-info-label">KPI เชิงคุณภาพ</div>
+              <div class="project-info-value" id="projectKpiQuality">-</div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -49,6 +49,73 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+function formatThaiDateShort(value) {
+  if (!value) return "-";
+
+  const text = String(value).trim();
+
+  let dateText = text;
+
+  // รองรับรูปแบบ 2026-06-18T00:00:00.000Z
+  if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+    dateText = text.slice(0, 10);
+  }
+
+  // รองรับรูปแบบ 2026-06-18
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) {
+    const [yyyy, mm, dd] = dateText.split("-");
+    const yy = String(Number(yyyy) + 543).slice(-2);
+    return `${dd}.${mm}.${yy}`;
+  }
+
+  const d = new Date(value);
+  if (isNaN(d)) return "-";
+
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = String(d.getFullYear() + 543).slice(-2);
+
+  return `${dd}.${mm}.${yy}`;
+}
+
+function formatProjectPeriod(startDate, endDate) {
+  const start = formatThaiDateShort(startDate);
+  const end = formatThaiDateShort(endDate);
+
+  if (start === "-" && end === "-") return "-";
+  if (end === "-" || start === end) return start;
+
+  return `${start} - ${end}`;
+}
+
+function renderProjectInfo(project = {}) {
+  const panel = document.getElementById("projectInfoPanel");
+  if (!panel) return;
+
+  const hasData =
+    project.start_date ||
+    project.end_date ||
+    project.goal_text ||
+    project.kpi_quantity ||
+    project.kpi_quality;
+
+  if (!hasData) {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "";
+
+  setText(
+    "projectPeriod",
+    formatProjectPeriod(project.start_date, project.end_date),
+  );
+
+  setText("projectGoal", project.goal_text || "-");
+  setText("projectKpiQuantity", project.kpi_quantity || "-");
+  setText("projectKpiQuality", project.kpi_quality || "-");
+}
+
 function renderQuestionTable(rows = []) {
   const tbody = document.getElementById("questionTable");
 
@@ -350,41 +417,42 @@ async function loadResult() {
     setText("totalResponses", data.total_responses || 0);
     setText("totalQuestions", data.total_questions || 0);
 
+    renderProjectInfo(data.project_info || {});
+
     document.getElementById("levelText").style.background = "#fff";
     document.getElementById("levelText").style.color = level.color;
     document.getElementById("levelBig").style.color = level.color;
 
     renderQuestionTable(data.question_scores || []);
-renderWeakTable(data.question_scores || []);
-renderSuggestions(data.suggestions || []);
-renderGroupChart(data.group_scores || []);
-renderLevelChart(data.level_counts || {});
+    renderWeakTable(data.question_scores || []);
+    renderSuggestions(data.suggestions || []);
+    renderGroupChart(data.group_scores || []);
+    renderLevelChart(data.level_counts || {});
 
-renderRespondentChart(
-  "statusChart",
-  data.respondent_summary?.status || {},
-  "doughnut"
-);
+    renderRespondentChart(
+      "statusChart",
+      data.respondent_summary?.status || {},
+      "doughnut",
+    );
 
-renderRespondentChart(
-  "levelProfileChart",
-  data.respondent_summary?.education_level || {},
-  "bar"
-);
+    renderRespondentChart(
+      "levelProfileChart",
+      data.respondent_summary?.education_level || {},
+      "bar",
+    );
 
-renderRespondentChart(
-  "facultyChart",
-  data.respondent_summary?.faculty || {},
-  "bar"
-);
+    renderRespondentChart(
+      "facultyChart",
+      data.respondent_summary?.faculty || {},
+      "bar",
+    );
 
-renderSummaryList("statusSummary", data.respondent_summary?.status || {});
-renderSummaryList(
-  "educationSummary",
-  data.respondent_summary?.education_level || {}
-);
-renderSummaryList("facultySummary", data.respondent_summary?.faculty || {});
-
+    renderSummaryList("statusSummary", data.respondent_summary?.status || {});
+    renderSummaryList(
+      "educationSummary",
+      data.respondent_summary?.education_level || {},
+    );
+    renderSummaryList("facultySummary", data.respondent_summary?.faculty || {});
   } catch (err) {
     console.error(err);
     alert(err.message || "เกิดข้อผิดพลาด");
@@ -444,9 +512,7 @@ async function downloadPDF() {
       document.getElementById("formTitle")?.textContent?.trim() ||
       "result-report";
 
-    const safeTitle = title
-      .replace(/[\\/:*?"<>|]/g, "")
-      .slice(0, 80);
+    const safeTitle = title.replace(/[\\/:*?"<>|]/g, "").slice(0, 80);
 
     pdf.save(`รายงานผลการประเมิน-${safeTitle}.pdf`);
   } catch (err) {

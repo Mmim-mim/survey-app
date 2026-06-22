@@ -342,8 +342,8 @@
         </a>
       </div>
 
-      <!-- ข้อมูลโครงการ -->
-      <div class="section" id="projectInfo">
+      <!-- ข้อมูลโครงการ: ซ่อนไว้ ไม่แสดงในหน้าผู้ตอบ -->
+      <div class="section" id="projectInfo" style="display: none">
         <div class="title">ข้อมูลโครงการ</div>
         <div id="projectInfoBody" class="form-grid"></div>
       </div>
@@ -468,23 +468,23 @@
         titleEl.textContent = data.form_title || savedTitle || "ชื่อเรื่อง";
         subEl.textContent = data.form_desc || savedSub || "คำอธิบายแบบประเมิน";
 
-        const projectInfoBody = document.getElementById("projectInfoBody");
+      //   const projectInfoBody = document.getElementById("projectInfoBody");
 
-        if (projectInfoBody) {
-          projectInfoBody.innerHTML = `
-        <div style="grid-column: 1 / -1;"><b>ช่วงเวลา:</b> ${data.start_date || "-"} ถึง ${data.end_date || "-"}</div>
+      //   if (projectInfoBody) {
+      //     projectInfoBody.innerHTML = `
+      //   <div style="grid-column: 1 / -1;"><b>ช่วงเวลา:</b> ${data.start_date || "-"} ถึง ${data.end_date || "-"}</div>
 
-        <div style="grid-column: 1 / -1;"><b>เป้าหมาย:</b> ${data.goal_text || "-"}</div>
+      //   <div style="grid-column: 1 / -1;"><b>เป้าหมาย:</b> ${data.goal_text || "-"}</div>
 
-        <div><b>KPI ปริมาณ:</b> ${data.kpi_quantity || "-"}</div>
-        <div><b>KPI คุณภาพ:</b> ${data.kpi_quality || "-"}</div>
+      //   <div><b>KPI ปริมาณ:</b> ${data.kpi_quantity || "-"}</div>
+      //   <div><b>KPI คุณภาพ:</b> ${data.kpi_quality || "-"}</div>
 
-        <div style="grid-column: 1 / -1;"><b>ฝ่ายที่สังกัด:</b> ${data.dept_name || "-"}</div>
-        <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์มหาวิทยาลัย:</b> ${data.uni_strategy || "-"}</div>
-        <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์ศูนย์ฯ:</b> ${data.center_strategy || "-"}</div>
-        <div style="grid-column: 1 / -1;"><b>พันธกิจ:</b> ${data.center_mission || "-"}</div>
-      `;
-        }
+      //   <div style="grid-column: 1 / -1;"><b>ฝ่ายที่สังกัด:</b> ${data.dept_name || "-"}</div>
+      //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์มหาวิทยาลัย:</b> ${data.uni_strategy || "-"}</div>
+      //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์ศูนย์ฯ:</b> ${data.center_strategy || "-"}</div>
+      //   <div style="grid-column: 1 / -1;"><b>พันธกิจ:</b> ${data.center_mission || "-"}</div>
+      // `;
+      //   }
 
         const suggestTitle = document.getElementById("suggestTitle");
         const prompt = (data.suggestion_prompt || "").trim();

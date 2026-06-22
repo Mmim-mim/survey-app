@@ -42,29 +42,32 @@ function parseSubmissionPayload(payloadJson) {
 
   const comments = [];
 
-if (Array.isArray(p.comments)) {
-  comments.push(...p.comments);
-}
+  if (Array.isArray(p.comments)) {
+    comments.push(...p.comments);
+  }
 
-if (Array.isArray(p.suggestions)) {
-  comments.push(...p.suggestions);
-}
+  if (Array.isArray(p.suggestions)) {
+    comments.push(...p.suggestions);
+  }
 
-if (typeof p.dissatisfaction_text === "string" && p.dissatisfaction_text.trim()) {
-  comments.push({
-    text: p.dissatisfaction_text.trim(),
-    type: "dissatisfaction",
-    label: "ความไม่พึงพอใจ",
-  });
-}
+  if (
+    typeof p.dissatisfaction_text === "string" &&
+    p.dissatisfaction_text.trim()
+  ) {
+    comments.push({
+      text: p.dissatisfaction_text.trim(),
+      type: "dissatisfaction",
+      label: "ความไม่พึงพอใจ",
+    });
+  }
 
-if (typeof p.suggestion === "string" && p.suggestion.trim()) {
-  comments.push({
-    text: p.suggestion.trim(),
-    type: "suggestion",
-    label: "ข้อเสนอแนะ",
-  });
-}
+  if (typeof p.suggestion === "string" && p.suggestion.trim()) {
+    comments.push({
+      text: p.suggestion.trim(),
+      type: "suggestion",
+      label: "ข้อเสนอแนะ",
+    });
+  }
 
   return {
     fiscal_year: Number(p.fiscal_year) || null,
@@ -125,7 +128,7 @@ app.post("/api/login", async (req, res) => {
        FROM users
        WHERE username = ?
        LIMIT 1`,
-      [String(username).trim()]
+      [String(username).trim()],
     );
 
     if (!rows.length) {
@@ -553,8 +556,6 @@ app.get("/api/forms", async (req, res) => {
   }
 });
 
-
-
 // 3) ดึงฟอร์มตาม id
 app.get("/api/forms/:id", async (req, res) => {
   try {
@@ -663,7 +664,6 @@ app.put("/api/forms/:id", async (req, res) => {
 
     const isOwner = ownerUsername === reqUsername;
 
-
     if (!isOwner) {
       return res.status(403).json({
         error: "สามารถแก้ไขได้เฉพาะฟอร์มที่ตัวเองสร้างเท่านั้น",
@@ -729,7 +729,7 @@ app.delete("/api/forms/:id", async (req, res) => {
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
-      [id]
+      [id],
     );
 
     if (!rows.length) {
@@ -1175,10 +1175,10 @@ app.post("/api/admin/users", async (req, res) => {
     }
 
     const [result] = await pool.execute(
-  `INSERT INTO users (username, password, display_name, role, dept_name)
+      `INSERT INTO users (username, password, display_name, role, dept_name)
    VALUES (?, ?, ?, ?, ?)`,
-  [username, password, display_name || username, role, dept_name || null]
-);
+      [username, password, display_name || username, role, dept_name || null],
+    );
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
@@ -1234,10 +1234,10 @@ app.put("/api/admin/users/:id/dept", async (req, res) => {
       return res.status(400).json({ error: "ฝ่ายไม่ถูกต้อง" });
     }
 
-    await pool.execute(
-      `UPDATE users SET dept_name = ? WHERE id = ?`,
-      [dept_name || null, id]
-    );
+    await pool.execute(`UPDATE users SET dept_name = ? WHERE id = ?`, [
+      dept_name || null,
+      id,
+    ]);
 
     res.json({ ok: true });
   } catch (e) {
@@ -1398,10 +1398,17 @@ app.get("/api/forms/:id/results", async (req, res) => {
     const formId = req.params.id;
 
     const [forms] = await pool.execute(
-      `SELECT id, form_title
-       FROM survey_forms
-       WHERE id = ?
-       LIMIT 1`,
+      `SELECT 
+      id,
+      form_title,
+      goal_text,
+      kpi_quantity,
+      kpi_quality,
+      start_date,
+      end_date
+   FROM survey_forms
+   WHERE id = ?
+   LIMIT 1`,
       [formId],
     );
 
@@ -1427,66 +1434,65 @@ app.get("/api/forms/:id/results", async (req, res) => {
     const groupMap = new Map();
     const suggestions = [];
     const respondentSummary = {
-  status: {},
-  education_level: {},
-  faculty: {},
-  major: {},
-};
-
-function addCount(map, value) {
-  const key = String(value || "").trim() || "ไม่ระบุ";
-  map[key] = (map[key] || 0) + 1;
-}
-
-function collectRespondentProfile(payload) {
-  const profile = payload.profile || payload.respondent || payload.user || {};
-
-  const status =
-    profile.status ||
-    profile.respondent_status ||
-    profile.user_status ||
-    profile.type ||
-    payload.status ||
-    payload.respondent_status;
-
-  const educationLevel =
-    profile.level ||
-    profile.education_level ||
-    profile.degree ||
-    payload.level ||
-    payload.education_level;
-
-  const faculty =
-    profile.faculty ||
-    profile.dept ||
-    profile.department ||
-    profile.organization ||
-    profile.school ||
-    payload.faculty ||
-    payload.dept ||
-    payload.department;
-
-  const major =
-    profile.major ||
-    profile.program ||
-    profile.branch ||
-    payload.major ||
-    payload.program;
-
-  addCount(respondentSummary.status, status);
-  addCount(respondentSummary.education_level, educationLevel);
-  addCount(respondentSummary.faculty, faculty);
-  addCount(respondentSummary.major, major);
-}
-    const levelCounts = {
-      "ต้องปรับปรุงเร่งด่วน": 0,
-      "ต้องปรับปรุง": 0,
-      "พอใช้": 0,
-      "ดี": 0,
-      "ดีมาก": 0,
+      status: {},
+      education_level: {},
+      faculty: {},
+      major: {},
     };
 
-    
+    function addCount(map, value) {
+      const key = String(value || "").trim() || "ไม่ระบุ";
+      map[key] = (map[key] || 0) + 1;
+    }
+
+    function collectRespondentProfile(payload) {
+      const profile =
+        payload.profile || payload.respondent || payload.user || {};
+
+      const status =
+        profile.status ||
+        profile.respondent_status ||
+        profile.user_status ||
+        profile.type ||
+        payload.status ||
+        payload.respondent_status;
+
+      const educationLevel =
+        profile.level ||
+        profile.education_level ||
+        profile.degree ||
+        payload.level ||
+        payload.education_level;
+
+      const faculty =
+        profile.faculty ||
+        profile.dept ||
+        profile.department ||
+        profile.organization ||
+        profile.school ||
+        payload.faculty ||
+        payload.dept ||
+        payload.department;
+
+      const major =
+        profile.major ||
+        profile.program ||
+        profile.branch ||
+        payload.major ||
+        payload.program;
+
+      addCount(respondentSummary.status, status);
+      addCount(respondentSummary.education_level, educationLevel);
+      addCount(respondentSummary.faculty, faculty);
+      addCount(respondentSummary.major, major);
+    }
+    const levelCounts = {
+      ต้องปรับปรุงเร่งด่วน: 0,
+      ต้องปรับปรุง: 0,
+      พอใช้: 0,
+      ดี: 0,
+      ดีมาก: 0,
+    };
 
     function getLevel(score) {
       const s = Number(score) || 0;
@@ -1577,55 +1583,53 @@ function collectRespondentProfile(payload) {
     }
 
     function collectSuggestions(payload) {
-  const found = [];
+      const found = [];
 
-  function pushText(label, text) {
-    const clean = String(text || "").trim();
-    if (!clean) return;
+      function pushText(label, text) {
+        const clean = String(text || "").trim();
+        if (!clean) return;
 
-    const displayText = label ? `${label}: ${clean}` : clean;
-    found.push(displayText);
-  }
-
-  // อ่าน key ใหม่โดยตรง
-  if (payload.dissatisfaction_text) {
-    pushText("ความไม่พึงพอใจ", payload.dissatisfaction_text);
-  }
-
-  if (payload.suggestion) {
-    pushText("ข้อเสนอแนะ", payload.suggestion);
-  }
-
-  // รองรับโครงสร้างเดิมด้วย
-  function walk(value, keyName = "") {
-    if (Array.isArray(value)) {
-      value.forEach((v) => walk(v, keyName));
-      return;
-    }
-
-    if (!value || typeof value !== "object") {
-      if (
-        typeof value === "string" &&
-        value.trim() &&
-        (
-          keyName.toLowerCase().includes("suggest") ||
-          keyName.toLowerCase().includes("dissatisfaction") ||
-          keyName.includes("ข้อเสนอแนะ") ||
-          keyName.includes("ความไม่พึงพอใจ")
-        )
-      ) {
-        pushText("", value);
+        const displayText = label ? `${label}: ${clean}` : clean;
+        found.push(displayText);
       }
-      return;
+
+      // อ่าน key ใหม่โดยตรง
+      if (payload.dissatisfaction_text) {
+        pushText("ความไม่พึงพอใจ", payload.dissatisfaction_text);
+      }
+
+      if (payload.suggestion) {
+        pushText("ข้อเสนอแนะ", payload.suggestion);
+      }
+
+      // รองรับโครงสร้างเดิมด้วย
+      function walk(value, keyName = "") {
+        if (Array.isArray(value)) {
+          value.forEach((v) => walk(v, keyName));
+          return;
+        }
+
+        if (!value || typeof value !== "object") {
+          if (
+            typeof value === "string" &&
+            value.trim() &&
+            (keyName.toLowerCase().includes("suggest") ||
+              keyName.toLowerCase().includes("dissatisfaction") ||
+              keyName.includes("ข้อเสนอแนะ") ||
+              keyName.includes("ความไม่พึงพอใจ"))
+          ) {
+            pushText("", value);
+          }
+          return;
+        }
+
+        Object.entries(value).forEach(([k, v]) => walk(v, k));
+      }
+
+      walk(payload);
+
+      return [...new Set(found)];
     }
-
-    Object.entries(value).forEach(([k, v]) => walk(v, k));
-  }
-
-  walk(payload);
-
-  return [...new Set(found)];
-}
 
     subs.forEach((row) => {
       let payload = {};
@@ -1640,12 +1644,12 @@ function collectRespondentProfile(payload) {
       }
 
       collectRespondentProfile(payload);
-walkForScores(payload);
+      walkForScores(payload);
 
-collectSuggestions(payload).forEach((s) => {
-  if (s && !suggestions.includes(s)) suggestions.push(s);
-});
-});
+      collectSuggestions(payload).forEach((s) => {
+        if (s && !suggestions.includes(s)) suggestions.push(s);
+      });
+    });
     const average =
       allScores.length > 0
         ? allScores.reduce((sum, n) => sum + n, 0) / allScores.length
@@ -1683,6 +1687,15 @@ collectSuggestions(payload).forEach((s) => {
     res.json({
       form_id: form.id,
       form_title: formTitle,
+
+      project_info: {
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        goal_text: form.goal_text || "",
+        kpi_quantity: form.kpi_quantity || "",
+        kpi_quality: form.kpi_quality || "",
+      },
+
       total_responses: subs.length,
       total_questions: question_scores.length,
       average_score: Number(average.toFixed(2)),
@@ -1690,10 +1703,10 @@ collectSuggestions(payload).forEach((s) => {
       group_scores,
       question_scores,
       suggestions,
-      
+
       level_counts: levelCounts,
       respondent_summary: respondentSummary,
-
+      
     });
   } catch (err) {
     console.error("GET /api/forms/:id/results error:", err);

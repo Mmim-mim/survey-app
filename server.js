@@ -1405,7 +1405,11 @@ app.get("/api/forms/:id/results", async (req, res) => {
       kpi_quantity,
       kpi_quality,
       start_date,
-      end_date
+      end_date,
+      dept_name,
+      uni_strategy,
+      center_strategy,
+      center_mission
    FROM survey_forms
    WHERE id = ?
    LIMIT 1`,
@@ -1696,6 +1700,13 @@ app.get("/api/forms/:id/results", async (req, res) => {
         kpi_quality: form.kpi_quality || "",
       },
 
+      project_meta: {
+        dept_name: form.dept_name || "",
+        uni_strategy: form.uni_strategy || "",
+        center_strategy: form.center_strategy || "",
+        center_mission: form.center_mission || "",
+      },
+
       total_responses: subs.length,
       total_questions: question_scores.length,
       average_score: Number(average.toFixed(2)),
@@ -1706,7 +1717,6 @@ app.get("/api/forms/:id/results", async (req, res) => {
 
       level_counts: levelCounts,
       respondent_summary: respondentSummary,
-      
     });
   } catch (err) {
     console.error("GET /api/forms/:id/results error:", err);

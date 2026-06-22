@@ -116,6 +116,29 @@ function renderProjectInfo(project = {}) {
   setText("projectKpiQuality", project.kpi_quality || "-");
 }
 
+function renderProjectMeta(meta = {}) {
+  const panel = document.getElementById("projectMetaPanel");
+  if (!panel) return;
+
+  const hasData =
+    meta.dept_name ||
+    meta.uni_strategy ||
+    meta.center_strategy ||
+    meta.center_mission;
+
+  if (!hasData) {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "";
+
+  setText("projectDept", meta.dept_name || "-");
+  setText("projectUniStrategy", meta.uni_strategy || "-");
+  setText("projectCenterStrategy", meta.center_strategy || "-");
+  setText("projectCenterMission", meta.center_mission || "-");
+}
+
 function renderQuestionTable(rows = []) {
   const tbody = document.getElementById("questionTable");
 
@@ -418,6 +441,7 @@ async function loadResult() {
     setText("totalQuestions", data.total_questions || 0);
 
     renderProjectInfo(data.project_info || {});
+    renderProjectMeta(data.project_meta || {});
 
     document.getElementById("levelText").style.background = "#fff";
     document.getElementById("levelText").style.color = level.color;

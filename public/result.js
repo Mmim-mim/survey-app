@@ -151,17 +151,14 @@ function renderBudgetInfo(project = {}) {
     spentInput.value = hasSpent ? spent : "";
   }
 
-  const spentHint = document.getElementById("budgetSpentHint");
+
   const statusEl = document.getElementById("budgetStatus");
 
   if (!hasReceived || !hasSpent) {
     setText("budgetDiff", "-");
     setText("budgetPercent", "-");
 
-    if (spentHint) {
-      spentHint.textContent = "กรอกภายหลัง";
-      spentHint.className = "budget-status neutral";
-    }
+    
 
     if (statusEl) {
       statusEl.textContent = "รอข้อมูล";
@@ -171,10 +168,7 @@ function renderBudgetInfo(project = {}) {
     return;
   }
 
-  if (spentHint) {
-    spentHint.textContent = "บันทึกแล้ว";
-    spentHint.className = "budget-status good";
-  }
+  
 
   const diff = spent - received;
   const absDiff = Math.abs(diff);

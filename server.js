@@ -531,7 +531,7 @@ app.get("/api/forms", async (req, res) => {
         f.kpi_quantity,
         f.kpi_quality,
         f.start_date,
-        f.end_date,
+        f.end_date
 
       FROM survey_forms f
       LEFT JOIN users u

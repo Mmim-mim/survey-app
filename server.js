@@ -468,7 +468,6 @@ app.post("/api/forms", async (req, res) => {
       start_date,
       end_date,
       budget_received,
-      budget_spent,
       attachment_url,
       form,
     } = req.body || {};
@@ -482,8 +481,8 @@ app.post("/api/forms", async (req, res) => {
     const [result] = await pool.execute(
       `INSERT INTO survey_forms
 (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
-kpi_quantity, kpi_quality, start_date, end_date, budget_received, budget_spent, attachment_url, form_json)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+kpi_quantity, kpi_quality, start_date, end_date, budget_received, attachment_url, form_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         created_by || null,
         created_by_username || null,
@@ -498,7 +497,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         start_date || null,
         end_date || null,
         budget_received || null,
-        budget_spent || null,
+
         attachment_url || null,
         form_json,
       ],
@@ -533,8 +532,7 @@ app.get("/api/forms", async (req, res) => {
         f.kpi_quality,
         f.start_date,
         f.end_date,
-        f.budget_received,
-        f.budget_spent
+
       FROM survey_forms f
       LEFT JOIN users u
         ON f.created_by_username = u.username
@@ -642,7 +640,7 @@ app.put("/api/forms/:id", async (req, res) => {
       start_date,
       end_date,
       budget_received,
-      budget_spent,
+
       form,
     } = req.body || {};
 
@@ -694,7 +692,7 @@ app.put("/api/forms/:id", async (req, res) => {
            start_date = ?,
            end_date = ?,
             budget_received = ?,
-            budget_spent = ?,
+            
             form_json = ?
        WHERE id = ?`,
       [
@@ -709,7 +707,7 @@ app.put("/api/forms/:id", async (req, res) => {
         start_date || null,
         end_date || null,
         budget_received || null,
-        budget_spent || null,
+        
         form_json,
         id,
       ],

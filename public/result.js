@@ -583,7 +583,7 @@ async function loadResult() {
     renderSummaryList("facultySummary", data.respondent_summary?.faculty || {});
   } catch (err) {
     console.error(err);
-    alert(err.message || "เกิดข้อผิดพลาด");
+    showToast(err.message || "เกิดข้อผิดพลาด");
   }
 }
 
@@ -654,6 +654,23 @@ async function downloadPDF() {
   }
 }
 
+function showToast(message = "บันทึกเรียบร้อย") {
+  const popup = document.getElementById("toastPopup");
+  const text = document.getElementById("toastText");
+
+  if (!popup || !text) {
+    alert(message);
+    return;
+  }
+
+  text.textContent = message;
+  popup.classList.add("show");
+
+  setTimeout(() => {
+    popup.classList.remove("show");
+  }, 1400);
+}
+
 async function saveBudgetSpent() {
   const input = document.getElementById("budgetSpentInput");
   const value = Number(input?.value);
@@ -680,7 +697,7 @@ async function saveBudgetSpent() {
       throw new Error(data.error || "บันทึกงบประมาณไม่สำเร็จ");
     }
 
-    alert("บันทึกงบประมาณเรียบร้อย");
+    showToast("บันทึกงบประมาณเรียบร้อย");
     loadResult();
   } catch (err) {
     console.error(err);

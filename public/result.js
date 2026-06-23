@@ -145,7 +145,11 @@ function renderBudgetInfo(project = {}) {
   panel.style.display = "";
 
   setText("budgetReceived", hasReceived ? formatMoney(received) : "-");
-  setText("budgetSpent", hasSpent ? formatMoney(spent) : "-");
+  const spentInput = document.getElementById("budgetSpentInput");
+
+  if (spentInput) {
+    spentInput.value = hasSpent ? spent : "";
+  }
 
   const spentHint = document.getElementById("budgetSpentHint");
   const statusEl = document.getElementById("budgetStatus");
@@ -690,5 +694,4 @@ document.addEventListener("click", (e) => {
   }
 });
 
-loadResult()
-;
+loadResult();

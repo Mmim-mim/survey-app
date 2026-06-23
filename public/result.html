@@ -356,6 +356,23 @@
         font-weight: 900;
       }
 
+      .budget-value-input {
+        width: 100%;
+        border: none;
+        background: transparent;
+        outline: none;
+
+        color: #8b1515;
+        font-size: 26px;
+        font-weight: 900;
+        text-align: center;
+      }
+
+      .budget-value-input:focus {
+        background: #fff8f2;
+        border-radius: 10px;
+      }
+
       .budget-unit {
         color: #166534;
         font-weight: 900;
@@ -522,23 +539,14 @@
           <div class="budget-card">
             <div class="budget-label">งบประมาณที่ใช้จริง</div>
 
-            <div class="budget-value" id="budgetSpent">-</div>
-
-            <div class="budget-unit">บาท</div>
-
             <input
               type="number"
               id="budgetSpentInput"
-              placeholder="กรอกงบที่ใช้จริง"
-              style="
-                width: 100%;
-                margin-top: 10px;
-                padding: 8px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                text-align: center;
-              "
+              class="budget-value-input"
+              placeholder="0.00"
             />
+
+            <div class="budget-unit">บาท</div>
 
             <button
               id="saveBudgetBtn"

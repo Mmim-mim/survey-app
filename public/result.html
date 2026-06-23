@@ -324,6 +324,74 @@
         }
       }
 
+      /* ===== งบประมาณโครงการ ===== */
+      .budget-panel {
+        background: linear-gradient(135deg, #fffdf9, #fff7df);
+      }
+
+      .budget-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+      }
+
+      .budget-card {
+        background: #fff;
+        border: 1px solid #ead8c8;
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+      }
+
+      .budget-label {
+        color: #4b3a3a;
+        font-weight: 900;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .budget-value {
+        color: #8b1515;
+        font-size: 26px;
+        font-weight: 900;
+      }
+
+      .budget-unit {
+        color: #166534;
+        font-weight: 900;
+        margin-top: 4px;
+      }
+
+      .budget-status {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-weight: 900;
+        font-size: 13px;
+      }
+
+      .budget-status.good {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .budget-status.bad {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+
+      .budget-status.neutral {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      @media (max-width: 900px) {
+        .budget-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .pdf-btn {
         border: none;
         border-radius: 12px;
@@ -429,6 +497,47 @@
               <div class="project-info-label">KPI เชิงคุณภาพ</div>
               <div class="project-info-value" id="projectKpiQuality">-</div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- งบประมาณโครงการ -->
+      <div
+        class="panel project-info-panel budget-panel"
+        id="budgetPanel"
+        style="display: none"
+      >
+        <div class="project-info-head">
+          <span>💰</span>
+          <span>งบประมาณโครงการ</span>
+        </div>
+
+        <div class="budget-grid">
+          <div class="budget-card">
+            <div class="budget-label">งบประมาณที่ได้รับ</div>
+            <div class="budget-value" id="budgetReceived">-</div>
+            <div class="budget-unit">บาท</div>
+          </div>
+
+          <div class="budget-card">
+            <div class="budget-label">งบประมาณที่ใช้จริง</div>
+            <div class="budget-value" id="budgetSpent">-</div>
+            <div class="budget-unit">บาท</div>
+            <div class="budget-status neutral" id="budgetSpentHint">
+              กรอกภายหลัง
+            </div>
+          </div>
+
+          <div class="budget-card">
+            <div class="budget-label">ผลต่างงบประมาณ</div>
+            <div class="budget-value" id="budgetDiff">-</div>
+            <div class="budget-unit" id="budgetDiffUnit">บาท</div>
+          </div>
+
+          <div class="budget-card">
+            <div class="budget-label">คิดเป็น</div>
+            <div class="budget-value" id="budgetPercent">-</div>
+            <div class="budget-status neutral" id="budgetStatus">รอข้อมูล</div>
           </div>
         </div>
       </div>

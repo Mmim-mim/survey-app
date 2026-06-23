@@ -116,6 +116,105 @@ function renderProjectInfo(project = {}) {
   setText("projectKpiQuality", project.kpi_quality || "-");
 }
 
+function formatMoney(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n)) return "-";
+
+  return n.toLocaleString("th-TH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function renderBudgetInfo(project = {}) {
+  const panel = document.getElementById("budgetPanel");
+  if (!panel) return;
+
+  const received = Number(project.budget_received);
+  const spent = Number(project.budget_spent);
+
+  const hasReceived = Number.isFinite(received) && received > 0;
+  const hasSpent = Number.isFinite(spent) && spent >= 0;
+
+  if (!hasReceived && !hasSpent) {
+    panel.style.display = "none";
+    return;
+  }
+
+  panel.style.display = "";
+
+  setText("budgetReceived", hasReceived ? formatMoney(received) : "-");
+  setText("budgetSpent", hasSpent ? formatMoney(spent) : "-");
+
+  const spentHint = document.getElementById("budgetSpentHint");
+  const statusEl = document.getElementById("budgetStatus");
+
+  if (!hasReceived || !hasSpent) {
+    setText("budgetDiff", "-");
+    setText("budgetPercent", "-");
+
+    if (spentHint) {
+      spentHint.textContent = "กรอกภายหลัง";
+      spentHint.className = "budget-status neutral";
+    }
+
+    if (statusEl) {
+      statusEl.textContent = "รอข้อมูล";
+      statusEl.className = "budget-status neutral";
+    }
+
+    return;
+  }
+
+  if (spentHint) {
+    spentHint.textContent = "บันทึกแล้ว";
+    spentHint.className = "budget-status good";
+  }
+
+  const diff = spent - received;
+  const absDiff = Math.abs(diff);
+  const percent = received > 0 ? (absDiff / received) * 100 : 0;
+
+  setText("budgetDiff", formatMoney(absDiff));
+  setText("budgetPercent", `${percent.toFixed(2)}%`);
+
+  if (diff > 0) {
+    if (statusEl) {
+      statusEl.textContent = "เกินงบ";
+      statusEl.className = "budget-status bad";
+    }
+    document
+      .getElementById("budgetDiff")
+      ?.style.setProperty("color", "#b91c1c");
+    document
+      .getElementById("budgetPercent")
+      ?.style.setProperty("color", "#b91c1c");
+  } else if (diff < 0) {
+    if (statusEl) {
+      statusEl.textContent = "ต่ำกว่างบ";
+      statusEl.className = "budget-status good";
+    }
+    document
+      .getElementById("budgetDiff")
+      ?.style.setProperty("color", "#166534");
+    document
+      .getElementById("budgetPercent")
+      ?.style.setProperty("color", "#166534");
+  } else {
+    if (statusEl) {
+      statusEl.textContent = "พอดีงบ";
+      statusEl.className = "budget-status neutral";
+    }
+    document
+      .getElementById("budgetDiff")
+      ?.style.setProperty("color", "#92400e");
+    document
+      .getElementById("budgetPercent")
+      ?.style.setProperty("color", "#92400e");
+  }
+}
+
 function renderProjectMeta(meta = {}) {
   const panel = document.getElementById("projectMetaPanel");
   if (!panel) return;
@@ -441,6 +540,7 @@ async function loadResult() {
     setText("totalQuestions", data.total_questions || 0);
 
     renderProjectInfo(data.project_info || {});
+    renderBudgetInfo(data.project_info || {});
     renderProjectMeta(data.project_meta || {});
 
     document.getElementById("levelText").style.background = "#fff";

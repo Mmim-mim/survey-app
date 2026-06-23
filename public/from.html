@@ -802,6 +802,43 @@
           </div>
         </div>
 
+        <!-- งบประมาณโครงการ -->
+        <div class="section">
+          <div class="head">
+            <div class="left">
+              <div class="title">💰 งบประมาณโครงการ</div>
+            </div>
+          </div>
+
+          <div class="group">
+            <label>งบประมาณที่ได้รับ (บาท):</label>
+            <input
+              class="input"
+              id="budget_received"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="เช่น 10000"
+            />
+
+            <label style="margin-top: 14px; display: block">
+              งบประมาณที่ใช้จริง (บาท):
+            </label>
+            <input
+              class="input"
+              id="budget_spent"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="กรอกภายหลังเมื่อโครงการสิ้นสุด"
+            />
+
+            <div style="margin-top: 10px; color: #7b6b6b; font-weight: 700">
+              * งบประมาณที่ใช้จริงสามารถกลับมาแก้ไขภายหลังได้
+            </div>
+          </div>
+        </div>
+
         <!-- ====== ข้อมูลประกอบโครงการ ====== -->
         <div class="section">
           <div class="head">
@@ -1646,8 +1683,11 @@
             document.getElementById("kpi_quantity")?.value?.trim() || "",
           kpi_quality:
             document.getElementById("kpi_quality")?.value?.trim() || "",
-          start_date: document.getElementById("start_date")?.value || "",
-          end_date: document.getElementById("end_date")?.value || "",
+          start_date: document.getElementById("start_date").value,
+          end_date: document.getElementById("end_date").value,
+          budget_received:
+            document.getElementById("budget_received")?.value || "",
+          budget_spent: document.getElementById("budget_spent")?.value || "",
 
           dept_name: document.getElementById("dept_name")?.value || "",
           uni_strategy: document.getElementById("uni_strategy")?.value || "",
@@ -1693,6 +1733,8 @@
         setValue("#kpi_quality", data.kpi_quality);
         setValue("#start_date", toDateInputValue(data.start_date));
         setValue("#end_date", toDateInputValue(data.end_date));
+        setValue("#budget_received", data.budget_received || "");
+        setValue("#budget_spent", data.budget_spent || "");
 
         setValue("#dept_name", data.dept_name);
         setValue("#uni_strategy", data.uni_strategy);

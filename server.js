@@ -467,6 +467,8 @@ app.post("/api/forms", async (req, res) => {
       kpi_quality,
       start_date,
       end_date,
+      budget_received,
+      budget_spent,
       attachment_url,
       form,
     } = req.body || {};
@@ -479,9 +481,9 @@ app.post("/api/forms", async (req, res) => {
 
     const [result] = await pool.execute(
       `INSERT INTO survey_forms
-  (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
-  kpi_quantity, kpi_quality, start_date, end_date, attachment_url, form_json)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+(created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
+kpi_quantity, kpi_quality, start_date, end_date, budget_received, budget_spent, attachment_url, form_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         created_by || null,
         created_by_username || null,
@@ -495,6 +497,8 @@ app.post("/api/forms", async (req, res) => {
         kpi_quality || null,
         start_date || null,
         end_date || null,
+        budget_received || null,
+        budget_spent || null,
         attachment_url || null,
         form_json,
       ],
@@ -528,7 +532,9 @@ app.get("/api/forms", async (req, res) => {
         f.kpi_quantity,
         f.kpi_quality,
         f.start_date,
-        f.end_date
+        f.end_date,
+        f.budget_received,
+        f.budget_spent
       FROM survey_forms f
       LEFT JOIN users u
         ON f.created_by_username = u.username
@@ -568,7 +574,7 @@ app.get("/api/forms/:id", async (req, res) => {
       `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
               goal_text, kpi_quantity, kpi_quality,
-              start_date, end_date, attachment_url, form_json
+              start_date, end_date, budget_received, budget_spent, attachment_url, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -604,6 +610,8 @@ app.get("/api/forms/:id", async (req, res) => {
       kpi_quality: r.kpi_quality,
       start_date: r.start_date,
       end_date: r.end_date,
+      budget_received: r.budget_received,
+      budget_spent: r.budget_spent,
       form,
     });
   } catch (e) {
@@ -633,6 +641,8 @@ app.put("/api/forms/:id", async (req, res) => {
       kpi_quality,
       start_date,
       end_date,
+      budget_received,
+      budget_spent,
       form,
     } = req.body || {};
 
@@ -683,7 +693,9 @@ app.put("/api/forms/:id", async (req, res) => {
            kpi_quality = ?,
            start_date = ?,
            end_date = ?,
-           form_json = ?
+            budget_received = ?,
+            budget_spent = ?,
+            form_json = ?
        WHERE id = ?`,
       [
         form_title || null,
@@ -696,6 +708,8 @@ app.put("/api/forms/:id", async (req, res) => {
         kpi_quality || null,
         start_date || null,
         end_date || null,
+        budget_received || null,
+        budget_spent || null,
         form_json,
         id,
       ],
@@ -1398,19 +1412,21 @@ app.get("/api/forms/:id/results", async (req, res) => {
     const formId = req.params.id;
 
     const [forms] = await pool.execute(
-      `SELECT 
-      id,
-      form_title,
-      goal_text,
-      kpi_quantity,
-      kpi_quality,
-      start_date,
-      end_date,
-      dept_name,
-      uni_strategy,
-      center_strategy,
-      center_mission
-   FROM survey_forms
+      `SELECT
+  id,
+  form_title,
+  goal_text,
+  kpi_quantity,
+  kpi_quality,
+  start_date,
+  end_date,
+  budget_received,
+  budget_spent,
+  dept_name,
+  uni_strategy,
+  center_strategy,
+  center_mission
+FROM survey_forms
    WHERE id = ?
    LIMIT 1`,
       [formId],
@@ -1698,6 +1714,8 @@ app.get("/api/forms/:id/results", async (req, res) => {
         goal_text: form.goal_text || "",
         kpi_quantity: form.kpi_quantity || "",
         kpi_quality: form.kpi_quality || "",
+        budget_received: form.budget_received || null,
+        budget_spent: form.budget_spent || null,
       },
 
       project_meta: {

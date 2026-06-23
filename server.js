@@ -1405,6 +1405,36 @@ app.get("/api/question-bank/active", async (req, res) => {
   }
 });
 
+app.put("/api/forms/:id/budget", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const budget_spent = Number(req.body.budget_spent);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({
+        error: "invalid id",
+      });
+    }
+
+    await pool.execute(
+      `
+      UPDATE survey_forms
+      SET budget_spent = ?
+      WHERE id = ?
+      `,
+      [budget_spent, id],
+    );
+
+    res.json({
+      ok: true,
+    });
+  } catch (e) {
+    res.status(500).json({
+      error: e.message,
+    });
+  }
+});
+
 app.get("/api/forms/:id/results", async (req, res) => {
   try {
     const formId = req.params.id;

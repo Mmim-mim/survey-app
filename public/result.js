@@ -650,4 +650,45 @@ async function downloadPDF() {
   }
 }
 
-loadResult();
+async function saveBudgetSpent() {
+  const input = document.getElementById("budgetSpentInput");
+  const value = Number(input?.value);
+
+  if (!Number.isFinite(value) || value < 0) {
+    alert("กรุณากรอกงบประมาณที่ใช้จริงให้ถูกต้อง");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/forms/${formId}/budget`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        budget_spent: value,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "บันทึกงบประมาณไม่สำเร็จ");
+    }
+
+    alert("บันทึกงบประมาณเรียบร้อย");
+    loadResult();
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "เกิดข้อผิดพลาด");
+  }
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "saveBudgetBtn") {
+    saveBudgetSpent();
+  }
+});
+
+loadResult()
+;

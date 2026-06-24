@@ -519,28 +519,27 @@ app.get("/api/forms", async (req, res) => {
     const dept_name = String(req.query.dept_name || "").trim();
 
     let sql = `
-      SELECT 
-        f.id,
-        f.created_at,
-        f.created_by,
-        f.created_by_username,
-        f.form_title,
-        f.dept_name,
-        f.uni_strategy,
-        f.center_strategy,
-        f.center_mission,
-        f.goal_text,
-        f.kpi_quantity,
-        f.kpi_quality,
-        f.start_date,
-        f.end_date
-        f.fiscal_year
-
-      FROM survey_forms f
-      LEFT JOIN users u
-        ON f.created_by_username = u.username
-      WHERE 1=1
-    `;
+  SELECT 
+    f.id,
+    f.created_at,
+    f.created_by,
+    f.created_by_username,
+    f.form_title,
+    f.dept_name,
+    f.uni_strategy,
+    f.center_strategy,
+    f.center_mission,
+    f.goal_text,
+    f.kpi_quantity,
+    f.kpi_quality,
+    f.start_date,
+    f.end_date,
+    f.fiscal_year
+  FROM survey_forms f
+  LEFT JOIN users u
+    ON f.created_by_username = u.username
+  WHERE 1=1
+`;
 
     const params = [];
     const fiscal_year = String(req.query.fiscal_year || "").trim();

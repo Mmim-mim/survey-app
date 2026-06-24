@@ -207,6 +207,9 @@ function buildCharts() {
         },
         y: {
           offset: true,
+          afterFit: function (scale) {
+            scale.width = 260;
+          },
           ticks: {
             color: "#7a5c5c",
             font: {

@@ -246,6 +246,17 @@ app.get("/api/dashboard/options", async (req, res) => {
       if (parsed.dept) depts.add(parsed.dept);
     }
 
+    const [formYearRows] = await pool.execute(`
+  SELECT DISTINCT fiscal_year
+  FROM survey_forms
+  WHERE fiscal_year IS NOT NULL
+    AND fiscal_year <> ''
+`);
+
+    for (const row of formYearRows) {
+      years.add(Number(row.fiscal_year));
+    }
+
     res.json({
       forms: Array.from(forms).sort((a, b) => a.localeCompare(b, "th")),
       fiscalYears: Array.from(years).sort((a, b) => b - a),

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>แบบฟอร์มการประเมินทั้งหมด</title>
-    <link rel="icon" type="image/png" href="/info/public/images/logo.png">
+    <link rel="icon" type="image/png" href="/info/public/images/logo.png" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
@@ -793,6 +793,7 @@
 
       // ===== ตั้งค่าปีงบประมาณ =====
       const select = document.getElementById("budgetYear");
+      select.addEventListener("change", loadFormsList);
 
       // ปีปัจจุบัน (พ.ศ.)
       const currentYearBE = new Date().getFullYear() + 543;
@@ -882,11 +883,18 @@
           const role = (localStorage.getItem("role") || "staff").trim();
           const dept_name = (localStorage.getItem("dept_name") || "").trim();
 
+          const selectedFiscalYear =
+            document.getElementById("budgetYear")?.value || "";
+
           const qs = new URLSearchParams({
             username,
             role,
             dept_name,
           });
+
+          if (selectedFiscalYear) {
+            qs.set("fiscal_year", selectedFiscalYear);
+          }
           const res = await fetch("/api/forms?" + qs.toString());
           const rows = await res.json();
           if (!res.ok)

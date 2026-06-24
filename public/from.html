@@ -1647,6 +1647,18 @@
         }));
       }
 
+      function calculateFiscalYear(startDateValue) {
+        if (!startDateValue) return "";
+
+        const date = new Date(startDateValue);
+        if (isNaN(date)) return "";
+
+        const yearBE = date.getFullYear() + 543;
+        const month = date.getMonth() + 1;
+
+        return month >= 10 ? String(yearBE + 1) : String(yearBE);
+      }
+
       function buildFormPayload() {
         return {
           form_title:
@@ -1661,6 +1673,9 @@
             document.getElementById("kpi_quality")?.value?.trim() || "",
           start_date: document.getElementById("start_date").value,
           end_date: document.getElementById("end_date").value,
+          fiscal_year: calculateFiscalYear(
+            document.getElementById("start_date").value,
+          ),
           budget_received:
             document.getElementById("budget_received")?.value || "",
 
@@ -2150,6 +2165,7 @@
               kpi_quality: formData.kpi_quality,
               start_date: formData.start_date || null,
               end_date: formData.end_date || null,
+              fiscal_year: formData.fiscal_year || null,
               budget_received: formData.budget_received || null,
 
               attachment_url:

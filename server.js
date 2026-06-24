@@ -467,6 +467,7 @@ app.post("/api/forms", async (req, res) => {
       kpi_quality,
       start_date,
       end_date,
+      fiscal_year,
       budget_received,
       attachment_url,
       form,
@@ -481,8 +482,8 @@ app.post("/api/forms", async (req, res) => {
     const [result] = await pool.execute(
       `INSERT INTO survey_forms
 (created_by, created_by_username, form_title, dept_name, uni_strategy, center_strategy, center_mission, goal_text, 
-kpi_quantity, kpi_quality, start_date, end_date, budget_received, attachment_url, form_json)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+kpi_quantity, kpi_quality, start_date, end_date, fiscal_year, budget_received, attachment_url, form_json)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         created_by || null,
         created_by_username || null,
@@ -496,6 +497,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         kpi_quality || null,
         start_date || null,
         end_date || null,
+        fiscal_year || null,
         budget_received || null,
 
         attachment_url || null,
@@ -532,6 +534,7 @@ app.get("/api/forms", async (req, res) => {
         f.kpi_quality,
         f.start_date,
         f.end_date
+        f.fiscal_year
 
       FROM survey_forms f
       LEFT JOIN users u
@@ -540,6 +543,7 @@ app.get("/api/forms", async (req, res) => {
     `;
 
     const params = [];
+    const fiscal_year = String(req.query.fiscal_year || "").trim();
 
     if (role === "staff") {
       sql += ` AND f.created_by_username = ? `;
@@ -549,6 +553,11 @@ app.get("/api/forms", async (req, res) => {
     if (role === "manager") {
       sql += ` AND u.dept_name = ? `;
       params.push(dept_name);
+    }
+
+    if (fiscal_year) {
+      sql += ` AND f.fiscal_year = ? `;
+      params.push(fiscal_year);
     }
 
     sql += ` ORDER BY f.id DESC LIMIT 500`;
@@ -572,7 +581,7 @@ app.get("/api/forms/:id", async (req, res) => {
       `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
               goal_text, kpi_quantity, kpi_quality,
-              start_date, end_date, budget_received, budget_spent, attachment_url, form_json
+              start_date, end_date, fiscal_year, budget_received, budget_spent, attachment_url, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -639,6 +648,7 @@ app.put("/api/forms/:id", async (req, res) => {
       kpi_quality,
       start_date,
       end_date,
+      fiscal_year,
       budget_received,
 
       form,
@@ -691,8 +701,10 @@ app.put("/api/forms/:id", async (req, res) => {
            kpi_quality = ?,
            start_date = ?,
            end_date = ?,
-            budget_received = ?,
-            
+           fiscal_year = ?,
+          budget_received = ?,
+
+
             form_json = ?
        WHERE id = ?`,
       [
@@ -706,8 +718,9 @@ app.put("/api/forms/:id", async (req, res) => {
         kpi_quality || null,
         start_date || null,
         end_date || null,
+        fiscal_year || null,
         budget_received || null,
-        
+
         form_json,
         id,
       ],

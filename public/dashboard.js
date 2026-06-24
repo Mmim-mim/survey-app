@@ -176,6 +176,12 @@ function buildCharts() {
       indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: {
+          left: 10,
+          right: 20,
+        },
+      },
       plugins: {
         legend: {
           labels: {
@@ -200,10 +206,17 @@ function buildCharts() {
           },
         },
         y: {
-          beginAtZero: true,
+          offset: true,
           ticks: {
-            precision: 0,
             color: "#7a5c5c",
+            font: {
+              size: 12,
+              family: "Noto Sans Thai",
+            },
+            callback: function (value) {
+              const label = this.getLabelForValue(value);
+              return label.length > 45 ? label.substring(0, 45) + "..." : label;
+            },
           },
           grid: {
             color: "rgba(234, 216, 200, 0.7)",

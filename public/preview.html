@@ -366,7 +366,9 @@
 
       <!-- ส่วนที่ 3: ความไม่พึงพอใจแบบข้อความ -->
       <div class="section" id="sec3">
-        <div class="title" id="dissTitle">ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)</div>
+        <div class="title" id="dissTitle">
+          ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)
+        </div>
 
         <textarea
           id="dissatisfactionAnswer"
@@ -452,7 +454,7 @@
       let data = {};
 
       function renderPage() {
-        const sectionState = data.section_state || {};
+        
 
         const sec1El = document.getElementById("sec1");
         const sec2El = document.getElementById("sec2");
@@ -460,40 +462,42 @@
         const sec4El = document.getElementById("sec4");
         const sec5El = document.getElementById("sec5");
 
-        if (sec1El && sectionState.s1 === false) sec1El.style.display = "none";
-        if (sec2El && sectionState.s2 === false) sec2El.style.display = "none";
-        if (sec3El && sectionState.s3 === false) sec3El.style.display = "none";
-        if (sec4El && sectionState.s4 === false) sec4El.style.display = "none";
-        if (sec5El && sectionState.s5 === false) sec5El.style.display = "none";
+        if (sec1El)
+          sec1El.style.display = data.section1_enabled === false ? "none" : "";
+        if (sec2El)
+          sec2El.style.display = data.section2_enabled === false ? "none" : "";
+        if (sec3El)
+          sec3El.style.display = data.section3_enabled === false ? "none" : "";
+        if (sec4El)
+          sec4El.style.display = data.section4_enabled === false ? "none" : "";
+        if (sec5El)
+          sec5El.style.display = data.section5_enabled === false ? "none" : "";
 
         titleEl.textContent = data.form_title || savedTitle || "ชื่อเรื่อง";
         subEl.textContent = data.form_desc || savedSub || "คำอธิบายแบบประเมิน";
 
-      //   const projectInfoBody = document.getElementById("projectInfoBody");
+        //   const projectInfoBody = document.getElementById("projectInfoBody");
 
-      //   if (projectInfoBody) {
-      //     projectInfoBody.innerHTML = `
-      //   <div style="grid-column: 1 / -1;"><b>ช่วงเวลา:</b> ${data.start_date || "-"} ถึง ${data.end_date || "-"}</div>
+        //   if (projectInfoBody) {
+        //     projectInfoBody.innerHTML = `
+        //   <div style="grid-column: 1 / -1;"><b>ช่วงเวลา:</b> ${data.start_date || "-"} ถึง ${data.end_date || "-"}</div>
 
-      //   <div style="grid-column: 1 / -1;"><b>เป้าหมาย:</b> ${data.goal_text || "-"}</div>
+        //   <div style="grid-column: 1 / -1;"><b>เป้าหมาย:</b> ${data.goal_text || "-"}</div>
 
-      //   <div><b>KPI ปริมาณ:</b> ${data.kpi_quantity || "-"}</div>
-      //   <div><b>KPI คุณภาพ:</b> ${data.kpi_quality || "-"}</div>
+        //   <div><b>KPI ปริมาณ:</b> ${data.kpi_quantity || "-"}</div>
+        //   <div><b>KPI คุณภาพ:</b> ${data.kpi_quality || "-"}</div>
 
-      //   <div style="grid-column: 1 / -1;"><b>ฝ่ายที่สังกัด:</b> ${data.dept_name || "-"}</div>
-      //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์มหาวิทยาลัย:</b> ${data.uni_strategy || "-"}</div>
-      //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์ศูนย์ฯ:</b> ${data.center_strategy || "-"}</div>
-      //   <div style="grid-column: 1 / -1;"><b>พันธกิจ:</b> ${data.center_mission || "-"}</div>
-      // `;
-      //   }
+        //   <div style="grid-column: 1 / -1;"><b>ฝ่ายที่สังกัด:</b> ${data.dept_name || "-"}</div>
+        //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์มหาวิทยาลัย:</b> ${data.uni_strategy || "-"}</div>
+        //   <div style="grid-column: 1 / -1;"><b>ยุทธศาสตร์ศูนย์ฯ:</b> ${data.center_strategy || "-"}</div>
+        //   <div style="grid-column: 1 / -1;"><b>พันธกิจ:</b> ${data.center_mission || "-"}</div>
+        // `;
+        //   }
 
         const suggestTitle = document.getElementById("suggestTitle");
         const prompt = (data.suggestion_prompt || "").trim();
 
-        if (data.section5_enabled === false) {
-          const sec5 = document.getElementById("sec5");
-          if (sec5) sec5.style.display = "none";
-        } else if (suggestTitle) {
+        if (suggestTitle) {
           suggestTitle.textContent = prompt || "ข้อเสนอแนะ";
         }
 
@@ -935,7 +939,8 @@
         /* ---------- ส่วนที่ 3: ความไม่พึงพอใจแบบ Textarea ---------- */
         const dissTitle = document.getElementById("dissTitle");
         if (dissTitle) {
-          dissTitle.textContent = "ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)";
+          dissTitle.textContent =
+            "ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)";
         }
 
         /* ---------- ส่วนที่ 4: บอกต่อกิจกรรม ใช่/ไม่ใช่ ---------- */

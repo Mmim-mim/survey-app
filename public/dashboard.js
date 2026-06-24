@@ -1,7 +1,6 @@
 const fForm = document.getElementById("fForm");
 const fDept = document.getElementById("fDept");
 
-
 const yearMulti = document.getElementById("yearMulti");
 const yearMultiBtn = document.getElementById("yearMultiBtn");
 const yearMultiMenu = document.getElementById("yearMultiMenu");
@@ -40,7 +39,12 @@ function esc(s) {
     .replaceAll("'", "&#039;");
 }
 
-function setSelectOptions(selectEl, items, includeAll = true, allText = "ทั้งหมด") {
+function setSelectOptions(
+  selectEl,
+  items,
+  includeAll = true,
+  allText = "ทั้งหมด",
+) {
   const list = [];
   if (includeAll) list.push(`<option value="">${allText}</option>`);
   for (const item of items) {
@@ -59,7 +63,7 @@ function renderYearOptions(years) {
           <input type="checkbox" class="year-check" value="${esc(year)}" />
           <span>${esc(year)}</span>
         </label>
-      `
+      `,
     )
     .join("");
 
@@ -169,6 +173,7 @@ function buildCharts() {
       ],
     },
     options: {
+      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -185,6 +190,10 @@ function buildCharts() {
         x: {
           ticks: {
             color: "#7a5c5c",
+            callback: function (value) {
+              const label = this.getLabelForValue(value);
+              return label.length > 35 ? label.substring(0, 35) + "..." : label;
+            },
           },
           grid: {
             color: "rgba(234, 216, 200, 0.7)",
@@ -213,10 +222,8 @@ async function loadOptions() {
   if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
 
   setSelectOptions(fForm, json.forms || [], true, "ทั้งหมด");
-renderYearOptions((json.fiscalYears || []).map(String));
-setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
-
-
+  renderYearOptions((json.fiscalYears || []).map(String));
+  setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
 }
 
 function renderTable(rows) {
@@ -225,7 +232,9 @@ function renderTable(rows) {
     return;
   }
 
-  summaryTableBody.innerHTML = rows.map((r) => `
+  summaryTableBody.innerHTML = rows
+    .map(
+      (r) => `
     <tr>
       <td>${r.no}</td>
       <td>${esc(r.question)}</td>
@@ -233,7 +242,9 @@ function renderTable(rows) {
       <td>${Number(r.sd || 0).toFixed(2)}</td>
       <td>${r.count || 0}</td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function renderComments(rows) {
@@ -242,14 +253,18 @@ function renderComments(rows) {
     return;
   }
 
-  commentList.innerHTML = rows.map((c) => `
+  commentList.innerHTML = rows
+    .map(
+      (c) => `
     <div class="comment-item">
       <div class="comment-meta">
         ${esc(c.created_by || "-")} • ${esc(c.form_title || "-")} • ${new Date(c.created_at).toLocaleString("th-TH")}
       </div>
       <div>${esc(c.text)}</div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function updateCharts(charts) {
@@ -265,15 +280,15 @@ function updateCharts(charts) {
 
 async function loadSummary() {
   const qs = new URLSearchParams({
-  username,
-  role,
-  form_title: fForm.value,
-  fiscal_years: getFiscalYearsParam(),
-  dept: fDept.value,
+    username,
+    role,
+    form_title: fForm.value,
+    fiscal_years: getFiscalYearsParam(),
+    dept: fDept.value,
 
-  date_from: fDateFrom.value,
-  date_to: fDateTo.value
-});
+    date_from: fDateFrom.value,
+    date_to: fDateTo.value,
+  });
   const res = await fetch("/api/dashboard/summary?" + qs.toString());
   const json = await res.json();
 
@@ -284,11 +299,14 @@ async function loadSummary() {
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
   sForm.textContent = fForm.value || "ทั้งหมด";
-  sYear.textContent = selectedYears.length ? selectedYears.join(", ") : "ทั้งหมด";
-  sDept.textContent = fDept.value || "ทั้งหมด";
-  sDate.textContent = (fDateFrom.value || fDateTo.value)
-    ? `${fDateFrom.value || "-"} ถึง ${fDateTo.value || "-"}`
+  sYear.textContent = selectedYears.length
+    ? selectedYears.join(", ")
     : "ทั้งหมด";
+  sDept.textContent = fDept.value || "ทั้งหมด";
+  sDate.textContent =
+    fDateFrom.value || fDateTo.value
+      ? `${fDateFrom.value || "-"} ถึง ${fDateTo.value || "-"}`
+      : "ทั้งหมด";
 
   renderTable(json.table || []);
   renderComments(json.comments || []);
@@ -314,8 +332,8 @@ async function refreshDashboard() {
     await refreshDashboard();
 
     [fForm, fDept, fDateFrom, fDateTo].forEach((el) => {
-  el.addEventListener("change", refreshDashboard);
-});
+      el.addEventListener("change", refreshDashboard);
+    });
     btnRefresh.addEventListener("click", refreshDashboard);
   } catch (err) {
     console.error(err);

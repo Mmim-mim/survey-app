@@ -704,18 +704,22 @@
         font-weight: 600;
       }
 
-      /* ===============================
-          ปุ่มเพิ่มเป้าหมาย
-      ================================ */
+      /* ============================
+   ปุ่มเพิ่มเป้าหมาย
+============================ */
 
       .btn-add-goal {
         display: inline-flex;
+
         align-items: center;
-        gap: 6px;
 
-        padding:5px 10px;
+        justify-content: center;
 
-        margin-top: 10px;
+        gap: 5px;
+
+        padding: 4px 10px;
+
+        margin: 12px auto 14px;
 
         border: 1px solid #e7c8b6;
 
@@ -723,9 +727,9 @@
 
         background: #fff8f3;
 
-        color: #7d1f1f;
+        color: #8b1f1f;
 
-        font-size: 15px;
+        font-size: 13px;
 
         font-weight: 500;
 
@@ -736,27 +740,26 @@
 
       .btn-add-goal:hover {
         background: #fff2e8;
-
-        border-color: #d9a46c;
-
+        border-color: #d8a06a;
         transform: translateY(-1px);
-
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-      }
-
-      .btn-add-goal:active {
-        transform: translateY(0);
       }
 
       .btn-add-goal .plus-icon {
-        font-size: 16px;
+        font-size: 15px;
 
         font-weight: 500;
 
-        color: #b91c1c;
-
         line-height: 1;
       }
+
+      .goal-btn-wrap {
+        display: flex;
+
+        justify-content: center;
+
+        width: 100%;
+      }
+      
     </style>
     <link rel="stylesheet" href="global.css" />
   </head>
@@ -842,10 +845,16 @@
                 class="center"
                 style="justify-content: flex-start; margin-top: 10px"
               >
-                <button type="button" id="addGoalBtn" class="btn btn-add-goal">
-                  <span class="plus-icon">＋</span>
-                  <span>เพิ่มเป้าหมาย</span>
-                </button>
+                <div class="goal-btn-wrap">
+                  <button
+                    type="button"
+                    id="addGoalBtn"
+                    class="btn btn-add-goal"
+                  >
+                    <span class="plus-icon">＋</span>
+                    <span>เพิ่มเป้าหมาย</span>
+                  </button>
+                </div>
               </div>
 
               <div class="title" style="font-size: 16px; margin: 16px 0 10px">

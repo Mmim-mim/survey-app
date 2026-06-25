@@ -704,12 +704,58 @@
         font-weight: 600;
       }
 
-      #addGoalBtn {
+      /* ===============================
+          ปุ่มเพิ่มเป้าหมาย
+      ================================ */
+
+      .btn-add-goal {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
         padding: 6px 12px;
-        font-size: 15px;
-        font-weight: 600;
+
+        margin-top: 10px;
+
+        border: 1px solid #e7c8b6;
+
         border-radius: 10px;
-        min-height: 34px;
+
+        background: #ffffff;
+
+        color: #7d1f1f;
+
+        font-size: 15px;
+
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition: 0.2s;
+      }
+
+      .btn-add-goal:hover {
+        background: #fff8f3;
+
+        border-color: #d9a46c;
+
+        transform: translateY(-1px);
+
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+      }
+
+      .btn-add-goal:active {
+        transform: translateY(0);
+      }
+
+      .btn-add-goal .plus-icon {
+        font-size: 18px;
+
+        font-weight: 500;
+
+        color: #b91c1c;
+
+        line-height: 1;
       }
     </style>
     <link rel="stylesheet" href="global.css" />
@@ -796,8 +842,9 @@
                 class="center"
                 style="justify-content: flex-start; margin-top: 10px"
               >
-                <button type="button" class="btn soft" id="addGoalBtn">
-                  + เพิ่มเป้าหมาย
+                <button type="button" id="addGoalBtn" class="btn btn-add-goal">
+                  <span class="plus-icon">＋</span>
+                  <span>เพิ่มเป้าหมาย</span>
                 </button>
               </div>
 

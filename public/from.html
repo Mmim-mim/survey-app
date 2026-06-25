@@ -275,6 +275,28 @@
         width: 100%;
       }
 
+      .goal-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .goal-item:first-child {
+        grid-template-columns: 1fr;
+      }
+
+      .goal-remove-btn {
+        color: #9b1c1c;
+        border-color: #ead8c8;
+        background: #fff8f2;
+      }
+
+      .goal-remove-btn:hover {
+        background: #fee2e2;
+        border-color: #fecaca;
+      }
+
       .num {
         width: 42px;
         text-align: right;
@@ -752,12 +774,26 @@
               <div class="title" style="font-size: 16px; margin-bottom: 10px">
                 เป้าหมาย:
               </div>
-              <input
-                type="text"
-                id="goal_text"
-                class="input"
-                placeholder="เป้าหมายโครงการ"
-              />
+
+              <div id="goalList" class="stack">
+                <div class="item goal-item">
+                  <input
+                    type="text"
+                    id="goal_text"
+                    class="input goal-input"
+                    placeholder="เป้าหมายโครงการ"
+                  />
+                </div>
+              </div>
+
+              <div
+                class="center"
+                style="justify-content: flex-start; margin-top: 10px"
+              >
+                <button type="button" class="btn soft" id="addGoalBtn">
+                  + เพิ่มเป้าหมาย
+                </button>
+              </div>
 
               <div class="title" style="font-size: 16px; margin: 16px 0 10px">
                 ตัวชี้วัดเชิงปริมาณ:
@@ -1636,6 +1672,66 @@
         );
       }
 
+      function addGoalInput(value = "") {
+        const goalList = document.getElementById("goalList");
+        if (!goalList) return;
+
+        const row = document.createElement("div");
+        row.className = "item goal-item";
+
+        row.innerHTML = `
+    <input
+      type="text"
+      class="input goal-input"
+      placeholder="เป้าหมายเพิ่มเติม"
+      value="${String(value || "").replaceAll('"', "&quot;")}"
+    />
+    <button type="button" class="btn soft goal-remove-btn">ลบ</button>
+  `;
+
+        row.querySelector(".goal-remove-btn").addEventListener("click", () => {
+          row.remove();
+        });
+
+        goalList.appendChild(row);
+      }
+
+      function collectGoalText() {
+        return Array.from(document.querySelectorAll(".goal-input"))
+          .map((el) => String(el.value || "").trim())
+          .filter(Boolean)
+          .join("\n");
+      }
+
+      function applyGoalText(value = "") {
+        const goalList = document.getElementById("goalList");
+        const firstInput = document.getElementById("goal_text");
+        if (!goalList || !firstInput) return;
+
+        goalList
+          .querySelectorAll(".goal-item:not(:first-child)")
+          .forEach((el) => {
+            el.remove();
+          });
+
+        const goals = Array.isArray(value)
+          ? value
+          : String(value || "")
+              .split(/\n+/)
+              .map((v) => v.trim())
+              .filter(Boolean);
+
+        firstInput.value = goals[0] || "";
+
+        goals.slice(1).forEach((goal) => {
+          addGoalInput(goal);
+        });
+      }
+
+      document.getElementById("addGoalBtn")?.addEventListener("click", () => {
+        addGoalInput();
+      });
+
       function collectExtraSections() {
         return Array.from(
           document.querySelectorAll('.custom-dimension[data-role="section"]'),
@@ -1666,7 +1762,7 @@
           form_desc:
             document.querySelector('[name="form_desc"]')?.value?.trim() || "",
 
-          goal_text: document.getElementById("goal_text")?.value?.trim() || "",
+          goal_text: collectGoalText(),
           kpi_quantity:
             document.getElementById("kpi_quantity")?.value?.trim() || "",
           kpi_quality:
@@ -1718,7 +1814,7 @@
         setValue('[name="form_title"]', data.form_title);
         setValue('[name="form_desc"]', data.form_desc);
 
-        setValue("#goal_text", data.goal_text);
+        applyGoalText(data.goal_text);
         setValue("#kpi_quantity", data.kpi_quantity);
         setValue("#kpi_quality", data.kpi_quality);
         setValue("#start_date", toDateInputValue(data.start_date));

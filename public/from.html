@@ -70,13 +70,15 @@
 
       .title-inp {
         width: 100%;
-        font-weight: 900;
-        font-size: clamp(26px, 2.6vw, 34px);
-        line-height: 1.2;
-        border: 1px solid transparent;
-        background: transparent;
-        padding: 8px 10px;
+        font-weight: 700;
+        font-size: 18px;
+        line-height: 1.35;
+        border: 1px solid #e0c6b5;
+        background: #fff;
+        padding: 14px 16px;
         border-radius: 12px;
+        outline: none;
+        transition: 0.15s ease;
       }
 
       .title-inp::placeholder {
@@ -84,22 +86,22 @@
       }
 
       .title-inp:focus {
-        background: #fff;
-        border-color: #cbd5e1;
-        box-shadow: var(--ring);
-        outline: none;
+        border-color: #c9a34e;
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.2);
       }
 
       .subtitle-inp {
         width: 100%;
-        margin-top: 10px;
-        color: var(--muted);
-        border: 1px solid transparent;
-        background: transparent;
-        padding: 10px 10px;
+        margin-top: 12px;
+        color: var(--ink);
+        border: 1px solid #e0c6b5;
+        background: #fff;
+        padding: 14px 16px;
         border-radius: 12px;
         resize: vertical;
-        min-height: 48px;
+        min-height: 76px;
+        outline: none;
+        transition: 0.15s ease;
       }
 
       .subtitle-inp::placeholder {
@@ -107,11 +109,8 @@
       }
 
       .subtitle-inp:focus {
-        background: #fff;
-        border-color: #cbd5e1;
-        box-shadow: var(--ring);
-        outline: none;
-        color: #334155;
+        border-color: #c9a34e;
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.2);
       }
 
       h2 {
@@ -759,7 +758,6 @@
 
         width: 100%;
       }
-
     </style>
     <link rel="stylesheet" href="global.css" />
   </head>
@@ -789,7 +787,6 @@
             name="form_desc"
             placeholder="คำอธิบาย (ถ้ามี)"
           ></textarea>
-          
 
           <div style="margin-top: 16px">
             <label

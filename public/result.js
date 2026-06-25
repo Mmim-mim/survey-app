@@ -49,6 +49,23 @@ function setText(id, value) {
   if (el) el.textContent = value;
 }
 
+function setGoalList(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+
+  const goals = String(value || "")
+    .split(/\n+/)
+    .map((g) => g.trim())
+    .filter(Boolean);
+
+  if (!goals.length) {
+    el.textContent = "-";
+    return;
+  }
+
+  el.innerHTML = goals.map((g) => `<div>• ${g}</div>`).join("");
+}
+
 function formatThaiDateShort(value) {
   if (!value) return "-";
 
@@ -111,7 +128,7 @@ function renderProjectInfo(project = {}) {
     formatProjectPeriod(project.start_date, project.end_date),
   );
 
-  setText("projectGoal", project.goal_text || "-");
+  setGoalList("projectGoal", project.goal_text);
   setText("projectKpiQuantity", project.kpi_quantity || "-");
   setText("projectKpiQuality", project.kpi_quality || "-");
 }

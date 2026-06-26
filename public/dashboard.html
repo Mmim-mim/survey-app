@@ -536,7 +536,21 @@
       <div class="filters">
         <div class="field">
           <label>ชื่อฟอร์ม</label>
-          <select id="fForm"></select>
+
+          <div class="multi-select" id="formMulti">
+            <button type="button" class="multi-btn" id="formMultiBtn">
+              ทั้งหมด
+            </button>
+
+            <div class="multi-menu" id="formMultiMenu">
+              <label class="multi-option">
+                <input type="checkbox" id="formAll" checked />
+                <span>ทั้งหมด</span>
+              </label>
+
+              <div id="formOptions"></div>
+            </div>
+          </div>
         </div>
         <div class="field">
           <label>ปีงบประมาณ</label>

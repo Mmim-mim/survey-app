@@ -273,6 +273,12 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const role = String(req.query.role || "staff").trim();
 
     const formTitle = String(req.query.form_title || "").trim();
+
+    const formTitles = String(req.query.form_titles || "")
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+
     const dateFrom = String(req.query.date_from || "").trim();
     const dateTo = String(req.query.date_to || "").trim();
     const fiscalYear = req.query.fiscal_year
@@ -305,7 +311,10 @@ app.get("/api/dashboard/summary", async (req, res) => {
       }
     }
 
-    if (formTitle) {
+    if (formTitles.length) {
+      sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
+      params.push(...formTitles);
+    } else if (formTitle) {
       sql += ` AND form_title = ? `;
       params.push(formTitle);
     }

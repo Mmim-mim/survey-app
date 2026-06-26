@@ -1,4 +1,9 @@
-const fForm = document.getElementById("fForm");
+const formMulti = document.getElementById("formMulti");
+const formMultiBtn = document.getElementById("formMultiBtn");
+const formMultiMenu = document.getElementById("formMultiMenu");
+const formAll = document.getElementById("formAll");
+const formOptions = document.getElementById("formOptions");
+
 const fDept = document.getElementById("fDept");
 
 const yearMulti = document.getElementById("yearMulti");
@@ -54,6 +59,7 @@ function setSelectOptions(
 }
 
 let selectedYears = [];
+let selectedForms = [];
 
 function renderYearOptions(years) {
   yearOptions.innerHTML = (years || [])
@@ -86,6 +92,37 @@ function getFiscalYearsParam() {
   return selectedYears.join(",");
 }
 
+function renderFormOptions(forms) {
+  formOptions.innerHTML = (forms || [])
+    .map(
+      (name) => `
+        <label class="multi-option">
+          <input type="checkbox" class="form-check" value="${esc(name)}" />
+          <span>${esc(name)}</span>
+        </label>
+      `,
+    )
+    .join("");
+
+  selectedForms = [];
+  formAll.checked = true;
+  updateFormButtonText();
+}
+
+function updateFormButtonText() {
+  if (!selectedForms.length) {
+    formMultiBtn.textContent = "ทั้งหมด";
+  } else if (selectedForms.length === 1) {
+    formMultiBtn.textContent = selectedForms[0];
+  } else {
+    formMultiBtn.textContent = `เลือก ${selectedForms.length} ฟอร์ม`;
+  }
+}
+
+function getFormsParam() {
+  return selectedForms.join(",");
+}
+
 yearMultiBtn.addEventListener("click", () => {
   yearMulti.classList.toggle("open");
 });
@@ -116,6 +153,39 @@ yearOptions.addEventListener("change", () => {
   yearAll.checked = selectedYears.length === 0;
 
   updateYearButtonText();
+  refreshDashboard();
+});
+
+formMultiBtn.addEventListener("click", () => {
+  formMulti.classList.toggle("open");
+});
+
+document.addEventListener("click", (e) => {
+  if (!formMulti.contains(e.target)) {
+    formMulti.classList.remove("open");
+  }
+});
+
+formAll.addEventListener("change", () => {
+  const checks = formOptions.querySelectorAll(".form-check");
+
+  if (formAll.checked) {
+    selectedForms = [];
+    checks.forEach((c) => (c.checked = false));
+  }
+
+  updateFormButtonText();
+  refreshDashboard();
+});
+
+formOptions.addEventListener("change", () => {
+  const checks = [...formOptions.querySelectorAll(".form-check")];
+
+  selectedForms = checks.filter((c) => c.checked).map((c) => c.value);
+
+  formAll.checked = selectedForms.length === 0;
+
+  updateFormButtonText();
   refreshDashboard();
 });
 
@@ -237,7 +307,7 @@ async function loadOptions() {
 
   if (!res.ok) throw new Error(json?.error || "โหลด options ไม่สำเร็จ");
 
-  setSelectOptions(fForm, json.forms || [], true, "ทั้งหมด");
+  renderFormOptions(json.forms || []);
   renderYearOptions((json.fiscalYears || []).map(String));
   setSelectOptions(fDept, json.depts || [], true, "ทั้งหมด");
 }
@@ -298,7 +368,7 @@ async function loadSummary() {
   const qs = new URLSearchParams({
     username,
     role,
-    form_title: fForm.value,
+    form_titles: getFormsParam(),
     fiscal_years: getFiscalYearsParam(),
     dept: fDept.value,
 
@@ -314,7 +384,9 @@ async function loadSummary() {
   kpiAvg.textContent = Number(json.kpi?.avgSatisfaction || 0).toFixed(2);
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
-  sForm.textContent = fForm.value || "ทั้งหมด";
+  sForm.textContent = selectedForms.length
+    ? selectedForms.join(", ")
+    : "ทั้งหมด";
   sYear.textContent = selectedYears.length
     ? selectedYears.join(", ")
     : "ทั้งหมด";
@@ -347,7 +419,7 @@ async function refreshDashboard() {
     await loadOptions();
     await refreshDashboard();
 
-    [fForm, fDept, fDateFrom, fDateTo].forEach((el) => {
+    [fDept, fDateFrom, fDateTo].forEach((el) => {
       el.addEventListener("change", refreshDashboard);
     });
     btnRefresh.addEventListener("click", refreshDashboard);

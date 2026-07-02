@@ -137,7 +137,7 @@ function renderStructure() {
             <div class="actions">
               ${
                 section.title.includes("คำถาม")
-                  ? `<button class="icon-btn expand-btn" data-section-id="${section.id}">⌄</button>`
+                  ? `<button class="icon-btn expand-btn" data-section-id="${section.id}">▸</button>`
                   : ""
               }
               <button class="icon-btn edit-section-btn" data-section-id="${section.id}">✏️</button>
@@ -182,6 +182,22 @@ function bindStructureEvents() {
       if (!section) return;
 
       fillSectionForm(section);
+
+      if (section.title.includes("คำถาม")) {
+        await loadCategoriesForSection(sectionId);
+        renderStructure();
+
+        const box = document.querySelector(`[data-section-box="${sectionId}"]`);
+        const btn = document.querySelector(
+          `.expand-btn[data-section-id="${sectionId}"]`,
+        );
+
+        box?.classList.toggle("open");
+
+        if (btn) {
+          btn.textContent = box?.classList.contains("open") ? "▾" : "▸";
+        }
+      }
     });
   });
 
@@ -190,17 +206,24 @@ function bindStructureEvents() {
       e.stopPropagation();
 
       const sectionId = Number(btn.dataset.sectionId);
-      const box = document.querySelector(`[data-section-box="${sectionId}"]`);
 
       await loadCategoriesForSection(sectionId);
       renderStructure();
 
-      document
-        .querySelector(`[data-section-box="${sectionId}"]`)
-        ?.classList.toggle("open");
+      const box = document.querySelector(`[data-section-box="${sectionId}"]`);
+      const newBtn = document.querySelector(
+        `.expand-btn[data-section-id="${sectionId}"]`,
+      );
+
+      if (box) {
+        box.classList.toggle("open");
+      }
+
+      if (newBtn) {
+        newBtn.textContent = box?.classList.contains("open") ? "▾" : "▸";
+      }
     });
   });
-
   document.querySelectorAll(".edit-section-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();

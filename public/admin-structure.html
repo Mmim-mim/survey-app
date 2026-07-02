@@ -220,6 +220,55 @@
         font-size: 13px;
         color: #7a5c5c;
       }
+
+      .structure-child-list {
+        margin-left: 46px;
+        padding: 10px 0 12px 18px;
+        border-left: 2px dashed #ead8c8;
+        display: none;
+      }
+
+      .structure-item.open .structure-child-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .child-item {
+        position: relative;
+        padding: 12px 14px;
+        border: 1px solid #ead8c8;
+        border-radius: 12px;
+        background: #fffdf9;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .child-item::before {
+        content: "";
+        position: absolute;
+        left: -18px;
+        top: 50%;
+        width: 16px;
+        border-top: 2px dashed #ead8c8;
+      }
+
+      .child-item:hover,
+      .child-item.active {
+        border-color: #c9a34e;
+        background: #fff7ec;
+      }
+
+      .expand-btn {
+        font-size: 16px;
+        font-weight: 900;
+        color: #8b1515;
+      }
+
+      .icon-btn {
+        font-size: 16px;
+      }
     </style>
   </head>
 
@@ -233,7 +282,7 @@
           </div>
         </div>
 
-        <button class="btn primary" id="btnNew">+ เพิ่มหัวข้อใหญ่</button>
+        <button class="btn primary" id="btnNew">+ เพิ่มส่วนหลัก</button>
       </div>
 
       <div class="layout">

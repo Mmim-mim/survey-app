@@ -1903,6 +1903,66 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
   }
 });
 
+/* =====================================================
+   SURVEY QUESTION CATEGORIES API
+   ดึงหัวข้อย่อยใต้ "ส่วนของคำถาม"
+===================================================== */
+
+app.get("/api/survey-question-categories/:sectionId", async (req, res) => {
+  try {
+    const sectionId = Number(req.params.sectionId);
+
+    if (!Number.isFinite(sectionId)) {
+      return res.status(400).json({ error: "sectionId ไม่ถูกต้อง" });
+    }
+
+    const [rows] = await pool.execute(
+      `
+      SELECT id, section_id, title, description, sort_order, is_active, created_at
+      FROM survey_question_categories
+      WHERE section_id = ?
+      ORDER BY sort_order ASC, id ASC
+      `,
+      [sectionId],
+    );
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put("/api/survey-question-categories/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const sort_order = Number(req.body.sort_order || 0);
+    const is_active = req.body.is_active ? 1 : 0;
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: "กรุณากรอกชื่อหัวข้อย่อย" });
+    }
+
+    await pool.execute(
+      `
+      UPDATE survey_question_categories
+      SET title = ?, description = ?, sort_order = ?, is_active = ?
+      WHERE id = ?
+      `,
+      [title, description || null, sort_order, is_active, id],
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

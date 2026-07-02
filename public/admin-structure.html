@@ -161,6 +161,65 @@
           grid-template-columns: 1fr;
         }
       }
+
+      .structure-item {
+        border: 1px solid #ead8c8;
+        border-radius: 14px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        background: #fffaf4;
+      }
+
+      .structure-head {
+        display: grid;
+        grid-template-columns: 42px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        cursor: pointer;
+      }
+
+      .structure-head.active {
+        border-color: #c9a34e;
+        box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.16);
+      }
+
+      .structure-child-list {
+        padding: 0 14px 14px 68px;
+        display: none;
+      }
+
+      .structure-item.open .structure-child-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .child-item {
+        padding: 10px 12px;
+        border: 1px solid #ead8c8;
+        border-radius: 12px;
+        background: #fff;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .child-item:hover,
+      .child-item.active {
+        border-color: #c9a34e;
+        background: #fff7ec;
+      }
+
+      .child-title {
+        font-weight: 800;
+        color: #8b1515;
+      }
+
+      .child-muted {
+        font-size: 13px;
+        color: #7a5c5c;
+      }
     </style>
   </head>
 
@@ -179,12 +238,12 @@
 
       <div class="layout">
         <div class="card">
-          <h2>หัวข้อใหญ่ทั้งหมด</h2>
-          <div id="categoryList"></div>
+          <h2>โครงสร้างแบบประเมิน</h2>
+          <div id="structureList"></div>
         </div>
 
         <div class="card">
-          <h2 id="formTitle">เพิ่มหัวข้อใหญ่</h2>
+          <h2 id="formTitle">รายละเอียดส่วนหลัก</h2>
 
           <input type="hidden" id="categoryId" />
 

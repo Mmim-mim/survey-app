@@ -1810,11 +1810,11 @@ FROM survey_forms
 ===================================================== */
 
 // ดึงหัวข้อใหญ่ทั้งหมด
-app.get("/api/survey-categories", async (req, res) => {
+app.get("/api/survey-sections", async (req, res) => {
   try {
     const [rows] = await pool.execute(`
       SELECT id, title, description, sort_order, is_active, created_at
-      FROM survey_categories
+      FROM survey_sections
       ORDER BY sort_order ASC, id ASC
     `);
 
@@ -1824,8 +1824,26 @@ app.get("/api/survey-categories", async (req, res) => {
   }
 });
 
-// เพิ่มหัวข้อใหญ่
-app.post("/api/survey-categories", async (req, res) => {
+/* =====================================================
+   SURVEY SECTIONS API
+   จัดการ 5 ส่วนหลักของแบบประเมิน
+===================================================== */
+
+app.get("/api/survey-sections", async (req, res) => {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT id, title, description, sort_order, is_active, created_at
+      FROM survey_sections
+      ORDER BY sort_order ASC, id ASC
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/survey-sections", async (req, res) => {
   try {
     const title = String(req.body.title || "").trim();
     const description = String(req.body.description || "").trim();
@@ -1833,11 +1851,11 @@ app.post("/api/survey-categories", async (req, res) => {
     const is_active = req.body.is_active === false ? 0 : 1;
 
     if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อหัวข้อใหญ่" });
+      return res.status(400).json({ error: "กรุณากรอกชื่อส่วนหลัก" });
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO survey_categories (title, description, sort_order, is_active)
+      `INSERT INTO survey_sections (title, description, sort_order, is_active)
        VALUES (?, ?, ?, ?)`,
       [title, description || null, sort_order, is_active],
     );
@@ -1848,8 +1866,7 @@ app.post("/api/survey-categories", async (req, res) => {
   }
 });
 
-// แก้ไขหัวข้อใหญ่
-app.put("/api/survey-categories/:id", async (req, res) => {
+app.put("/api/survey-sections/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
     const title = String(req.body.title || "").trim();
@@ -1857,16 +1874,12 @@ app.put("/api/survey-categories/:id", async (req, res) => {
     const sort_order = Number(req.body.sort_order || 0);
     const is_active = req.body.is_active ? 1 : 0;
 
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
     if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อหัวข้อใหญ่" });
+      return res.status(400).json({ error: "กรุณากรอกชื่อส่วนหลัก" });
     }
 
     await pool.execute(
-      `UPDATE survey_categories
+      `UPDATE survey_sections
        SET title = ?, description = ?, sort_order = ?, is_active = ?
        WHERE id = ?`,
       [title, description || null, sort_order, is_active, id],
@@ -1878,16 +1891,11 @@ app.put("/api/survey-categories/:id", async (req, res) => {
   }
 });
 
-// ลบหัวข้อใหญ่
-app.delete("/api/survey-categories/:id", async (req, res) => {
+app.delete("/api/survey-sections/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    await pool.execute(`DELETE FROM survey_categories WHERE id = ?`, [id]);
+    await pool.execute(`DELETE FROM survey_sections WHERE id = ?`, [id]);
 
     res.json({ ok: true });
   } catch (e) {

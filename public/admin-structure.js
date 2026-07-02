@@ -88,7 +88,7 @@ function renderCategories() {
 
       if (!confirm(`ต้องการลบ "${item?.title || ""}" ใช่ไหม?`)) return;
 
-      const res = await fetch(`/api/survey-categories/${id}`, {
+      const res = await fetch(`/api/survey-sections/${id}`, {
         method: "DELETE",
       });
 
@@ -119,7 +119,7 @@ function fillForm(item) {
 }
 
 async function loadCategories() {
-  const res = await fetch("/api/survey-categories");
+  const res = await fetch("/api/survey-sections");
   const json = await res.json();
 
   if (!res.ok) {
@@ -147,8 +147,8 @@ async function saveCategory() {
   }
 
   const url = id
-    ? `/api/survey-categories/${encodeURIComponent(id)}`
-    : "/api/survey-categories";
+    ? `/api/survey-sections/${encodeURIComponent(id)}`
+    : "/api/survey-sections";
 
   const method = id ? "PUT" : "POST";
 

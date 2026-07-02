@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <title>จัดการโครงสร้างแบบประเมิน</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="global.css" />
+
+  <style>
+    body {
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      margin: 0;
+      background: linear-gradient(135deg, #fff8f2, #fff1e6);
+      color: #2a1a1a;
+      padding: 28px;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      color: #8b1414;
+      margin: 0;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      color: #7a5c5c;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 800;
+      background: #fff;
+      border: 1px solid #ead8c8;
+    }
+
+    .btn.primary {
+      background: linear-gradient(90deg, #9b1c1c, #c9a34e);
+      color: white;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #ead8c8;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 28px rgba(155, 28, 28, 0.08);
+    }
+
+    .category-item {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #ead8c8;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+      background: #fffaf4;
+      cursor: pointer;
+    }
+
+    .category-item.active {
+      border-color: #c9a34e;
+      box-shadow: 0 0 0 4px rgba(201, 163, 78, 0.18);
+    }
+
+    .badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #9b1c1c;
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+    }
+
+    .title {
+      font-weight: 900;
+      color: #7a1414;
+    }
+
+    .muted {
+      color: #7a5c5c;
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      border: 0;
+      background: #fff;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 6px;
+      border-radius: 8px;
+    }
+
+    .icon-btn:hover {
+      background: #fff1e6;
+    }
+
+    label {
+      display: block;
+      font-weight: 800;
+      margin: 14px 0 8px;
+      color: #7a1414;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid #e0c6b5;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 16px;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 850px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div>
+        <h1>จัดการโครงสร้างแบบประเมิน</h1>
+        <div class="subtitle">จัดการหัวข้อใหญ่ เช่น LibQUAL+, WEBQUAL, SERVQUAL</div>
+      </div>
+
+      <button class="btn primary" id="btnNew">+ เพิ่มหัวข้อใหญ่</button>
+    </div>
+
+    <div class="layout">
+      <div class="card">
+        <h2>หัวข้อใหญ่ทั้งหมด</h2>
+        <div id="categoryList"></div>
+      </div>
+
+      <div class="card">
+        <h2 id="formTitle">เพิ่มหัวข้อใหญ่</h2>
+
+        <input type="hidden" id="categoryId" />
+
+        <label>ชื่อหัวข้อใหญ่</label>
+        <input id="titleInput" placeholder="เช่น LibQUAL+" />
+
+        <label>คำอธิบาย</label>
+        <textarea id="descInput" placeholder="คำอธิบายหัวข้อใหญ่"></textarea>
+
+        <label>ลำดับ</label>
+        <input id="sortInput" type="number" value="0" />
+
+        <label>สถานะ</label>
+        <select id="activeInput">
+          <option value="1">เปิดใช้งาน</option>
+          <option value="0">ปิดใช้งาน</option>
+        </select>
+
+        <div class="form-actions">
+          <button class="btn" id="btnCancel">ล้างฟอร์ม</button>
+          <button class="btn primary" id="btnSave">บันทึกข้อมูล</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin-structure.js"></script>
+</body>
+</html>

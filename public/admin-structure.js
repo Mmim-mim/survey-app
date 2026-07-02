@@ -152,13 +152,17 @@ function renderStructure() {
                       (cat) => `
                         <div class="child-item" data-category-id="${cat.id}">
                           <div>
-                            <div class="child-title">${esc(cat.title)}</div>
+                            <div class="child-title">
+    📑 ${esc(cat.title)}
+</div>
                             <div class="child-muted">
                               ${cat.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                               · ลำดับ ${cat.sort_order || 0}
                             </div>
                           </div>
-                          <span>✏️</span>
+                          <span class="child-edit-icon">
+    ✏️
+</span>
                         </div>
                       `,
                     )
@@ -174,6 +178,30 @@ function renderStructure() {
   bindStructureEvents();
 }
 
+async function toggleQuestionSection(sectionId) {
+  await loadCategoriesForSection(sectionId);
+
+  const box = document.querySelector(`[data-section-box="${sectionId}"]`);
+
+  const isOpen = box?.classList.contains("open");
+
+  renderStructure();
+
+  const newBox = document.querySelector(`[data-section-box="${sectionId}"]`);
+
+  const btn = document.querySelector(
+    `.expand-btn[data-section-id="${sectionId}"]`,
+  );
+
+  if (!isOpen) {
+    newBox?.classList.add("open");
+    if (btn) btn.textContent = "▾";
+  } else {
+    newBox?.classList.remove("open");
+    if (btn) btn.textContent = "▸";
+  }
+}
+
 function bindStructureEvents() {
   document.querySelectorAll(".structure-head").forEach((head) => {
     head.addEventListener("click", async () => {
@@ -184,19 +212,7 @@ function bindStructureEvents() {
       fillSectionForm(section);
 
       if (section.title.includes("คำถาม")) {
-        await loadCategoriesForSection(sectionId);
-        renderStructure();
-
-        const box = document.querySelector(`[data-section-box="${sectionId}"]`);
-        const btn = document.querySelector(
-          `.expand-btn[data-section-id="${sectionId}"]`,
-        );
-
-        box?.classList.toggle("open");
-
-        if (btn) {
-          btn.textContent = box?.classList.contains("open") ? "▾" : "▸";
-        }
+        await toggleQuestionSection(sectionId);
       }
     });
   });
@@ -206,22 +222,7 @@ function bindStructureEvents() {
       e.stopPropagation();
 
       const sectionId = Number(btn.dataset.sectionId);
-
-      await loadCategoriesForSection(sectionId);
-      renderStructure();
-
-      const box = document.querySelector(`[data-section-box="${sectionId}"]`);
-      const newBtn = document.querySelector(
-        `.expand-btn[data-section-id="${sectionId}"]`,
-      );
-
-      if (box) {
-        box.classList.toggle("open");
-      }
-
-      if (newBtn) {
-        newBtn.textContent = box?.classList.contains("open") ? "▾" : "▸";
-      }
+      await toggleQuestionSection(sectionId);
     });
   });
   document.querySelectorAll(".edit-section-btn").forEach((btn) => {

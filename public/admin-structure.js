@@ -16,6 +16,7 @@ const parentCategoryId = document.getElementById("parentCategoryId");
 let sections = [];
 let categoryMap = {};
 let groupMap = {};
+let openCategoryIds = new Set();
 let selectedType = "section"; // section | category
 let selectedId = null;
 
@@ -210,17 +211,22 @@ function renderStructure() {
                 ? children
                     .map(
                       (cat) => `
-                        <div class="child-item" data-category-id="${cat.id}">
-                          <div>
-                            <div class="child-title">
-  📑 ${esc(cat.title)}
-</div>
-${getGroupsHtml(cat.id)}
-                            <div class="child-muted">
-                              ${cat.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                              · ลำดับ ${cat.sort_order || 0}
-                            </div>
-                          </div>
+                        <div class="child-item ${openCategoryIds.has(cat.id) ? "open" : ""}" data-category-id="${cat.id}">
+  <div>
+    <div class="child-title">
+      <button class="cat-toggle" data-category-id="${cat.id}">
+        ${openCategoryIds.has(cat.id) ? "▾" : "▸"}
+      </button>
+      📑 ${esc(cat.title)}
+    </div>
+
+    <div class="child-muted">
+      ${cat.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+      · ลำดับ ${cat.sort_order || 0}
+    </div>
+
+    ${getGroupsHtml(cat.id)}
+  </div>
                           <span class="child-edit-icon">
     ✏️
 </span>
@@ -297,6 +303,31 @@ function bindStructureEvents() {
       await toggleQuestionSection(sectionId);
     });
   });
+
+  document.querySelectorAll(".cat-toggle").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+
+      const catId = Number(btn.dataset.categoryId);
+
+      if (openCategoryIds.has(catId)) {
+        openCategoryIds.delete(catId);
+      } else {
+        openCategoryIds.add(catId);
+        await loadGroupsForCategory(catId);
+      }
+
+      renderStructure();
+
+      const questionSection = sections.find((s) => s.title.includes("คำถาม"));
+      if (questionSection) {
+        document
+          .querySelector(`[data-section-box="${questionSection.id}"]`)
+          ?.classList.add("open");
+      }
+    });
+  });
+
   document.querySelectorAll(".edit-section-btn").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -316,12 +347,17 @@ function bindStructureEvents() {
 
       if (category) {
         fillCategoryForm(category);
+        openCategoryIds.add(category.id);
         await loadGroupsForCategory(category.id);
         renderStructure();
 
         document
           .querySelector(`[data-section-box="${category.section_id}"]`)
           ?.classList.add("open");
+
+        document
+          .querySelector(`.child-item[data-category-id="${category.id}"]`)
+          ?.classList.add("active");
       }
     });
   });

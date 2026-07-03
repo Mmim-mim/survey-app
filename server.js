@@ -1963,6 +1963,113 @@ app.put("/api/survey-question-categories/:id", async (req, res) => {
   }
 });
 
+/* =====================================================
+   SURVEY QUESTION GROUPS API
+   จัดการกลุ่มคำถามใต้ Category
+===================================================== */
+
+app.get("/api/survey-question-groups/:categoryId", async (req, res) => {
+  try {
+    const categoryId = Number(req.params.categoryId);
+
+    if (!Number.isFinite(categoryId)) {
+      return res.status(400).json({ error: "categoryId ไม่ถูกต้อง" });
+    }
+
+    const [rows] = await pool.execute(
+      `
+      SELECT id, category_id, title, description, sort_order, is_active, created_at
+      FROM survey_question_groups
+      WHERE category_id = ?
+      ORDER BY sort_order ASC, id ASC
+      `,
+      [categoryId],
+    );
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/survey-question-groups", async (req, res) => {
+  try {
+    const category_id = Number(req.body.category_id);
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const sort_order = Number(req.body.sort_order || 0);
+    const is_active = req.body.is_active === false ? 0 : 1;
+
+    if (!Number.isFinite(category_id)) {
+      return res.status(400).json({ error: "category_id ไม่ถูกต้อง" });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: "กรุณากรอกชื่อกลุ่มคำถาม" });
+    }
+
+    const [result] = await pool.execute(
+      `
+      INSERT INTO survey_question_groups
+      (category_id, title, description, sort_order, is_active)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [category_id, title, description || null, sort_order, is_active],
+    );
+
+    res.json({ ok: true, id: result.insertId });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.put("/api/survey-question-groups/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const sort_order = Number(req.body.sort_order || 0);
+    const is_active = req.body.is_active ? 1 : 0;
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: "กรุณากรอกชื่อกลุ่มคำถาม" });
+    }
+
+    await pool.execute(
+      `
+      UPDATE survey_question_groups
+      SET title = ?, description = ?, sort_order = ?, is_active = ?
+      WHERE id = ?
+      `,
+      [title, description || null, sort_order, is_active, id],
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.delete("/api/survey-question-groups/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    await pool.execute(`DELETE FROM survey_question_groups WHERE id = ?`, [id]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

@@ -10,9 +10,12 @@ const formTitle = document.getElementById("formTitle");
 const btnNew = document.getElementById("btnNew");
 const btnCancel = document.getElementById("btnCancel");
 const btnSave = document.getElementById("btnSave");
+const btnNewGroup = document.getElementById("btnNewGroup");
+const parentCategoryId = document.getElementById("parentCategoryId");
 
 let sections = [];
 let categoryMap = {};
+let groupMap = {};
 let selectedType = "section"; // section | category
 let selectedId = null;
 
@@ -80,6 +83,29 @@ function fillCategoryForm(category) {
     ?.classList.add("active");
 }
 
+function fillGroupForm(group) {
+  selectedType = "group";
+  selectedId = group.id;
+
+  categoryId.value = group.id;
+  parentCategoryId.value = group.category_id;
+  titleInput.value = group.title || "";
+  descInput.value = group.description || "";
+  sortInput.value = group.sort_order || 0;
+  activeInput.value = group.is_active ? "1" : "0";
+  formTitle.textContent = "แก้ไขกลุ่มคำถาม";
+
+  document
+    .querySelectorAll(".structure-head, .child-item, .group-item")
+    .forEach((el) => {
+      el.classList.remove("active");
+    });
+
+  document
+    .querySelector(`.group-item[data-group-id="${group.id}"]`)
+    ?.classList.add("active");
+}
+
 async function api(path, options = {}) {
   const res = await fetch(path, {
     headers: {
@@ -111,6 +137,15 @@ async function loadCategoriesForSection(sectionId) {
   return rows;
 }
 
+async function loadGroupsForCategory(categoryIdValue) {
+  if (groupMap[categoryIdValue]) return groupMap[categoryIdValue];
+
+  const rows = await api(`/api/survey-question-groups/${categoryIdValue}`);
+  groupMap[categoryIdValue] = rows;
+
+  return rows;
+}
+
 function renderStructure() {
   if (!sections.length) {
     structureList.innerHTML = `<div class="muted">ยังไม่มีส่วนหลัก</div>`;
@@ -120,6 +155,31 @@ function renderStructure() {
   structureList.innerHTML = sections
     .map((section, index) => {
       const children = categoryMap[section.id] || [];
+      const getGroupsHtml = (categoryIdValue) => {
+        const groups = groupMap[categoryIdValue] || [];
+
+        if (!groups.length) return "";
+
+        return `
+    <div class="group-list">
+      ${groups
+        .map(
+          (g) => `
+            <div class="group-item" data-group-id="${g.id}">
+              <div>
+                <div class="group-title">↳ ${esc(g.title)}</div>
+                <div class="child-muted">
+                  ${g.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                  · ลำดับ ${g.sort_order || 0}
+                </div>
+              </div>
+            </div>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+      };
 
       return `
         <div class="structure-item" data-section-box="${section.id}">
@@ -153,8 +213,9 @@ function renderStructure() {
                         <div class="child-item" data-category-id="${cat.id}">
                           <div>
                             <div class="child-title">
-    📑 ${esc(cat.title)}
+  📑 ${esc(cat.title)}
 </div>
+${getGroupsHtml(cat.id)}
                             <div class="child-muted">
                               ${cat.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
                               · ลำดับ ${cat.sort_order || 0}
@@ -176,6 +237,17 @@ function renderStructure() {
     .join("");
 
   bindStructureEvents();
+  document.querySelectorAll(".group-item").forEach((item) => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      const groupId = Number(item.dataset.groupId);
+      const allGroups = Object.values(groupMap).flat();
+      const group = allGroups.find((x) => x.id === groupId);
+
+      if (group) fillGroupForm(group);
+    });
+  });
 }
 
 async function toggleQuestionSection(sectionId) {
@@ -236,13 +308,21 @@ function bindStructureEvents() {
   });
 
   document.querySelectorAll(".child-item").forEach((item) => {
-    item.addEventListener("click", () => {
+    item.addEventListener("click", async () => {
       const categoryId = Number(item.dataset.categoryId);
 
       const allCategories = Object.values(categoryMap).flat();
       const category = allCategories.find((x) => x.id === categoryId);
 
-      if (category) fillCategoryForm(category);
+      if (category) {
+        fillCategoryForm(category);
+        await loadGroupsForCategory(category.id);
+        renderStructure();
+
+        document
+          .querySelector(`[data-section-box="${category.section_id}"]`)
+          ?.classList.add("open");
+      }
     });
   });
 }
@@ -263,9 +343,11 @@ async function saveSection() {
   }
 
   const url =
-    selectedType === "category"
-      ? `/api/survey-question-categories/${encodeURIComponent(id)}`
-      : `/api/survey-sections/${encodeURIComponent(id)}`;
+    selectedType === "group"
+      ? `/api/survey-question-groups/${encodeURIComponent(id)}`
+      : selectedType === "category"
+        ? `/api/survey-question-categories/${encodeURIComponent(id)}`
+        : `/api/survey-sections/${encodeURIComponent(id)}`;
 
   const res = await fetch(url, {
     method: "PUT",
@@ -283,9 +365,44 @@ async function saveSection() {
   alert("บันทึกข้อมูลเรียบร้อย");
 
   categoryMap = {};
+  groupMap = {};
   await loadSections();
   renderStructure();
 }
+
+btnNewGroup.addEventListener("click", async () => {
+  if (selectedType !== "category" || !selectedId) {
+    alert("กรุณาเลือกหัวข้อย่อยก่อน เช่น LibQUAL+");
+    return;
+  }
+
+  const payload = {
+    category_id: selectedId,
+    title: "กลุ่มคำถามใหม่",
+    description: "",
+    sort_order: 0,
+    is_active: true,
+  };
+
+  const res = await fetch("/api/survey-question-groups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    alert(json.error || "เพิ่มกลุ่มคำถามไม่สำเร็จ");
+    return;
+  }
+
+  groupMap = {};
+  await loadGroupsForCategory(selectedId);
+  renderStructure();
+
+  alert("เพิ่มกลุ่มคำถามเรียบร้อย");
+});
 
 btnNew.addEventListener("click", resetForm);
 btnCancel.addEventListener("click", resetForm);

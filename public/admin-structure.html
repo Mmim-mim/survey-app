@@ -356,6 +356,34 @@
           transform: translateY(0);
         }
       }
+
+      .group-list {
+        margin-top: 8px;
+        display: grid;
+        gap: 6px;
+        padding-left: 18px;
+        border-left: 2px solid #f0dfd0;
+      }
+
+      .group-item {
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: #fff8f2;
+        border: 1px solid #f0dfd0;
+        cursor: pointer;
+      }
+
+      .group-item:hover,
+      .group-item.active {
+        border-color: #c9a34e;
+        background: #fff1e6;
+      }
+
+      .group-title {
+        font-size: 14px;
+        font-weight: 800;
+        color: #7a1414;
+      }
     </style>
   </head>
 
@@ -369,7 +397,10 @@
           </div>
         </div>
 
-        <button class="btn primary" id="btnNew">+ เพิ่มส่วนหลัก</button>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <button class="btn primary" id="btnNew">+ เพิ่มส่วนหลัก</button>
+          <button class="btn" id="btnNewGroup">+ เพิ่มกลุ่มคำถาม</button>
+        </div>
       </div>
 
       <div class="layout">
@@ -382,6 +413,7 @@
           <h2 id="formTitle">รายละเอียดส่วนหลัก</h2>
 
           <input type="hidden" id="categoryId" />
+          <input type="hidden" id="parentCategoryId" />
 
           <label>ชื่อหัวข้อใหญ่</label>
           <input id="titleInput" placeholder="เช่น LibQUAL+" />

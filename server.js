@@ -1806,28 +1806,12 @@ FROM survey_forms
 
 /* =====================================================
    SURVEY STRUCTURE API
-   จัดการหัวข้อใหญ่แบบประเมิน
+   Section > Category > Group
 ===================================================== */
 
-// ดึงหัวข้อใหญ่ทั้งหมด
-app.get("/api/survey-sections", async (req, res) => {
-  try {
-    const [rows] = await pool.execute(`
-      SELECT id, title, description, sort_order, is_active, created_at
-      FROM survey_sections
-      ORDER BY sort_order ASC, id ASC
-    `);
-
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-/* =====================================================
-   SURVEY SECTIONS API
-   จัดการ 5 ส่วนหลักของแบบประเมิน
-===================================================== */
+// =========================
+// SECTION
+// =========================
 
 app.get("/api/survey-sections", async (req, res) => {
   try {
@@ -1855,8 +1839,11 @@ app.post("/api/survey-sections", async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `INSERT INTO survey_sections (title, description, sort_order, is_active)
-       VALUES (?, ?, ?, ?)`,
+      `
+      INSERT INTO survey_sections
+      (title, description, sort_order, is_active)
+      VALUES (?, ?, ?, ?)
+      `,
       [title, description || null, sort_order, is_active],
     );
 
@@ -1874,14 +1861,20 @@ app.put("/api/survey-sections/:id", async (req, res) => {
     const sort_order = Number(req.body.sort_order || 0);
     const is_active = req.body.is_active ? 1 : 0;
 
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
     if (!title) {
       return res.status(400).json({ error: "กรุณากรอกชื่อส่วนหลัก" });
     }
 
     await pool.execute(
-      `UPDATE survey_sections
-       SET title = ?, description = ?, sort_order = ?, is_active = ?
-       WHERE id = ?`,
+      `
+      UPDATE survey_sections
+      SET title = ?, description = ?, sort_order = ?, is_active = ?
+      WHERE id = ?
+      `,
       [title, description || null, sort_order, is_active, id],
     );
 
@@ -1895,6 +1888,26 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    const [[childCount]] = await pool.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM survey_question_categories
+      WHERE section_id = ?
+      `,
+      [id],
+    );
+
+    if (childCount.total > 0) {
+      return res.status(400).json({
+        error:
+          "ไม่สามารถลบ Section นี้ได้ เพราะยังมี Category อยู่ กรุณาลบ Category ก่อน",
+      });
+    }
+
     await pool.execute(`DELETE FROM survey_sections WHERE id = ?`, [id]);
 
     res.json({ ok: true });
@@ -1903,10 +1916,9 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
   }
 });
 
-/* =====================================================
-   SURVEY QUESTION CATEGORIES API
-   ดึงหัวข้อย่อยใต้ "ส่วนของคำถาม"
-===================================================== */
+// =========================
+// CATEGORY
+// =========================
 
 app.get("/api/survey-question-categories/:sectionId", async (req, res) => {
   try {
@@ -1932,6 +1944,37 @@ app.get("/api/survey-question-categories/:sectionId", async (req, res) => {
   }
 });
 
+app.post("/api/survey-question-categories", async (req, res) => {
+  try {
+    const section_id = Number(req.body.section_id);
+    const title = String(req.body.title || "").trim();
+    const description = String(req.body.description || "").trim();
+    const sort_order = Number(req.body.sort_order || 0);
+    const is_active = req.body.is_active === false ? 0 : 1;
+
+    if (!Number.isFinite(section_id)) {
+      return res.status(400).json({ error: "section_id ไม่ถูกต้อง" });
+    }
+
+    if (!title) {
+      return res.status(400).json({ error: "กรุณากรอกชื่อ Category" });
+    }
+
+    const [result] = await pool.execute(
+      `
+      INSERT INTO survey_question_categories
+      (section_id, title, description, sort_order, is_active)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [section_id, title, description || null, sort_order, is_active],
+    );
+
+    res.json({ ok: true, id: result.insertId });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.put("/api/survey-question-categories/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -1945,7 +1988,7 @@ app.put("/api/survey-question-categories/:id", async (req, res) => {
     }
 
     if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อหัวข้อย่อย" });
+      return res.status(400).json({ error: "กรุณากรอกชื่อ Category" });
     }
 
     await pool.execute(
@@ -1963,10 +2006,43 @@ app.put("/api/survey-question-categories/:id", async (req, res) => {
   }
 });
 
-/* =====================================================
-   SURVEY QUESTION GROUPS API
-   จัดการกลุ่มคำถามใต้ Category
-===================================================== */
+app.delete("/api/survey-question-categories/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    const [[childCount]] = await pool.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM survey_question_groups
+      WHERE category_id = ?
+      `,
+      [id],
+    );
+
+    if (childCount.total > 0) {
+      return res.status(400).json({
+        error:
+          "ไม่สามารถลบ Category นี้ได้ เพราะยังมี Group อยู่ กรุณาลบ Group ก่อน",
+      });
+    }
+
+    await pool.execute(`DELETE FROM survey_question_categories WHERE id = ?`, [
+      id,
+    ]);
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// =========================
+// GROUP
+// =========================
 
 app.get("/api/survey-question-groups/:categoryId", async (req, res) => {
   try {
@@ -2005,7 +2081,7 @@ app.post("/api/survey-question-groups", async (req, res) => {
     }
 
     if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อกลุ่มคำถาม" });
+      return res.status(400).json({ error: "กรุณากรอกชื่อ Group" });
     }
 
     const [result] = await pool.execute(
@@ -2036,7 +2112,7 @@ app.put("/api/survey-question-groups/:id", async (req, res) => {
     }
 
     if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อกลุ่มคำถาม" });
+      return res.status(400).json({ error: "กรุณากรอกชื่อ Group" });
     }
 
     await pool.execute(

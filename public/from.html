@@ -1500,6 +1500,7 @@
 
         const update = () => {
           const enabled = toggle.checked;
+
           block.classList.toggle("disabled", !enabled);
 
           if (body) {
@@ -1508,10 +1509,8 @@
         };
 
         toggle.addEventListener("change", update);
-
         update();
       }
-
 
       function addMainModel(data = {}) {
         const tpl = document
@@ -1523,7 +1522,7 @@
         const toggle = block.querySelector(".main-model-toggle");
         const subgroupsRoot = block.querySelector(".subgroups");
 
-        titleEl.textContent = data.title || "หัวข้อใหม่";
+        titleEl.textContent = String(data.title || "หัวข้อใหม่").trim();
         titleEl.textContent = titleEl.dataset.title;
 
         document.getElementById("mainModels").appendChild(block);

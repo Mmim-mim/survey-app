@@ -758,6 +758,32 @@
 
         width: 100%;
       }
+
+      /* ===== Collapse Section 2 ===== */
+      .collapse-btn {
+        width: 32px;
+        height: 32px;
+        border: 1px solid #ead8c8;
+        border-radius: 10px;
+        background: #fff8f2;
+        color: #8b1515;
+        font-weight: 900;
+        cursor: pointer;
+      }
+
+      .main-model.collapsed > .main-model-body {
+        display: none;
+      }
+
+      [data-subgroup-item].collapsed > .questions,
+      [data-subgroup-item].collapsed > .center {
+        display: none;
+      }
+
+      .main-model-title,
+      .subgroup-title {
+        cursor: pointer;
+      }
     </style>
     <link rel="stylesheet" href="global.css" />
   </head>
@@ -1406,6 +1432,29 @@
         const addBtn = group.querySelector(".add-question");
         const delBtn = group.querySelector(".remove-subgroup");
         const toggle = group.querySelector(".subtoggle");
+        const titleInput = group.querySelector(".subgroup-title");
+        const left = group.querySelector(".ghead .left");
+
+        const collapseBtn = document.createElement("button");
+        collapseBtn.type = "button";
+        collapseBtn.className = "collapse-btn";
+        collapseBtn.textContent = "▸";
+
+        left.insertBefore(collapseBtn, titleInput);
+        group.classList.add("collapsed");
+
+        const updateCollapseIcon = () => {
+          collapseBtn.textContent = group.classList.contains("collapsed")
+            ? "▸"
+            : "▾";
+        };
+
+        collapseBtn.addEventListener("click", () => {
+          group.classList.toggle("collapsed");
+          updateCollapseIcon();
+        });
+
+        updateCollapseIcon();
 
         addBtn.addEventListener("click", () => {
           const titleText =
@@ -1429,9 +1478,14 @@
           group
             .querySelectorAll("input,button,textarea,select")
             .forEach((el) => {
-              if (el === toggle) return;
+              if (el === toggle || el === collapseBtn || el === delBtn) return;
               el.disabled = !enabled;
             });
+
+          if (!enabled) {
+            group.classList.add("collapsed");
+            updateCollapseIcon();
+          }
 
           if (delBtn) delBtn.disabled = false;
         };
@@ -1481,27 +1535,58 @@
 
       function bindMainModel(block) {
         const toggle = block.querySelector(".main-model-toggle");
-        const body = block.querySelector(".main-model-body");
         const titleEl = block.querySelector(".main-model-title");
+        const left = block.querySelector(".ghead .left");
+
+        const collapseBtn = document.createElement("button");
+        collapseBtn.type = "button";
+        collapseBtn.className = "collapse-btn";
+        collapseBtn.textContent = "▸";
+
+        left.insertBefore(collapseBtn, titleEl);
+
+        block.classList.add("collapsed");
+
+        const updateCollapseIcon = () => {
+          collapseBtn.textContent = block.classList.contains("collapsed")
+            ? "▸"
+            : "▾";
+        };
+
+        const toggleCollapse = () => {
+          block.classList.toggle("collapsed");
+          updateCollapseIcon();
+        };
+
+        collapseBtn.addEventListener("click", toggleCollapse);
+
+        if (titleEl) {
+          titleEl.addEventListener("click", toggleCollapse);
+        }
 
         const update = () => {
           const enabled = toggle.checked;
+
           block.classList.toggle("disabled", !enabled);
-          if (body) body.style.display = enabled ? "" : "none";
+
+          block
+            .querySelectorAll("input,button,textarea,select")
+            .forEach((el) => {
+              if (el === toggle || el === collapseBtn) return;
+              el.disabled = !enabled;
+            });
+
+          if (!enabled) {
+            block.classList.add("collapsed");
+            updateCollapseIcon();
+          }
         };
 
         toggle.addEventListener("change", update);
-
-        if (titleEl) {
-          titleEl.style.cursor = "pointer";
-          titleEl.addEventListener("click", () => {
-            toggle.checked = !toggle.checked;
-            toggle.dispatchEvent(new Event("change"));
-          });
-        }
-
+        updateCollapseIcon();
         update();
       }
+
       function addMainModel(data = {}) {
         const tpl = document
           .getElementById("main-model-template")

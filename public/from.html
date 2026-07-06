@@ -1422,26 +1422,12 @@
         const addBtn = group.querySelector(".add-question");
         const delBtn = group.querySelector(".remove-subgroup");
         const toggle = group.querySelector(".subtoggle");
-        const titleInput = group.querySelector(".subgroup-title");
-        const left = group.querySelector(".ghead .left");
-
-        // ไม่สร้างปุ่ม dropdown แล้ว
-        // ใช้การคลิกที่ช่องชื่อกลุ่มเพื่อยุบ/ขยายแทน
-        group.classList.remove("collapsed");
-
-        const updateCollapseIcon = () => {
-          titleInput.value = titleInput.value.replace(/^[▸▾]\s*/, "");
-        };
-
-        // ไม่ให้คลิกชื่อเพื่อยุบ/ขยายแล้ว
-        updateCollapseIcon();
 
         addBtn.addEventListener("click", () => {
           const titleText =
             group.querySelector(".subgroup-title")?.value?.trim() || "";
 
           const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
-
           addQuestion(stack, "", subgroupListId, false);
         });
 
@@ -1458,17 +1444,9 @@
           group
             .querySelectorAll("input,button,textarea,select")
             .forEach((el) => {
-              if (el === toggle || el === titleInput || el === delBtn) return;
+              if (el === toggle) return;
               el.disabled = !enabled;
             });
-
-          if (!enabled) {
-            group.classList.add("collapsed");
-            updateCollapseIcon();
-          } else {
-            group.classList.remove("collapsed");
-            updateCollapseIcon();
-          }
 
           if (delBtn) delBtn.disabled = false;
         };
@@ -1487,7 +1465,7 @@
         const delBtn = group.querySelector(".remove-subgroup");
         const questions = Array.isArray(data.questions) ? data.questions : [];
 
-        titleInput.value = cleanTitleArrow(data.title || "");
+        titleInput.value = data.title || "";
 
         if (!isDefault && delBtn) {
           delBtn.style.display = "";
@@ -1518,52 +1496,22 @@
 
       function bindMainModel(block) {
         const toggle = block.querySelector(".main-model-toggle");
-        const titleEl = block.querySelector(".main-model-title");
-        const left = block.querySelector(".ghead .left");
-
-        block.classList.add("collapsed");
-
-        const updateCollapseIcon = () => {
-          titleInput.value = titleInput.value.replace(/^[▸▾]\s*/, "");
-        };
-
-        const toggleCollapse = () => {
-          block.classList.toggle("collapsed");
-          updateCollapseIcon();
-        };
-
-        if (titleEl) {
-          titleEl.addEventListener("click", toggleCollapse);
-        }
+        const body = block.querySelector(".main-model-body");
 
         const update = () => {
           const enabled = toggle.checked;
-
           block.classList.toggle("disabled", !enabled);
 
-          block
-            .querySelectorAll("input,button,textarea,select")
-            .forEach((el) => {
-              if (el === toggle) return;
-              el.disabled = !enabled;
-            });
-
-          if (!enabled) {
-            block.classList.add("collapsed");
-            updateCollapseIcon();
+          if (body) {
+            body.style.display = enabled ? "" : "none";
           }
         };
 
         toggle.addEventListener("change", update);
-        updateCollapseIcon();
+
         update();
       }
 
-      function cleanTitleArrow(text = "") {
-        return String(text || "")
-          .replace(/^[▸▾▶▼]\s*/, "")
-          .trim();
-      }
 
       function addMainModel(data = {}) {
         const tpl = document
@@ -1575,7 +1523,7 @@
         const toggle = block.querySelector(".main-model-toggle");
         const subgroupsRoot = block.querySelector(".subgroups");
 
-        titleEl.dataset.title = cleanTitleArrow(data.title || "หัวข้อใหม่");
+        titleEl.textContent = data.title || "หัวข้อใหม่";
         titleEl.textContent = titleEl.dataset.title;
 
         document.getElementById("mainModels").appendChild(block);

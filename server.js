@@ -2040,6 +2040,44 @@ app.delete("/api/survey-question-categories/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/survey-question-categories/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
+    }
+
+    const [[childCount]] = await pool.execute(
+      `
+      SELECT COUNT(*) AS total
+      FROM survey_question_groups
+      WHERE category_id = ?
+      `,
+      [id],
+    );
+
+    if (childCount.total > 0) {
+      return res.status(400).json({
+        error:
+          "ไม่สามารถลบ Category นี้ได้ เพราะยังมี Group อยู่ กรุณาลบ Group ก่อน",
+      });
+    }
+
+    await pool.execute(
+      `
+      DELETE FROM survey_question_categories
+      WHERE id = ?
+      `,
+      [id],
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // =========================
 // GROUP
 // =========================

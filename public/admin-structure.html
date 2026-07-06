@@ -427,6 +427,77 @@
         font-weight: 800;
         color: #7a1414;
       }
+
+      /* ===== Professional Tree View ===== */
+
+      .structure-head.active,
+      .child-item.active,
+      .group-item.active {
+        border-color: #c9a34e;
+        background: #fff7ec;
+        box-shadow: 0 0 0 3px rgba(201, 163, 78, 0.18);
+      }
+
+      .structure-child-list {
+        margin-left: 48px;
+        padding: 10px 0 12px 20px;
+        border-left: 2px dashed #ead8c8;
+      }
+
+      .child-item {
+        display: block;
+      }
+
+      .child-title {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .group-list {
+        display: none;
+        margin-top: 10px;
+        margin-left: 30px;
+        padding-left: 18px;
+        border-left: 2px dashed #ead8c8;
+      }
+
+      .child-item.open .group-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .group-item {
+        position: relative;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: #fff8f2;
+        border: 1px solid #f0dfd0;
+        cursor: pointer;
+      }
+
+      .group-item::before {
+        content: "";
+        position: absolute;
+        left: -18px;
+        top: 50%;
+        width: 14px;
+        border-top: 2px dashed #ead8c8;
+      }
+
+      .group-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: #7a1414;
+      }
+
+      .cat-toggle,
+      .expand-btn {
+        width: 30px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+      }
     </style>
   </head>
 

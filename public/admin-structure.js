@@ -198,7 +198,11 @@ function getGroupsHtml(categoryIdValue) {
   const groups = groupMap[categoryIdValue] || [];
 
   if (!groups.length) {
-    return `<div class="group-list"><div class="muted">ยังไม่มี Group</div></div>`;
+    return `
+      <div class="group-list">
+        <div class="muted">ยังไม่มี Group</div>
+      </div>
+    `;
   }
 
   return `
@@ -207,12 +211,10 @@ function getGroupsHtml(categoryIdValue) {
         .map(
           (g) => `
             <div class="group-item" data-group-id="${g.id}">
-              <div>
-                <div class="group-title">↳ ${esc(g.title)}</div>
-                <div class="child-muted">
-                  ${g.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
-                  · ลำดับ ${g.sort_order || 0}
-                </div>
+              <div class="group-title">📂 ${esc(g.title)}</div>
+              <div class="child-muted">
+                ${g.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
+                · ลำดับ ${g.sort_order || 0}
               </div>
             </div>
           `,
@@ -264,11 +266,11 @@ function renderStructure() {
                         <div class="child-item ${isCatOpen ? "open" : ""}" data-category-id="${cat.id}">
                           <div>
                             <div class="child-title">
-                              <button class="cat-toggle" data-category-id="${cat.id}">
-                                ${isCatOpen ? "▾" : "▸"}
-                              </button>
-                              📑 ${esc(cat.title)}
-                            </div>
+  <button class="cat-toggle" data-category-id="${cat.id}">
+    ${openCategoryIds.has(cat.id) ? "▾" : "▸"}
+  </button>
+  <span>📑 ${esc(cat.title)}</span>
+</div>
 
                             <div class="child-muted">
                               ${cat.is_active ? "เปิดใช้งาน" : "ปิดใช้งาน"}
@@ -513,13 +515,11 @@ btnSave.addEventListener("click", saveData);
   try {
     await loadSections();
 
-
     const questionSection = sections.find((s) => s.title.includes("คำถาม"));
 
     if (questionSection) {
       openSectionIds.add(questionSection.id);
       await loadCategoriesForSection(questionSection.id);
-
     }
 
     renderStructure();
@@ -528,5 +528,4 @@ btnSave.addEventListener("click", saveData);
     console.error(err);
     alert(err.message || "โหลดข้อมูลไม่สำเร็จ");
   }
-  
 })();

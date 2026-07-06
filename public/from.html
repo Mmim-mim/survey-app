@@ -1494,7 +1494,7 @@
         const delBtn = group.querySelector(".remove-subgroup");
         const questions = Array.isArray(data.questions) ? data.questions : [];
 
-        titleInput.value = data.title || "";
+        titleInput.value = cleanTitleArrow(data.title || "");
 
         if (!isDefault && delBtn) {
           delBtn.style.display = "";
@@ -1568,6 +1568,12 @@
         update();
       }
 
+      function cleanTitleArrow(text = "") {
+        return String(text || "")
+          .replace(/^[▸▾▶▼]\s*/, "")
+          .trim();
+      }
+
       function addMainModel(data = {}) {
         const tpl = document
           .getElementById("main-model-template")
@@ -1578,8 +1584,8 @@
         const toggle = block.querySelector(".main-model-toggle");
         const subgroupsRoot = block.querySelector(".subgroups");
 
-        titleEl.dataset.title = data.title || "หัวข้อใหม่";
-        titleEl.textContent = `▸ ${titleEl.dataset.title}`;
+        titleEl.dataset.title = cleanTitleArrow(data.title || "หัวข้อใหม่");
+        titleEl.textContent = titleEl.dataset.title;
 
         document.getElementById("mainModels").appendChild(block);
 
@@ -1736,17 +1742,19 @@
       function collectSection2Models() {
         return Array.from(document.querySelectorAll("[data-main-model]")).map(
           (modelEl) => {
-            const title =
+            const title = cleanTitleArrow(
               modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
-              "";
+                "",
+            );
             const enabled =
               !!modelEl.querySelector(".main-model-toggle")?.checked;
 
             const dimensions = Array.from(
               modelEl.querySelectorAll("[data-subgroup-item]"),
             ).map((groupEl) => ({
-              title:
+              title: cleanTitleArrow(
                 groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
+              ),
               enabled: !!groupEl.querySelector(".subtoggle")?.checked,
               questions: Array.from(
                 groupEl.querySelectorAll(".questions .dim-question"),

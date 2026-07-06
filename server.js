@@ -2184,6 +2184,84 @@ app.delete("/api/survey-question-groups/:id", async (req, res) => {
   }
 });
 
+app.get("/api/survey-structure/form", async (req, res) => {
+  try {
+    const [sections] = await pool.execute(`
+      SELECT id, title, description, sort_order, is_active
+      FROM survey_sections
+      WHERE is_active = 1
+      ORDER BY sort_order ASC, id ASC
+    `);
+
+    const questionSection = sections.find((s) =>
+      String(s.title || "").includes("คำถาม"),
+    );
+
+    if (!questionSection) {
+      return res.json({
+        section: null,
+        models: [],
+      });
+    }
+
+    const [categories] = await pool.execute(
+      `
+      SELECT id, section_id, title, description, sort_order, is_active
+      FROM survey_question_categories
+      WHERE section_id = ?
+        AND is_active = 1
+      ORDER BY sort_order ASC, id ASC
+      `,
+      [questionSection.id],
+    );
+
+    const categoryIds = categories.map((c) => c.id);
+
+    let groups = [];
+
+    if (categoryIds.length > 0) {
+      const [groupRows] = await pool.execute(
+        `
+        SELECT id, category_id, title, description, sort_order, is_active
+        FROM survey_question_groups
+        WHERE category_id IN (${categoryIds.map(() => "?").join(",")})
+          AND is_active = 1
+        ORDER BY sort_order ASC, id ASC
+        `,
+        categoryIds,
+      );
+
+      groups = groupRows;
+    }
+
+    const groupMap = {};
+
+    groups.forEach((g) => {
+      if (!groupMap[g.category_id]) groupMap[g.category_id] = [];
+      groupMap[g.category_id].push(g);
+    });
+
+    const models = categories.map((cat) => ({
+      id: cat.id,
+      title: cat.title,
+      enabled: true,
+      dimensions: (groupMap[cat.id] || []).map((g) => ({
+        id: g.id,
+        title: g.title,
+        enabled: true,
+        questions: [],
+      })),
+    }));
+
+    res.json({
+      section: questionSection,
+      models,
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

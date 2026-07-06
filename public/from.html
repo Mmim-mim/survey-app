@@ -1537,53 +1537,18 @@
         toggle?.dispatchEvent(new Event("change"));
       }
 
-      const defaultMainModels = [
-        {
-          title: "LibQUAL+TM",
-          dimensions: [
-            { title: "ความรู้สึกที่มีต่อบริการ (Affect of Service)" },
-            { title: "การควบคุมสารสนเทศ (Information Control)" },
-            { title: "ลักษณะกายภาพของห้องสมุด (Library as Place)" },
-          ],
-        },
-        {
-          title: "SERVQUAL",
-          dimensions: [
-            { title: "สิ่งที่สัมผัสได้ (Tangibles)" },
-            { title: "ความน่าเชื่อถือ (Reliability)" },
-            { title: "การตอบสนองของพนักงาน (Responsiveness)" },
-            { title: "การเอาใจใส่จากพนักงาน (Empathy)" },
-            { title: "ความไว้วางใจ (Assurance)" },
-          ],
-        },
-        {
-          title: "WEBQUAL",
-          dimensions: [
-            { title: "การใช้งาน (Usability)" },
-            { title: "คุณภาพของข้อมูล (Infomation Quality)" },
-            { title: "การตอบสนองต่อการบริการ (Service Interaction)" },
-          ],
-        },
-        {
-          title: "SiteQUAL",
-          dimensions: [
-            { title: "การใช้งานง่าย (Ease of Use)" },
-            { title: "การออกแบบที่สวยงาม (Aesthetic Design) " },
-            { title: "ความเร็วในการประมวลผล (Processing Speed) " },
-            { title: "การตอบสนองของเว็บไซต์ (Interactive Responsiveness)" },
-          ],
-        },
-        {
-          title: "ESQUAL",
-          dimensions: [
-            { title: "ประสิทธิภาพของระบบ" },
-            { title: "คุณภาพและความถูกต้องของระบบ" },
-            { title: "ความง่ายและความเป็นมิตรต่อผู้ใช้งาน" },
-            { title: "ความยืดหยุ่นและการปรับตัวของระบบ" },
-            { title: "การเชื่อมโยงข้อมูลและการนำส่ง" },
-          ],
-        },
-      ];
+      let defaultMainModels = [];
+
+      async function loadSurveyStructureForForm() {
+        const res = await fetch("/api/survey-structure/form");
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          throw new Error(json.error || "โหลดโครงสร้างแบบประเมินไม่สำเร็จ");
+        }
+
+        defaultMainModels = Array.isArray(json.models) ? json.models : [];
+      }
 
       let savedDraft = {};
       try {
@@ -2003,13 +1968,18 @@
         if (submitBtn) submitBtn.textContent = "อัปเดตฟอร์ม";
       }
 
-      if (
-        Array.isArray(savedDraft.section2_models) &&
-        savedDraft.section2_models.length
-      ) {
-        savedDraft.section2_models.forEach((m) => addMainModel(m));
-      } else {
-        defaultMainModels.forEach((m) => addMainModel(m));
+      function renderInitialSection2Models() {
+        const mainModelsEl = document.getElementById("mainModels");
+        if (mainModelsEl) mainModelsEl.innerHTML = "";
+
+        if (
+          Array.isArray(savedDraft.section2_models) &&
+          savedDraft.section2_models.length
+        ) {
+          savedDraft.section2_models.forEach((m) => addMainModel(m));
+        } else {
+          defaultMainModels.forEach((m) => addMainModel(m));
+        }
       }
 
       function renumberDimensions() {
@@ -2260,6 +2230,9 @@
 
       window.addEventListener("DOMContentLoaded", async () => {
         try {
+          await loadSurveyStructureForForm();
+          renderInitialSection2Models();
+
           await loadQuestionBankIntoDatalists();
           await loadProjectDropdowns();
 

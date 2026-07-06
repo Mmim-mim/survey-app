@@ -1427,7 +1427,7 @@
 
         // ไม่สร้างปุ่ม dropdown แล้ว
         // ใช้การคลิกที่ช่องชื่อกลุ่มเพื่อยุบ/ขยายแทน
-        group.classList.add("collapsed");
+        group.classList.remove("collapsed");
 
         const updateCollapseIcon = () => {
           const rawTitle = titleInput.value.replace(/^▸ |^▾ /, "");
@@ -1471,6 +1471,9 @@
 
           if (!enabled) {
             group.classList.add("collapsed");
+            updateCollapseIcon();
+          } else {
+            group.classList.remove("collapsed");
             updateCollapseIcon();
           }
 

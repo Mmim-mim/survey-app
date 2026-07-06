@@ -1430,17 +1430,10 @@
         group.classList.remove("collapsed");
 
         const updateCollapseIcon = () => {
-          const rawTitle = titleInput.value.replace(/^▸ |^▾ /, "");
-          titleInput.value = group.classList.contains("collapsed")
-            ? `▸ ${rawTitle}`
-            : `▾ ${rawTitle}`;
+          titleInput.value = titleInput.value.replace(/^[▸▾]\s*/, "");
         };
 
-        titleInput.addEventListener("click", () => {
-          group.classList.toggle("collapsed");
-          updateCollapseIcon();
-        });
-
+        // ไม่ให้คลิกชื่อเพื่อยุบ/ขยายแล้ว
         updateCollapseIcon();
 
         addBtn.addEventListener("click", () => {
@@ -1531,9 +1524,7 @@
         block.classList.add("collapsed");
 
         const updateCollapseIcon = () => {
-          titleEl.textContent = block.classList.contains("collapsed")
-            ? `▸ ${titleEl.dataset.title || titleEl.textContent.replace(/^▸ |^▾ /, "")}`
-            : `▾ ${titleEl.dataset.title || titleEl.textContent.replace(/^▸ |^▾ /, "")}`;
+          titleInput.value = titleInput.value.replace(/^[▸▾]\s*/, "");
         };
 
         const toggleCollapse = () => {

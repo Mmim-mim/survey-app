@@ -760,16 +760,6 @@
       }
 
       /* ===== Collapse Section 2 ===== */
-      .collapse-btn {
-        width: 32px;
-        height: 32px;
-        border: 1px solid #ead8c8;
-        border-radius: 10px;
-        background: #fff8f2;
-        color: #8b1515;
-        font-weight: 900;
-        cursor: pointer;
-      }
 
       .main-model.collapsed > .main-model-body {
         display: none;
@@ -1435,21 +1425,18 @@
         const titleInput = group.querySelector(".subgroup-title");
         const left = group.querySelector(".ghead .left");
 
-        const collapseBtn = document.createElement("button");
-        collapseBtn.type = "button";
-        collapseBtn.className = "collapse-btn";
-        collapseBtn.textContent = "▸";
-
-        left.insertBefore(collapseBtn, titleInput);
+        // ไม่สร้างปุ่ม dropdown แล้ว
+        // ใช้การคลิกที่ช่องชื่อกลุ่มเพื่อยุบ/ขยายแทน
         group.classList.add("collapsed");
 
         const updateCollapseIcon = () => {
-          collapseBtn.textContent = group.classList.contains("collapsed")
-            ? "▸"
-            : "▾";
+          const rawTitle = titleInput.value.replace(/^▸ |^▾ /, "");
+          titleInput.value = group.classList.contains("collapsed")
+            ? `▸ ${rawTitle}`
+            : `▾ ${rawTitle}`;
         };
 
-        collapseBtn.addEventListener("click", () => {
+        titleInput.addEventListener("click", () => {
           group.classList.toggle("collapsed");
           updateCollapseIcon();
         });
@@ -1478,7 +1465,7 @@
           group
             .querySelectorAll("input,button,textarea,select")
             .forEach((el) => {
-              if (el === toggle || el === collapseBtn || el === delBtn) return;
+              if (el === toggle || el === titleInput || el === delBtn) return;
               el.disabled = !enabled;
             });
 
@@ -1538,27 +1525,18 @@
         const titleEl = block.querySelector(".main-model-title");
         const left = block.querySelector(".ghead .left");
 
-        const collapseBtn = document.createElement("button");
-        collapseBtn.type = "button";
-        collapseBtn.className = "collapse-btn";
-        collapseBtn.textContent = "▸";
-
-        left.insertBefore(collapseBtn, titleEl);
-
         block.classList.add("collapsed");
 
         const updateCollapseIcon = () => {
-          collapseBtn.textContent = block.classList.contains("collapsed")
-            ? "▸"
-            : "▾";
+          titleEl.textContent = block.classList.contains("collapsed")
+            ? `▸ ${titleEl.dataset.title || titleEl.textContent.replace(/^▸ |^▾ /, "")}`
+            : `▾ ${titleEl.dataset.title || titleEl.textContent.replace(/^▸ |^▾ /, "")}`;
         };
 
         const toggleCollapse = () => {
           block.classList.toggle("collapsed");
           updateCollapseIcon();
         };
-
-        collapseBtn.addEventListener("click", toggleCollapse);
 
         if (titleEl) {
           titleEl.addEventListener("click", toggleCollapse);
@@ -1572,7 +1550,7 @@
           block
             .querySelectorAll("input,button,textarea,select")
             .forEach((el) => {
-              if (el === toggle || el === collapseBtn) return;
+              if (el === toggle) return;
               el.disabled = !enabled;
             });
 
@@ -1597,7 +1575,8 @@
         const toggle = block.querySelector(".main-model-toggle");
         const subgroupsRoot = block.querySelector(".subgroups");
 
-        titleEl.textContent = data.title || "หัวข้อใหม่";
+        titleEl.dataset.title = data.title || "หัวข้อใหม่";
+        titleEl.textContent = `▸ ${titleEl.dataset.title}`;
 
         document.getElementById("mainModels").appendChild(block);
 

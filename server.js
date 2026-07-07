@@ -1898,6 +1898,7 @@ FROM survey_forms
           ) {
             pushText("", value);
           }
+          
           return;
         }
 

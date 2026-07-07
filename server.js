@@ -1483,60 +1483,33 @@ app.post("/api/admin/questions", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    const group_id = req.body.group_id ? Number(req.body.group_id) : null;
+    const category = String(req.body.category || "").trim();
     const question_text = String(req.body.question_text || "").trim();
+    const used_in_label = String(req.body.used_in_label || "").trim();
+    const datalist_id = String(req.body.datalist_id || "").trim();
     const question_type = String(req.body.question_type || "rating").trim();
     const status = String(req.body.status || "active").trim();
-    const sort_order = Number(req.body.sort_order || 0);
 
-    if (!Number.isFinite(group_id)) {
-      return res.status(400).json({ error: "กรุณาเลือก Group" });
+    if (!category || !question_text || !used_in_label || !datalist_id) {
+      return res.status(400).json({ error: "กรุณากรอกข้อมูลให้ครบ" });
     }
 
-    if (!question_text) {
-      return res.status(400).json({ error: "กรุณากรอกคำถาม" });
-    }
-
-    const [groupRows] = await pool.execute(
-      `
-      SELECT 
-        g.id,
-        g.title AS group_title,
-        c.title AS category_title
-      FROM survey_question_groups g
-      JOIN survey_question_categories c
-        ON g.category_id = c.id
-      WHERE g.id = ?
-      LIMIT 1
-      `,
-      [group_id],
-    );
-
-    if (!groupRows.length) {
-      return res.status(404).json({ error: "ไม่พบ Group นี้" });
-    }
-
-    const group = groupRows[0];
-
-    const category = group.category_title || "";
-    const used_in_label = `${group.category_title || ""} > ${group.group_title || ""}`;
-    const datalist_id = `group_${group_id}_suggestions`;
 
     const [result] = await pool.execute(
       `
       INSERT INTO question_bank
-      (group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (category, question_text, used_in_label, datalist_id, question_type, status)
+      VALUES (?, ?, ?, ?, ?, ?)
       `,
       [
-        group_id,
+
         category,
         question_text,
         used_in_label,
         datalist_id,
         question_type,
         status,
-        sort_order,
+        
       ],
     );
 

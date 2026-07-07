@@ -16,6 +16,7 @@ const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
 let allQuestions = [];
 let selectedCategory = "";
+let questionOptions = [];
 
 function guardAdmin() {
   if (role !== "admin") {
@@ -49,6 +50,29 @@ async function api(path, options = {}) {
   }
 
   return json;
+}
+
+async function loadQuestionOptions() {
+  questionOptions = await api(
+    `/api/admin/question-options?role=${encodeURIComponent(role)}`,
+  );
+
+  usedInInput.innerHTML = `
+    <option value="">-- เลือกหัวข้อ --</option>
+    ${questionOptions
+      .map(
+        (item) => `
+          <option
+            value="${esc(item.datalist_id)}"
+            data-category="${esc(item.category)}"
+            data-used-in-label="${esc(item.used_in_label)}"
+          >
+            ${esc(item.used_in_label)}
+          </option>
+        `,
+      )
+      .join("")}
+  `;
 }
 
 async function loadQuestions() {
@@ -238,8 +262,40 @@ function renderQuestions(rows) {
 async function addQuestion() {
   const question_text = questionInput.value.trim();
   const datalist_id = usedInInput.value.trim();
-  const used_in_label =
-    usedInInput.options[usedInInput.selectedIndex]?.textContent.trim() || "";
+  async function addQuestion() {
+    const selectedOption = usedInInput.options[usedInInput.selectedIndex];
+
+    const question_text = questionInput.value.trim();
+    const datalist_id = usedInInput.value.trim();
+    const used_in_label = selectedOption?.dataset.usedInLabel || "";
+    const category = selectedOption?.dataset.category || "";
+    const question_type = typeInput.value;
+    const status = statusInput.value;
+
+    if (!question_text || !datalist_id || !used_in_label || !category) {
+      alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
+      return;
+    }
+
+    await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
+      method: "POST",
+      body: JSON.stringify({
+        category,
+        question_text,
+        used_in_label,
+        datalist_id,
+        question_type,
+        status,
+      }),
+    });
+
+    questionInput.value = "";
+    usedInInput.value = "";
+    typeInput.value = "rating";
+    statusInput.value = "active";
+
+    await loadQuestions();
+  }
   const question_type = typeInput.value;
   const status = statusInput.value;
 
@@ -346,6 +402,13 @@ if (btnDeleteSelected) {
 }
 
 guardAdmin();
-loadQuestions();
 
-
+(async function init() {
+  try {
+    await loadQuestionOptions();
+    await loadQuestions();
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "โหลดข้อมูลไม่สำเร็จ");
+  }
+})();

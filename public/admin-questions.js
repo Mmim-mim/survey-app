@@ -369,9 +369,15 @@ guardAdmin();
 (async function init() {
   try {
     await loadQuestionOptions();
+  } catch (err) {
+    console.error("โหลด Dropdown ไม่สำเร็จ:", err);
+    alert("โหลดหัวข้อ Dropdown ไม่สำเร็จ แต่จะโหลดรายการคำถามเดิมให้ก่อน");
+  }
+
+  try {
     await loadQuestions();
   } catch (err) {
-    console.error(err);
-    alert(err.message || "โหลดข้อมูลไม่สำเร็จ");
+    console.error("โหลดคำถามไม่สำเร็จ:", err);
+    alert(err.message || "โหลดรายการคำถามไม่สำเร็จ");
   }
 })();

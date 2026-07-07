@@ -1517,9 +1517,9 @@
         document.getElementById("mainModels").appendChild(block);
 
         if (toggle) {
-          // เปิดหัวข้อใหญ่เฉพาะกรณี data.enabled === true เท่านั้น
-          // ถ้า false / undefined ให้ปิดไว้ก่อน
-          toggle.checked = data.enabled === true;
+          // ให้ LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL แสดงชื่อ
+          // แต่ปิดรายละเอียดไว้ก่อนเสมอ ตอนเปิดฟอร์ม
+          toggle.checked = false;
         }
 
         bindMainModel(block);
@@ -2000,12 +2000,12 @@
 
           // เฉพาะส่วนที่ 2:
           // ถ้าปิดส่วนของคำถาม ให้ซ่อน LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL ทั้งหมด
-          if (sec.dataset.sec === "s2") {
-            const mainModels = sec.querySelector("#mainModels");
-            if (mainModels) {
-              mainModels.style.display = enabled ? "" : "none";
-            }
-          }
+          // if (sec.dataset.sec === "s2") {
+          //   const mainModels = sec.querySelector("#mainModels");
+          //   if (mainModels) {
+          //     mainModels.style.display = enabled ? "" : "none";
+          //   }
+          // }
 
           // ถ้าเปิด section ให้ toggle ย่อยกดได้
           // แต่ไม่บังคับเปิดหัวข้อย่อยเอง

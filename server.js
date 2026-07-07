@@ -1390,6 +1390,55 @@ app.get("/api/admin/question-groups", async (req, res) => {
   }
 });
 
+// ดึงหัวข้อจาก Admin Structure ไปใช้ใน Dropdown ของหน้าจัดการคำถาม
+app.get("/api/admin/question-options", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    function toDatalistId(title = "") {
+      const t = String(title).toLowerCase();
+
+      if (t.includes("affect of service")) return "affectOfServiceSuggestions";
+      if (t.includes("information control"))
+        return "informationControlSuggestions";
+      if (t.includes("library as place")) return "libraryAsPlaceSuggestions";
+
+      if (t.includes("tangibles")) return "tangiblesSuggestions";
+      if (t.includes("reliability")) return "reliabilitySuggestions";
+      if (t.includes("responsiveness")) return "responsivenessSuggestions";
+      if (t.includes("empathy")) return "empathySuggestions";
+      if (t.includes("assurance")) return "assuranceSuggestions";
+
+      return "";
+    }
+
+    const [rows] = await pool.execute(`
+      SELECT
+        c.title AS category,
+        g.title AS group_title
+      FROM survey_question_groups g
+      JOIN survey_question_categories c
+        ON g.category_id = c.id
+      JOIN survey_sections s
+        ON c.section_id = s.id
+      WHERE s.is_active = 1
+        AND c.is_active = 1
+        AND g.is_active = 1
+      ORDER BY c.sort_order ASC, g.sort_order ASC, g.id ASC
+    `);
+
+    res.json(
+      rows.map((r) => ({
+        category: r.category,
+        used_in_label: `${r.category} > ${r.group_title}`,
+        datalist_id: toDatalistId(r.group_title),
+      })),
+    );
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ดึงคำถามทั้งหมด สำหรับหน้า admin
 app.get("/api/admin/questions", async (req, res) => {
   try {

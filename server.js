@@ -2396,10 +2396,7 @@ app.get("/api/survey-structure/form", async (req, res) => {
     );
 
     if (!questionSection) {
-      return res.json({
-        section: null,
-        models: [],
-      });
+      return res.json({ section: null, models: [] });
     }
 
     const [categories] = await pool.execute(
@@ -2416,7 +2413,6 @@ app.get("/api/survey-structure/form", async (req, res) => {
     const categoryIds = categories.map((c) => c.id);
 
     let groups = [];
-
     if (categoryIds.length > 0) {
       const [groupRows] = await pool.execute(
         `
@@ -2432,8 +2428,42 @@ app.get("/api/survey-structure/form", async (req, res) => {
       groups = groupRows;
     }
 
-    const groupMap = {};
+    const [questionRows] = await pool.execute(`
+      SELECT
+        id,
+        group_id,
+        datalist_id,
+        question_text,
+        question_type,
+        sort_order
+      FROM question_bank
+      WHERE status = 'active'
+      ORDER BY sort_order ASC, id ASC
+    `);
 
+    const questionsByGroupId = {};
+    const questionsByDatalistId = {};
+
+    questionRows.forEach((q) => {
+      const text = String(q.question_text || "").trim();
+      if (!text) return;
+
+      if (q.group_id) {
+        if (!questionsByGroupId[q.group_id])
+          questionsByGroupId[q.group_id] = [];
+        questionsByGroupId[q.group_id].push(text);
+      }
+
+      const datalistId = String(q.datalist_id || "").trim();
+      if (datalistId) {
+        if (!questionsByDatalistId[datalistId]) {
+          questionsByDatalistId[datalistId] = [];
+        }
+        questionsByDatalistId[datalistId].push(text);
+      }
+    });
+
+    const groupMap = {};
     groups.forEach((g) => {
       if (!groupMap[g.category_id]) groupMap[g.category_id] = [];
       groupMap[g.category_id].push(g);
@@ -2442,18 +2472,25 @@ app.get("/api/survey-structure/form", async (req, res) => {
     const models = categories.map((cat) => ({
       id: cat.id,
       title: cat.title,
-
-      // ให้หัวข้อใหญ่ เช่น LibQUAL+ ปิดก่อน
       enabled: false,
+      dimensions: (groupMap[cat.id] || []).map((g) => {
+        const legacyDatalistId =
+          typeof makeLegacyDatalistId === "function"
+            ? makeLegacyDatalistId(g.title)
+            : "";
 
-      // แต่หัวข้อย่อยให้เปิดไว้ก่อน
-      // ถ้าผู้สร้างฟอร์มไม่ต้องการหัวข้อย่อยไหน ค่อยปิดเอง
-      dimensions: (groupMap[cat.id] || []).map((g) => ({
-        id: g.id,
-        title: g.title,
-        enabled: true,
-        questions: [],
-      })),
+        const questions =
+          questionsByGroupId[g.id] ||
+          questionsByDatalistId[legacyDatalistId] ||
+          [];
+
+        return {
+          id: g.id,
+          title: g.title,
+          enabled: true,
+          questions,
+        };
+      }),
     }));
 
     res.json({

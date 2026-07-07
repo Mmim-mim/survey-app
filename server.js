@@ -1348,74 +1348,51 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
 
 /** -----------------------------
  *  QUESTION BANK API
+ *  Hybrid Mode:
+ *  - ข้อมูลเก่าใช้ category / used_in_label / datalist_id
+ *  - ข้อมูลใหม่รองรับ group_id
  * ----------------------------- */
 
-// ดึง Group ทั้งหมดจาก Admin Structure สำหรับหน้า Admin Questions
-app.get("/api/admin/question-groups", async (req, res) => {
-  try {
-    if (!requireAdmin(req, res)) return;
+function makeLegacyDatalistId(text = "") {
+  const t = String(text || "").toLowerCase();
 
-    const [rows] = await pool.execute(`
-      SELECT 
-        g.id AS group_id,
-        g.title AS group_title,
-        g.sort_order AS group_sort_order,
-        g.is_active AS group_active,
+  if (t.includes("affect of service")) return "affectOfServiceSuggestions";
+  if (t.includes("information control")) return "informationControlSuggestions";
+  if (t.includes("library as place")) return "libraryAsPlaceSuggestions";
 
-        c.id AS category_id,
-        c.title AS category_title,
-        c.sort_order AS category_sort_order,
+  if (t.includes("tangibles")) return "tangiblesSuggestions";
+  if (t.includes("reliability")) return "reliabilitySuggestions";
+  if (t.includes("responsiveness")) return "responsivenessSuggestions";
+  if (t.includes("empathy")) return "empathySuggestions";
+  if (t.includes("assurance")) return "assuranceSuggestions";
 
-        s.id AS section_id,
-        s.title AS section_title,
-        s.sort_order AS section_sort_order
-      FROM survey_question_groups g
-      JOIN survey_question_categories c
-        ON g.category_id = c.id
-      JOIN survey_sections s
-        ON c.section_id = s.id
-      WHERE g.is_active = 1
-        AND c.is_active = 1
-        AND s.is_active = 1
-      ORDER BY 
-        s.sort_order ASC,
-        c.sort_order ASC,
-        g.sort_order ASC,
-        g.id ASC
-    `);
+  if (t.includes("usability")) return "usabilitySuggestions";
+  if (t.includes("information quality")) return "informationQualitySuggestions";
+  if (t.includes("service interaction")) return "serviceInteractionSuggestions";
 
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+  if (t.includes("ease of use")) return "easeOfUseSuggestions";
+  if (t.includes("aesthetic design")) return "aestheticDesignSuggestions";
+  if (t.includes("processing speed")) return "processingSpeedSuggestions";
+
+  return "";
+}
 
 // ดึงหัวข้อจาก Admin Structure ไปใช้ใน Dropdown ของหน้าจัดการคำถาม
 app.get("/api/admin/question-options", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    function toDatalistId(title = "") {
-      const t = String(title).toLowerCase();
-
-      if (t.includes("affect of service")) return "affectOfServiceSuggestions";
-      if (t.includes("information control"))
-        return "informationControlSuggestions";
-      if (t.includes("library as place")) return "libraryAsPlaceSuggestions";
-
-      if (t.includes("tangibles")) return "tangiblesSuggestions";
-      if (t.includes("reliability")) return "reliabilitySuggestions";
-      if (t.includes("responsiveness")) return "responsivenessSuggestions";
-      if (t.includes("empathy")) return "empathySuggestions";
-      if (t.includes("assurance")) return "assuranceSuggestions";
-
-      return "";
-    }
-
     const [rows] = await pool.execute(`
       SELECT
-        c.title AS category,
-        g.title AS group_title
+        s.id AS section_id,
+        s.title AS section_title,
+
+        c.id AS category_id,
+        c.title AS category_title,
+
+        g.id AS group_id,
+        g.title AS group_title,
+        g.sort_order AS group_sort_order
       FROM survey_question_groups g
       JOIN survey_question_categories c
         ON g.category_id = c.id
@@ -1424,28 +1401,43 @@ app.get("/api/admin/question-options", async (req, res) => {
       WHERE s.is_active = 1
         AND c.is_active = 1
         AND g.is_active = 1
-      ORDER BY c.sort_order ASC, g.sort_order ASC, g.id ASC
+      ORDER BY
+        s.sort_order ASC,
+        c.sort_order ASC,
+        g.sort_order ASC,
+        g.id ASC
     `);
 
     res.json(
-      rows.map((r) => ({
-        category: r.category,
-        used_in_label: `${r.category} > ${r.group_title}`,
-        datalist_id: toDatalistId(r.group_title),
-      })),
+      rows.map((r) => {
+        const legacyId = makeLegacyDatalistId(r.group_title);
+        const fallbackId = `group_${r.group_id}_suggestions`;
+
+        return {
+          section_id: r.section_id,
+          section_title: r.section_title,
+          category_id: r.category_id,
+          category: r.category_title,
+          category_title: r.category_title,
+          group_id: r.group_id,
+          group_title: r.group_title,
+          used_in_label: `${r.category_title} > ${r.group_title}`,
+          datalist_id: legacyId || fallbackId,
+        };
+      }),
     );
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-// ดึงคำถามทั้งหมด สำหรับหน้า admin
+// ดึงคำถามทั้งหมด สำหรับหน้า Admin Questions
 app.get("/api/admin/questions", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
     const [rows] = await pool.execute(`
-      SELECT 
+      SELECT
         q.id,
         q.group_id,
         q.category,
@@ -1467,12 +1459,19 @@ app.get("/api/admin/questions", async (req, res) => {
         ON g.category_id = c.id
       LEFT JOIN survey_sections s
         ON c.section_id = s.id
-      ORDER BY 
-        q.sort_order ASC,
-        q.id DESC
+      ORDER BY q.id DESC
     `);
 
-    res.json(rows);
+    const mapped = rows.map((q) => ({
+      ...q,
+      display_category: q.category_title || q.category || "",
+      display_used_in_label:
+        q.category_title && q.group_title
+          ? `${q.category_title} > ${q.group_title}`
+          : q.used_in_label || "",
+    }));
+
+    res.json(mapped);
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -1483,33 +1482,79 @@ app.post("/api/admin/questions", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    const category = String(req.body.category || "").trim();
+    const group_id = req.body.group_id ? Number(req.body.group_id) : null;
+
+    const oldCategory = String(req.body.category || "").trim();
+    const oldUsedInLabel = String(req.body.used_in_label || "").trim();
+    const oldDatalistId = String(req.body.datalist_id || "").trim();
+
     const question_text = String(req.body.question_text || "").trim();
-    const used_in_label = String(req.body.used_in_label || "").trim();
-    const datalist_id = String(req.body.datalist_id || "").trim();
     const question_type = String(req.body.question_type || "rating").trim();
     const status = String(req.body.status || "active").trim();
+    const sort_order = Number(req.body.sort_order || 0);
 
-    if (!category || !question_text || !used_in_label || !datalist_id) {
-      return res.status(400).json({ error: "กรุณากรอกข้อมูลให้ครบ" });
+    if (!question_text) {
+      return res.status(400).json({ error: "กรุณากรอกคำถาม" });
     }
 
+    let finalGroupId = null;
+    let finalCategory = oldCategory;
+    let finalUsedInLabel = oldUsedInLabel;
+    let finalDatalistId = oldDatalistId;
+
+    // กรณีใหม่: ส่ง group_id มา
+    if (Number.isFinite(group_id)) {
+      const [groupRows] = await pool.execute(
+        `
+        SELECT
+          g.id AS group_id,
+          g.title AS group_title,
+          c.title AS category_title
+        FROM survey_question_groups g
+        JOIN survey_question_categories c
+          ON g.category_id = c.id
+        WHERE g.id = ?
+        LIMIT 1
+        `,
+        [group_id],
+      );
+
+      if (!groupRows.length) {
+        return res.status(404).json({ error: "ไม่พบ Group นี้" });
+      }
+
+      const group = groupRows[0];
+
+      finalGroupId = group.group_id;
+      finalCategory = group.category_title || "";
+      finalUsedInLabel = `${group.category_title} > ${group.group_title}`;
+      finalDatalistId =
+        makeLegacyDatalistId(group.group_title) ||
+        `group_${group.group_id}_suggestions`;
+    }
+
+    // กรณีเก่า: ยังใช้ category / used_in_label / datalist_id
+    if (!finalCategory || !finalUsedInLabel || !finalDatalistId) {
+      return res.status(400).json({
+        error: "กรุณาเลือกหัวข้อคำถามให้ครบ",
+      });
+    }
 
     const [result] = await pool.execute(
       `
       INSERT INTO question_bank
-      (category, question_text, used_in_label, datalist_id, question_type, status)
-      VALUES (?, ?, ?, ?, ?, ?)
+      (group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-
-        category,
+        finalGroupId,
+        finalCategory,
         question_text,
-        used_in_label,
-        datalist_id,
+        finalUsedInLabel,
+        finalDatalistId,
         question_type,
         status,
-        
+        sort_order,
       ],
     );
 
@@ -1539,22 +1584,52 @@ app.delete("/api/admin/questions/:id", async (req, res) => {
 });
 
 // ดึงคำถาม active ไปใช้ใน from.html
+// รองรับทั้งข้อมูลเก่าและข้อมูลใหม่
 app.get("/api/question-bank/active", async (req, res) => {
   try {
     const [rows] = await pool.execute(`
-      SELECT 
-        id,
-        group_id,
-        datalist_id,
-        question_text,
-        question_type,
-        sort_order
-      FROM question_bank
-      WHERE status = 'active'
-      ORDER BY sort_order ASC, id ASC
+      SELECT
+        q.id,
+        q.group_id,
+        q.category,
+        q.used_in_label,
+        q.datalist_id,
+        q.question_text,
+        q.question_type,
+        q.sort_order,
+
+        g.title AS group_title,
+        c.title AS category_title,
+        s.title AS section_title
+      FROM question_bank q
+      LEFT JOIN survey_question_groups g
+        ON q.group_id = g.id
+      LEFT JOIN survey_question_categories c
+        ON g.category_id = c.id
+      LEFT JOIN survey_sections s
+        ON c.section_id = s.id
+      WHERE q.status = 'active'
+      ORDER BY q.sort_order ASC, q.id ASC
     `);
 
-    res.json(rows);
+    res.json(
+      rows.map((q) => ({
+        ...q,
+
+        // ใช้ตอนระบบใหม่
+        effective_group_id: q.group_id || null,
+        effective_group_title: q.group_title || "",
+        effective_category_title: q.category_title || q.category || "",
+
+        // ใช้รองรับระบบเก่า
+        effective_used_in_label:
+          q.category_title && q.group_title
+            ? `${q.category_title} > ${q.group_title}`
+            : q.used_in_label || "",
+
+        effective_datalist_id: q.datalist_id || "",
+      })),
+    );
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

@@ -1350,15 +1350,77 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
  *  QUESTION BANK API
  * ----------------------------- */
 
+// ดึง Group ทั้งหมดจาก Admin Structure สำหรับหน้า Admin Questions
+app.get("/api/admin/question-groups", async (req, res) => {
+  try {
+    if (!requireAdmin(req, res)) return;
+
+    const [rows] = await pool.execute(`
+      SELECT 
+        g.id AS group_id,
+        g.title AS group_title,
+        g.sort_order AS group_sort_order,
+        g.is_active AS group_active,
+
+        c.id AS category_id,
+        c.title AS category_title,
+        c.sort_order AS category_sort_order,
+
+        s.id AS section_id,
+        s.title AS section_title,
+        s.sort_order AS section_sort_order
+      FROM survey_question_groups g
+      JOIN survey_question_categories c
+        ON g.category_id = c.id
+      JOIN survey_sections s
+        ON c.section_id = s.id
+      WHERE g.is_active = 1
+        AND c.is_active = 1
+        AND s.is_active = 1
+      ORDER BY 
+        s.sort_order ASC,
+        c.sort_order ASC,
+        g.sort_order ASC,
+        g.id ASC
+    `);
+
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ดึงคำถามทั้งหมด สำหรับหน้า admin
 app.get("/api/admin/questions", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
     const [rows] = await pool.execute(`
-      SELECT id, category, question_text, used_in_label, datalist_id, question_type, status, created_at
-      FROM question_bank
-      ORDER BY id DESC
+      SELECT 
+        q.id,
+        q.group_id,
+        q.category,
+        q.question_text,
+        q.used_in_label,
+        q.datalist_id,
+        q.question_type,
+        q.status,
+        q.sort_order,
+        q.created_at,
+
+        g.title AS group_title,
+        c.title AS category_title,
+        s.title AS section_title
+      FROM question_bank q
+      LEFT JOIN survey_question_groups g
+        ON q.group_id = g.id
+      LEFT JOIN survey_question_categories c
+        ON g.category_id = c.id
+      LEFT JOIN survey_sections s
+        ON c.section_id = s.id
+      ORDER BY 
+        q.sort_order ASC,
+        q.id DESC
     `);
 
     res.json(rows);
@@ -1372,28 +1434,60 @@ app.post("/api/admin/questions", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
 
-    const category = String(req.body.category || "").trim();
+    const group_id = req.body.group_id ? Number(req.body.group_id) : null;
     const question_text = String(req.body.question_text || "").trim();
-    const used_in_label = String(req.body.used_in_label || "").trim();
-    const datalist_id = String(req.body.datalist_id || "").trim();
     const question_type = String(req.body.question_type || "rating").trim();
     const status = String(req.body.status || "active").trim();
+    const sort_order = Number(req.body.sort_order || 0);
 
-    if (!category || !question_text || !used_in_label || !datalist_id) {
-      return res.status(400).json({ error: "กรุณากรอกข้อมูลให้ครบ" });
+    if (!Number.isFinite(group_id)) {
+      return res.status(400).json({ error: "กรุณาเลือก Group" });
     }
 
+    if (!question_text) {
+      return res.status(400).json({ error: "กรุณากรอกคำถาม" });
+    }
+
+    const [groupRows] = await pool.execute(
+      `
+      SELECT 
+        g.id,
+        g.title AS group_title,
+        c.title AS category_title
+      FROM survey_question_groups g
+      JOIN survey_question_categories c
+        ON g.category_id = c.id
+      WHERE g.id = ?
+      LIMIT 1
+      `,
+      [group_id],
+    );
+
+    if (!groupRows.length) {
+      return res.status(404).json({ error: "ไม่พบ Group นี้" });
+    }
+
+    const group = groupRows[0];
+
+    const category = group.category_title || "";
+    const used_in_label = `${group.category_title || ""} > ${group.group_title || ""}`;
+    const datalist_id = `group_${group_id}_suggestions`;
+
     const [result] = await pool.execute(
-      `INSERT INTO question_bank
-       (category, question_text, used_in_label, datalist_id, question_type, status)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `
+      INSERT INTO question_bank
+      (group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
       [
+        group_id,
         category,
         question_text,
         used_in_label,
         datalist_id,
         question_type,
         status,
+        sort_order,
       ],
     );
 
@@ -1409,6 +1503,7 @@ app.delete("/api/admin/questions/:id", async (req, res) => {
     if (!requireAdmin(req, res)) return;
 
     const id = Number(req.params.id);
+
     if (!Number.isFinite(id)) {
       return res.status(400).json({ error: "id ไม่ถูกต้อง" });
     }
@@ -1425,10 +1520,16 @@ app.delete("/api/admin/questions/:id", async (req, res) => {
 app.get("/api/question-bank/active", async (req, res) => {
   try {
     const [rows] = await pool.execute(`
-      SELECT datalist_id, question_text
+      SELECT 
+        id,
+        group_id,
+        datalist_id,
+        question_text,
+        question_type,
+        sort_order
       FROM question_bank
       WHERE status = 'active'
-      ORDER BY id ASC
+      ORDER BY sort_order ASC, id ASC
     `);
 
     res.json(rows);
@@ -2244,7 +2345,12 @@ app.get("/api/survey-structure/form", async (req, res) => {
     const models = categories.map((cat) => ({
       id: cat.id,
       title: cat.title,
-      enabled: true,
+
+      // ให้หัวข้อใหญ่ เช่น LibQUAL+ ปิดก่อน
+      enabled: false,
+
+      // แต่หัวข้อย่อยให้เปิดไว้ก่อน
+      // ถ้าผู้สร้างฟอร์มไม่ต้องการหัวข้อย่อยไหน ค่อยปิดเอง
       dimensions: (groupMap[cat.id] || []).map((g) => ({
         id: g.id,
         title: g.title,

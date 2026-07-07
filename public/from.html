@@ -1517,11 +1517,9 @@
         document.getElementById("mainModels").appendChild(block);
 
         if (toggle) {
-          if (typeof data.enabled === "boolean") {
-            toggle.checked = data.enabled;
-          } else {
-            toggle.checked = false;
-          }
+          // เปิดหัวข้อใหญ่เฉพาะกรณี data.enabled === true เท่านั้น
+          // ถ้า false / undefined ให้ปิดไว้ก่อน
+          toggle.checked = data.enabled === true;
         }
 
         bindMainModel(block);
@@ -1991,15 +1989,27 @@
         const sec = cb.closest(".section");
 
         const setDisabled = () => {
-          sec.classList.toggle("disabled", !cb.checked);
+          const enabled = cb.checked;
+
+          sec.classList.toggle("disabled", !enabled);
 
           sec.querySelectorAll("input,button,textarea,select").forEach((el) => {
             if (el === cb) return;
-            el.disabled = !cb.checked;
+            el.disabled = !enabled;
           });
 
-          // ถ้าเปิด section ให้ subgroup toggle ใช้ได้
-          if (cb.checked) {
+          // เฉพาะส่วนที่ 2:
+          // ถ้าปิดส่วนของคำถาม ให้ซ่อน LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL ทั้งหมด
+          if (sec.dataset.sec === "s2") {
+            const mainModels = sec.querySelector("#mainModels");
+            if (mainModels) {
+              mainModels.style.display = enabled ? "" : "none";
+            }
+          }
+
+          // ถ้าเปิด section ให้ toggle ย่อยกดได้
+          // แต่ไม่บังคับเปิดหัวข้อย่อยเอง
+          if (enabled) {
             sec.querySelectorAll(".subtoggle").forEach((st) => {
               st.disabled = false;
               st.dispatchEvent(new Event("change"));

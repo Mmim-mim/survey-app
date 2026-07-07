@@ -260,53 +260,26 @@ function renderQuestions(rows) {
 }
 
 async function addQuestion() {
+  const selectedOption = usedInInput.options[usedInInput.selectedIndex];
+
   const question_text = questionInput.value.trim();
   const datalist_id = usedInInput.value.trim();
-  async function addQuestion() {
-    const selectedOption = usedInInput.options[usedInInput.selectedIndex];
 
-    const question_text = questionInput.value.trim();
-    const datalist_id = usedInInput.value.trim();
-    const used_in_label = selectedOption?.dataset.usedInLabel || "";
-    const category = selectedOption?.dataset.category || "";
-    const question_type = typeInput.value;
-    const status = statusInput.value;
+  const used_in_label = selectedOption?.dataset.usedInLabel || "";
+  const category = selectedOption?.dataset.category || "";
 
-    if (!question_text || !datalist_id || !used_in_label || !category) {
-      alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
-      return;
-    }
-
-    await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
-      method: "POST",
-      body: JSON.stringify({
-        category,
-        question_text,
-        used_in_label,
-        datalist_id,
-        question_type,
-        status,
-      }),
-    });
-
-    questionInput.value = "";
-    usedInInput.value = "";
-    typeInput.value = "rating";
-    statusInput.value = "active";
-
-    await loadQuestions();
-  }
   const question_type = typeInput.value;
   const status = statusInput.value;
 
-  if (!question_text || !datalist_id) {
+  if (!question_text || !datalist_id || !used_in_label || !category) {
     alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
     return;
   }
+
   await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
     method: "POST",
     body: JSON.stringify({
-      category: used_in_label,
+      category,
       question_text,
       used_in_label,
       datalist_id,
@@ -319,16 +292,6 @@ async function addQuestion() {
   usedInInput.value = "";
   typeInput.value = "rating";
   statusInput.value = "active";
-
-  await loadQuestions();
-}
-
-async function deleteQuestion(id) {
-  if (!confirm("ต้องการลบคำถามนี้ใช่ไหม?")) return;
-
-  await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
-    method: "DELETE",
-  });
 
   await loadQuestions();
 }

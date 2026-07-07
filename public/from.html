@@ -758,22 +758,6 @@
 
         width: 100%;
       }
-
-      /* ===== Collapse Section 2 ===== */
-
-      .main-model.collapsed > .main-model-body {
-        display: none;
-      }
-
-      [data-subgroup-item].collapsed > .questions,
-      [data-subgroup-item].collapsed > .center {
-        display: none;
-      }
-
-      .main-model-title,
-      .subgroup-title {
-        cursor: pointer;
-      }
     </style>
     <link rel="stylesheet" href="global.css" />
   </head>
@@ -1428,6 +1412,7 @@
             group.querySelector(".subgroup-title")?.value?.trim() || "";
 
           const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
+
           addQuestion(stack, "", subgroupListId, false);
         });
 
@@ -1497,21 +1482,26 @@
       function bindMainModel(block) {
         const toggle = block.querySelector(".main-model-toggle");
         const body = block.querySelector(".main-model-body");
+        const titleEl = block.querySelector(".main-model-title");
 
         const update = () => {
           const enabled = toggle.checked;
-
           block.classList.toggle("disabled", !enabled);
-
-          if (body) {
-            body.style.display = enabled ? "" : "none";
-          }
+          if (body) body.style.display = enabled ? "" : "none";
         };
 
         toggle.addEventListener("change", update);
+
+        if (titleEl) {
+          titleEl.style.cursor = "pointer";
+          titleEl.addEventListener("click", () => {
+            toggle.checked = !toggle.checked;
+            toggle.dispatchEvent(new Event("change"));
+          });
+        }
+
         update();
       }
-
       function addMainModel(data = {}) {
         const tpl = document
           .getElementById("main-model-template")
@@ -1522,8 +1512,7 @@
         const toggle = block.querySelector(".main-model-toggle");
         const subgroupsRoot = block.querySelector(".subgroups");
 
-        titleEl.textContent = String(data.title || "หัวข้อใหม่").trim();
-        titleEl.textContent = titleEl.dataset.title;
+        titleEl.textContent = data.title || "หัวข้อใหม่";
 
         document.getElementById("mainModels").appendChild(block);
 
@@ -1680,19 +1669,17 @@
       function collectSection2Models() {
         return Array.from(document.querySelectorAll("[data-main-model]")).map(
           (modelEl) => {
-            const title = cleanTitleArrow(
+            const title =
               modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
-                "",
-            );
+              "";
             const enabled =
               !!modelEl.querySelector(".main-model-toggle")?.checked;
 
             const dimensions = Array.from(
               modelEl.querySelectorAll("[data-subgroup-item]"),
             ).map((groupEl) => ({
-              title: cleanTitleArrow(
+              title:
                 groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
-              ),
               enabled: !!groupEl.querySelector(".subtoggle")?.checked,
               questions: Array.from(
                 groupEl.querySelectorAll(".questions .dim-question"),

@@ -1406,6 +1406,52 @@
         const addBtn = group.querySelector(".add-question");
         const delBtn = group.querySelector(".remove-subgroup");
         const toggle = group.querySelector(".subtoggle");
+        const titleInput = group.querySelector(".subgroup-title");
+        const ghead = group.querySelector(".ghead");
+
+        let collapsed = true;
+
+        const centerBox = addBtn?.closest(".center");
+
+        const bodyWrap = document.createElement("div");
+        bodyWrap.className = "subgroup-body";
+
+        if (stack) bodyWrap.appendChild(stack);
+        if (centerBox) bodyWrap.appendChild(centerBox);
+
+        group.appendChild(bodyWrap);
+
+        const arrow = document.createElement("button");
+        arrow.type = "button";
+        arrow.className = "btn soft subgroup-arrow";
+        arrow.textContent = "▸";
+        arrow.style.width = "36px";
+        arrow.style.padding = "6px 8px";
+
+        const leftBox = group.querySelector(".ghead .left");
+        if (leftBox) {
+          leftBox.insertBefore(arrow, leftBox.firstChild);
+        }
+
+        function setCollapsed(value) {
+          collapsed = value;
+          bodyWrap.style.display = collapsed ? "none" : "";
+          arrow.textContent = collapsed ? "▸" : "▾";
+        }
+
+        arrow.addEventListener("click", () => {
+          setCollapsed(!collapsed);
+        });
+
+        if (titleInput) {
+          titleInput.addEventListener("click", () => {
+            setCollapsed(!collapsed);
+          });
+        }
+
+        if (ghead) {
+          ghead.style.cursor = "pointer";
+        }
 
         addBtn.addEventListener("click", () => {
           const titleText =
@@ -1414,6 +1460,8 @@
           const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
 
           addQuestion(stack, "", subgroupListId, false);
+
+          setCollapsed(false);
         });
 
         if (delBtn) {
@@ -1430,15 +1478,20 @@
             .querySelectorAll("input,button,textarea,select")
             .forEach((el) => {
               if (el === toggle) return;
+              if (el === arrow) return;
               el.disabled = !enabled;
             });
 
           if (delBtn) delBtn.disabled = false;
+          if (arrow) arrow.disabled = false;
         };
 
         toggle.addEventListener("change", update);
         update();
+
+        setCollapsed(true);
       }
+
       function addSubgroup(subgroupsRoot, data = {}, isDefault = false) {
         const tpl = document
           .getElementById("subgroup-template")

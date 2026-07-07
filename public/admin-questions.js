@@ -8,15 +8,14 @@ const btnAddQuestion = document.getElementById("btnAddQuestion");
 const btnClearDemo = document.getElementById("btnClearDemo");
 const questionTableBody = document.getElementById("questionTableBody");
 const searchQuestionInput = document.getElementById("searchQuestionInput");
-
 const sortQuestionSelect = document.getElementById("sortQuestionSelect");
 const categoryList = document.getElementById("categoryList");
 const checkAllQuestions = document.getElementById("checkAllQuestions");
 const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
 let allQuestions = [];
-let selectedCategory = "";
 let questionOptions = [];
+let selectedCategory = "";
 
 function guardAdmin() {
   if (role !== "admin") {
@@ -25,8 +24,8 @@ function guardAdmin() {
   }
 }
 
-function esc(s) {
-  return String(s ?? "")
+function esc(value) {
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -52,6 +51,14 @@ async function api(path, options = {}) {
   return json;
 }
 
+function getDisplayLabel(q) {
+  return String(q.display_used_in_label || q.used_in_label || "").trim();
+}
+
+function getDisplayCategory(q) {
+  return String(q.display_category || q.category_title || q.category || "อื่น ๆ").trim();
+}
+
 async function loadQuestionOptions() {
   questionOptions = await api(
     `/api/admin/question-options?role=${encodeURIComponent(role)}`,
@@ -63,11 +70,13 @@ async function loadQuestionOptions() {
       .map(
         (item) => `
           <option
-            value="${esc(item.datalist_id)}"
-            data-category="${esc(item.category)}"
-            data-used-in-label="${esc(item.used_in_label)}"
+            value="${esc(item.group_id || item.datalist_id)}"
+            data-group-id="${esc(item.group_id || "")}"
+            data-category="${esc(item.category_title || item.category || "")}"
+            data-used-in-label="${esc(item.used_in_label || "")}"
+            data-datalist-id="${esc(item.datalist_id || "")}"
           >
-            ${esc(item.used_in_label)}
+            ${esc(item.used_in_label || "")}
           </option>
         `,
       )
@@ -80,109 +89,75 @@ async function loadQuestions() {
     `/api/admin/questions?role=${encodeURIComponent(role)}`,
   );
 
-  renderCategoryList(allQuestions);
+  renderCategoryList();
   applyQuestionFilters();
 }
 
-function getQuestionCategory(q) {
-  const label = String(q.used_in_label || "").trim();
-
-  if (label.includes("ฝ่ายที่สังกัด") || label === "ฝ่ายที่สังกัด") {
-    return "ฝ่ายที่สังกัด";
-  }
-
-  if (label.includes("พันธกิจ")) {
-    return "พันธกิจศูนย์บรรณสาร";
-  }
-
-  if (label.includes("ยุทธศาสตร์มหาวิทยาลัย")) {
-    return "ยุทธศาสตร์มหาวิทยาลัย";
-  }
-
-  if (label.includes("ยุทธศาสตร์ศูนย์บรรณสาร")) {
-    return "ยุทธศาสตร์ศูนย์บรรณสาร";
-  }
-
-  if (label.includes("LibQUAL")) return "LibQUAL+TM";
-  if (label.includes("SERVQUAL")) return "SERVQUAL";
-  if (label.includes("WEBQUAL")) return "WEBQUAL";
-  if (label.includes("SiteQUAL")) return "SiteQUAL";
-  if (label.includes("EQUAL")) return "EQUAL";
-  if (label.includes("ความไม่พึงพอใจ")) return "ความไม่พึงพอใจ";
-  if (label.includes("ความผูกพัน")) return "ความผูกพัน";
-
-  return "อื่น ๆ";
-}
-
-function renderCategoryList(rows) {
+function renderCategoryList() {
   if (!categoryList) return;
 
-  const categories = [
-    "ทั้งหมด",
-    "ฝ่ายที่สังกัด",
-    "พันธกิจศูนย์บรรณสาร",
-    "ยุทธศาสตร์มหาวิทยาลัย",
-    "ยุทธศาสตร์ศูนย์บรรณสาร",
-    "LibQUAL+TM",
-    "SERVQUAL",
-    "WEBQUAL",
-    "SiteQUAL",
-    "EQUAL",
-    "ความไม่พึงพอใจ",
-    "ความผูกพัน",
-    "อื่น ๆ",
-  ];
+  const countMap = new Map();
 
-  const countMap = {};
-  rows.forEach((q) => {
-    const cat = getQuestionCategory(q);
-    countMap[cat] = (countMap[cat] || 0) + 1;
+  allQuestions.forEach((q) => {
+    const category = getDisplayCategory(q);
+    countMap.set(category, (countMap.get(category) || 0) + 1);
   });
 
-  categoryList.innerHTML = categories
-    .map((cat) => {
-      const value = cat === "ทั้งหมด" ? "" : cat;
-      const count = cat === "ทั้งหมด" ? rows.length : countMap[cat] || 0;
-      const active = selectedCategory === value ? "active" : "";
+  const categories = Array.from(countMap.keys()).sort((a, b) =>
+    a.localeCompare(b, "th"),
+  );
 
-      return `
-        <button
-          type="button"
-          class="category-btn ${active}"
-          data-category="${esc(value)}"
-        >
-          <span>${esc(cat)}</span>
-          <span class="category-count">${count}</span>
-        </button>
-      `;
-    })
-    .join("");
+  categoryList.innerHTML = `
+    <button
+      type="button"
+      class="category-btn ${selectedCategory === "" ? "active" : ""}"
+      data-category=""
+    >
+      <span>ทั้งหมด</span>
+      <span class="category-count">${allQuestions.length}</span>
+    </button>
+
+    ${categories
+      .map((cat) => {
+        const active = selectedCategory === cat ? "active" : "";
+
+        return `
+          <button
+            type="button"
+            class="category-btn ${active}"
+            data-category="${esc(cat)}"
+          >
+            <span>${esc(cat)}</span>
+            <span class="category-count">${countMap.get(cat) || 0}</span>
+          </button>
+        `;
+      })
+      .join("")}
+  `;
 
   categoryList.querySelectorAll(".category-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       selectedCategory = btn.dataset.category || "";
-      renderCategoryList(allQuestions);
+      renderCategoryList();
       applyQuestionFilters();
     });
   });
 }
 
 function applyQuestionFilters() {
-  const keyword = String(searchQuestionInput.value || "")
+  const keyword = String(searchQuestionInput?.value || "")
     .trim()
     .toLowerCase();
 
-  const sortType = String(sortQuestionSelect.value || "newest");
+  const sortType = String(sortQuestionSelect?.value || "newest");
 
-  let filtered = allQuestions.filter((q) => {
+  let rows = allQuestions.filter((q) => {
     const questionText = String(q.question_text || "").toLowerCase();
-    const usedInLabel = String(q.used_in_label || "").trim();
-    const category = getQuestionCategory(q);
+    const label = getDisplayLabel(q).toLowerCase();
+    const category = getDisplayCategory(q);
 
     const matchKeyword =
-      !keyword ||
-      questionText.includes(keyword) ||
-      usedInLabel.toLowerCase().includes(keyword);
+      !keyword || questionText.includes(keyword) || label.includes(keyword);
 
     const matchCategory = !selectedCategory || category === selectedCategory;
 
@@ -191,34 +166,32 @@ function applyQuestionFilters() {
 
   switch (sortType) {
     case "oldest":
-      filtered.sort((a, b) => a.id - b.id);
+      rows.sort((a, b) => Number(a.id) - Number(b.id));
       break;
-
     case "az":
-      filtered.sort((a, b) =>
+      rows.sort((a, b) =>
         String(a.question_text || "").localeCompare(
           String(b.question_text || ""),
           "th",
         ),
       );
       break;
-
     case "za":
-      filtered.sort((a, b) =>
+      rows.sort((a, b) =>
         String(b.question_text || "").localeCompare(
           String(a.question_text || ""),
           "th",
         ),
       );
       break;
-
     default:
-      filtered.sort((a, b) => b.id - a.id);
+      rows.sort((a, b) => Number(b.id) - Number(a.id));
       break;
   }
 
-  renderQuestions(filtered);
+  renderQuestions(rows);
 }
+
 function renderQuestions(rows) {
   if (checkAllQuestions) {
     checkAllQuestions.checked = false;
@@ -247,11 +220,21 @@ function renderQuestions(rows) {
           </td>
           <td>${index + 1}</td>
           <td>${esc(q.question_text)}</td>
-          <td>${esc(q.used_in_label)}</td>
-          <td><span class="badge ${esc(q.question_type)}">${esc(q.question_type)}</span></td>
+          <td>${esc(getDisplayLabel(q))}</td>
+          <td>
+            <span class="badge ${esc(q.question_type)}">
+              ${esc(q.question_type)}
+            </span>
+          </td>
           <td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
           <td>
-            <button class="btn danger" onclick="deleteQuestion(${q.id})">ลบ</button>
+            <button
+              type="button"
+              class="btn danger"
+              onclick="deleteQuestion(${q.id})"
+            >
+              ลบ
+            </button>
           </td>
         </tr>
       `;
@@ -263,26 +246,31 @@ async function addQuestion() {
   const selectedOption = usedInInput.options[usedInInput.selectedIndex];
 
   const question_text = questionInput.value.trim();
-  const datalist_id = usedInInput.value.trim();
-
-  const used_in_label = selectedOption?.dataset.usedInLabel || "";
+  const group_id = Number(selectedOption?.dataset.groupId || 0);
   const category = selectedOption?.dataset.category || "";
-
+  const used_in_label = selectedOption?.dataset.usedInLabel || "";
+  const datalist_id = selectedOption?.dataset.datalistId || "";
   const question_type = typeInput.value;
   const status = statusInput.value;
 
-  if (!question_text || !datalist_id || !used_in_label || !category) {
-    alert("กรุณากรอกคำถาม และเลือก Dropdown/หัวข้อ");
+  if (!question_text) {
+    alert("กรุณากรอกคำถาม");
+    return;
+  }
+
+  if (!group_id && (!category || !used_in_label || !datalist_id)) {
+    alert("กรุณาเลือก Dropdown/หัวข้อ");
     return;
   }
 
   await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
     method: "POST",
     body: JSON.stringify({
+      group_id: group_id || null,
       category,
-      question_text,
       used_in_label,
       datalist_id,
+      question_text,
       question_type,
       status,
     }),
@@ -292,6 +280,18 @@ async function addQuestion() {
   usedInInput.value = "";
   typeInput.value = "rating";
   statusInput.value = "active";
+
+  await loadQuestions();
+  alert("เพิ่มคำถามเรียบร้อย");
+}
+
+async function deleteQuestion(id) {
+  const ok = confirm("ต้องการลบคำถามนี้ใช่หรือไม่?");
+  if (!ok) return;
+
+  await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
+    method: "DELETE",
+  });
 
   await loadQuestions();
 }
@@ -310,10 +310,7 @@ async function deleteSelectedQuestions() {
     return;
   }
 
-  const ok = confirm(
-    `ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`,
-  );
-
+  const ok = confirm(`ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`);
   if (!ok) return;
 
   try {
@@ -328,8 +325,8 @@ async function deleteSelectedQuestions() {
       });
     }
 
-    alert("ลบคำถามที่เลือกเรียบร้อยแล้ว");
     await loadQuestions();
+    alert("ลบคำถามที่เลือกเรียบร้อยแล้ว");
   } catch (err) {
     alert(err.message || "ลบคำถามไม่สำเร็จ");
   } finally {
@@ -342,15 +339,21 @@ async function deleteSelectedQuestions() {
 
 window.deleteQuestion = deleteQuestion;
 
-btnAddQuestion.addEventListener("click", addQuestion);
+if (btnAddQuestion) {
+  btnAddQuestion.addEventListener("click", addQuestion);
+}
 
 if (btnClearDemo) {
   btnClearDemo.style.display = "none";
 }
 
-searchQuestionInput.addEventListener("input", applyQuestionFilters);
+if (searchQuestionInput) {
+  searchQuestionInput.addEventListener("input", applyQuestionFilters);
+}
 
-sortQuestionSelect.addEventListener("change", applyQuestionFilters);
+if (sortQuestionSelect) {
+  sortQuestionSelect.addEventListener("change", applyQuestionFilters);
+}
 
 if (checkAllQuestions) {
   checkAllQuestions.addEventListener("change", () => {

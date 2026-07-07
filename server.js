@@ -1901,7 +1901,10 @@ FROM survey_forms
           return;
         }
 
-        Object.entries(value).forEach(([k, v]) => walk(v, k));
+        Object.entries(value).forEach(([k, v]) => {
+          if (k === "dissatisfaction_text" || k === "suggestion") return;
+          walk(v, k);
+        });
       }
 
       walk(payload);

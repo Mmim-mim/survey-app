@@ -1472,6 +1472,12 @@
           questions.forEach((q, i) => {
             addQuestion(stack, q, subgroupListId, i < 2);
           });
+
+          const st = group.querySelector(".subtoggle");
+          if (st) {
+            st.checked = data.enabled !== false;
+            st.dispatchEvent(new Event("change"));
+          }
         } else {
           addQuestion(stack, "", subgroupListId, true);
           addQuestion(stack, "", subgroupListId, true);
@@ -1518,7 +1524,11 @@
         if (toggle) {
           // ให้ LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL แสดงชื่อ
           // แต่ปิดรายละเอียดไว้ก่อนเสมอ ตอนเปิดฟอร์ม
-          toggle.checked = false;
+          if (keepQuestions) {
+            toggle.checked = data.enabled !== false;
+          } else {
+            toggle.checked = false;
+          }
         }
 
         bindMainModel(block);

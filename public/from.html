@@ -1833,6 +1833,16 @@
           return false;
         }
 
+        // งบประมาณ
+        if (formData.budget_received !== "") {  
+          const budget = Number(formData.budget_received);
+
+          if (!Number.isFinite(budget) || budget < 0) {
+            showValidationPopup("กรุณากรอกงบประมาณเป็นตัวเลข 0 บาทขึ้นไป");
+            return false;
+          }
+        }
+
         // ข้อมูลประกอบโครงการ
         if (!formData.dept_name) {
           showValidationPopup("กรุณาเลือกฝ่ายที่สังกัด");

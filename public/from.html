@@ -1541,7 +1541,6 @@
               keepQuestions,
             ),
           );
-          
         } else {
           addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 1" }, true);
           addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 2" }, true);
@@ -1787,6 +1786,43 @@
         const month = date.getMonth() + 1;
 
         return month >= 10 ? String(yearBE + 1) : String(yearBE);
+      }
+
+      function validateBeforeSave(formData) {
+        // ชื่อโครงการ
+        if (!formData.form_title) {
+          alert("กรุณากรอกชื่อโครงการ");
+          return false;
+        }
+
+        // วันที่
+        if (formData.start_date && formData.end_date) {
+          if (formData.end_date < formData.start_date) {
+            alert("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น");
+            return false;
+          }
+        }
+
+        // ส่วนของคำถาม
+        if (formData.section2_enabled) {
+          const hasQuestion = formData.section2_models.some((model) => {
+            if (!model.enabled) return false;
+
+            return model.dimensions.some((dim) => {
+              if (!dim.enabled) return false;
+
+              return dim.questions.length > 0;
+            });
+          });
+
+          if (!hasQuestion) {
+            alert("กรุณาเลือกคำถามอย่างน้อย 1 ข้อ");
+
+            return false;
+          }
+        }
+
+        return true;
       }
 
       function buildFormPayload() {
@@ -2294,8 +2330,7 @@
 
             const formData = buildFormPayload();
 
-            if (!formData.form_title) {
-              alert("กรุณากรอกชื่อฟอร์ม");
+            if (!validateBeforeSave(formData)) {
               return;
             }
 

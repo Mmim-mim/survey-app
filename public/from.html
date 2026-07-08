@@ -1834,25 +1834,26 @@
         }
 
         // ข้อมูลประกอบโครงการ
-if (!formData.dept_name) {
-  showValidationPopup("กรุณาเลือกฝ่ายที่สังกัด");
-  return false;
-}
+        if (!formData.dept_name) {
+          showValidationPopup("กรุณาเลือกฝ่ายที่สังกัด");
+          return false;
+        }
 
-if (!formData.center_mission) {
-  showValidationPopup("กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
-  return false;
-}
+        if (!formData.center_mission) {
+          showValidationPopup("กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
+          return false;
+        }
 
-// if (!formData.uni_strategy) {
-//   showValidationPopup("กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
-//   return false;
-// }
+        // TODO: เปิดเมื่อเพิ่มข้อมูลยุทธศาสตร์มหาวิทยาลัยแล้ว
+        // if (!formData.uni_strategy) {
+        //   showValidationPopup("กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
+        //   return false;
+        // }
 
-if (!formData.center_strategy) {
-  showValidationPopup("กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ");
-  return false;
-}
+        if (!formData.center_strategy) {
+          showValidationPopup("กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ");
+          return false;
+        }
 
         // ส่วนของคำถาม
         if (formData.section2_enabled) {

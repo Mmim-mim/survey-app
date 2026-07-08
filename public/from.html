@@ -1833,6 +1833,27 @@
           return false;
         }
 
+        // ข้อมูลประกอบโครงการ
+if (!formData.dept_name) {
+  showValidationPopup("กรุณาเลือกฝ่ายที่สังกัด");
+  return false;
+}
+
+if (!formData.center_mission) {
+  showValidationPopup("กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
+  return false;
+}
+
+// if (!formData.uni_strategy) {
+//   showValidationPopup("กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
+//   return false;
+// }
+
+if (!formData.center_strategy) {
+  showValidationPopup("กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ");
+  return false;
+}
+
         // ส่วนของคำถาม
         if (formData.section2_enabled) {
           const hasQuestion = formData.section2_models.some((model) => {

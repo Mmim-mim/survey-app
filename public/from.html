@@ -1439,7 +1439,12 @@
         update();
       }
 
-      function addSubgroup(subgroupsRoot, data = {}, isDefault = false) {
+      function addSubgroup(
+        subgroupsRoot,
+        data = {},
+        isDefault = false,
+        keepQuestions = false,
+      ) {
         const tpl = document
           .getElementById("subgroup-template")
           .content.cloneNode(true);
@@ -1463,8 +1468,14 @@
           data.title || "",
         );
 
-        addQuestion(stack, "", subgroupListId, true);
-        addQuestion(stack, "", subgroupListId, true);
+        if (keepQuestions && questions.length) {
+          questions.forEach((q, i) => {
+            addQuestion(stack, q, subgroupListId, i < 2);
+          });
+        } else {
+          addQuestion(stack, "", subgroupListId, true);
+          addQuestion(stack, "", subgroupListId, true);
+        }
       }
 
       function bindMainModel(block) {
@@ -1490,7 +1501,7 @@
 
         update();
       }
-      function addMainModel(data = {}) {
+      function addMainModel(data = {}, keepQuestions = false) {
         const tpl = document
           .getElementById("main-model-template")
           .content.cloneNode(true);
@@ -1513,7 +1524,12 @@
         bindMainModel(block);
         if (Array.isArray(data.dimensions) && data.dimensions.length) {
           data.dimensions.forEach((dim, i) =>
-            addSubgroup(subgroupsRoot, dim, i < data.dimensions.length),
+            addSubgroup(
+              subgroupsRoot,
+              dim,
+              i < data.dimensions.length,
+              keepQuestions,
+            ),
           );
         } else {
           addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 1" }, true);
@@ -1844,7 +1860,7 @@
           Array.isArray(data.section2_models) &&
           data.section2_models.length
         ) {
-          data.section2_models.forEach((m) => addMainModel(m));
+          data.section2_models.forEach((m) => addMainModel(m, true));
         } else {
           defaultMainModels.forEach((m) => addMainModel(m));
         }

@@ -758,12 +758,45 @@
 
         width: 100%;
       }
+
+      /* ===== Inline Validation ===== */
+      .input-error {
+        border: 2px solid #dc2626 !important;
+        background: #fff8f8 !important;
+      }
+
+      .field-error-message {
+        width: 100%;
+        margin-top: 6px;
+        color: #dc2626;
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .validation-summary {
+        display: none;
+        margin: 0 0 16px;
+        padding: 14px 16px;
+        border: 1px solid #fecaca;
+        border-radius: 14px;
+        background: #fff1f2;
+        color: #991b1b;
+        font-weight: 800;
+      }
+
+      .validation-summary.show {
+        display: block;
+      }
     </style>
     <link rel="stylesheet" href="global.css" />
   </head>
 
   <body>
     <div class="wrap">
+      <div id="validationSummary" class="validation-summary">
+        กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน
+      </div>
       <form
         id="formSurvey"
         class="section"
@@ -878,7 +911,6 @@
                 type="number"
                 id="budget_received"
                 class="input"
-                min="0"
                 step="0.01"
                 placeholder="เช่น 10000"
               />
@@ -1810,80 +1842,182 @@
         return month >= 10 ? String(yearBE + 1) : String(yearBE);
       }
 
-      function validateBeforeSave(formData) {
-        // ชื่อโครงการ
-        if (!formData.form_title) {
-          showValidationPopup("กรุณากรอกชื่อโครงการ");
-          return false;
+      function clearAllFieldErrors() {
+        document.querySelectorAll(".input-error").forEach((el) => {
+          el.classList.remove("input-error");
+        });
+
+        document.querySelectorAll(".field-error-message").forEach((el) => {
+          el.remove();
+        });
+
+        const summary = document.getElementById("validationSummary");
+        if (summary) {
+          summary.classList.remove("show");
+          summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
+        }
+      }
+
+      function showFieldError(input, message) {
+        if (!input) return;
+
+        input.classList.add("input-error");
+
+        const next = input.nextElementSibling;
+
+        if (next && next.classList.contains("field-error-message")) {
+          next.remove();
         }
 
-        // วันที่เริ่มต้น
+        const error = document.createElement("div");
+        error.className = "field-error-message";
+        error.textContent = message;
+
+        input.insertAdjacentElement("afterend", error);
+      }
+
+      function focusFirstError() {
+        const firstError = document.querySelector(".input-error");
+
+        if (firstError) {
+          firstError.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          setTimeout(() => {
+            firstError.focus?.();
+          }, 250);
+        }
+      }
+
+      function showValidationSummary() {
+        const summary = document.getElementById("validationSummary");
+        if (!summary) return;
+
+        summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
+        summary.classList.add("show");
+
+        summary.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+
+      function validateBeforeSave(formData) {
+        clearAllFieldErrors();
+
+        let isValid = true;
+
+        const formTitleInput = document.querySelector('[name="form_title"]');
+        const startDateInput = document.getElementById("start_date");
+        const endDateInput = document.getElementById("end_date");
+        const goalInput = document.getElementById("goal_text");
+        const kpiQuantityInput = document.getElementById("kpi_quantity");
+        const kpiQualityInput = document.getElementById("kpi_quality");
+        const budgetInput = document.getElementById("budget_received");
+        const deptInput = document.getElementById("dept_name");
+        const missionInput = document.getElementById("center_mission");
+        const centerStrategyInput = document.getElementById("center_strategy");
+
+        if (!formData.form_title) {
+          showFieldError(formTitleInput, "กรุณากรอกชื่อโครงการ");
+          isValid = false;
+        }
+
         if (!formData.start_date) {
-          showValidationPopup("กรุณาเลือกวันที่เริ่มต้น");
-          return false;
+          showFieldError(startDateInput, "กรุณาเลือกวันที่เริ่มต้น");
+          isValid = false;
         }
 
         if (!formData.end_date) {
-          showValidationPopup("กรุณาเลือกวันที่สิ้นสุด");
-          return false;
+          showFieldError(endDateInput, "กรุณาเลือกวันที่สิ้นสุด");
+          isValid = false;
         }
 
-        if (formData.end_date < formData.start_date) {
-          showValidationPopup("วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น");
-          return false;
-        }
-
-        // งบประมาณ
-        if (formData.budget_received !== "") {  
-          const budget = Number(formData.budget_received);
-
-          if (!Number.isFinite(budget) || budget < 0) {
-            showValidationPopup("กรุณากรอกงบประมาณเป็นตัวเลข 0 บาทขึ้นไป");
-            return false;
+        if (formData.start_date && formData.end_date) {
+          if (formData.end_date < formData.start_date) {
+            showFieldError(
+              endDateInput,
+              "วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น",
+            );
+            isValid = false;
           }
         }
 
-        // ข้อมูลประกอบโครงการ
+        if (!formData.goal_text) {
+          showFieldError(goalInput, "กรุณากรอกเป้าหมายโครงการ");
+          isValid = false;
+        }
+
+        if (!formData.kpi_quantity) {
+          showFieldError(kpiQuantityInput, "กรุณากรอกตัวชี้วัดเชิงปริมาณ");
+          isValid = false;
+        }
+
+        if (!formData.kpi_quality) {
+          showFieldError(kpiQualityInput, "กรุณากรอกตัวชี้วัดเชิงคุณภาพ");
+          isValid = false;
+        }
+
+        const budget = Number(formData.budget_received);
+
+        if (formData.budget_received === "") {
+          showFieldError(budgetInput, "กรุณากรอกงบประมาณ");
+          isValid = false;
+        } else if (!Number.isFinite(budget) || budget < 0) {
+          showFieldError(budgetInput, "งบประมาณต้องมากกว่าหรือเท่ากับ 0 บาท");
+          isValid = false;
+        }
+
         if (!formData.dept_name) {
-          showValidationPopup("กรุณาเลือกฝ่ายที่สังกัด");
-          return false;
+          showFieldError(deptInput, "กรุณาเลือกฝ่ายที่สังกัด");
+          isValid = false;
         }
 
         if (!formData.center_mission) {
-          showValidationPopup("กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
-          return false;
+          showFieldError(missionInput, "กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
+          isValid = false;
         }
 
         // TODO: เปิดเมื่อเพิ่มข้อมูลยุทธศาสตร์มหาวิทยาลัยแล้ว
+        // const uniStrategyInput = document.getElementById("uni_strategy");
         // if (!formData.uni_strategy) {
-        //   showValidationPopup("กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
-        //   return false;
+        //   showFieldError(uniStrategyInput, "กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
+        //   isValid = false;
         // }
 
         if (!formData.center_strategy) {
-          showValidationPopup("กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ");
-          return false;
+          showFieldError(
+            centerStrategyInput,
+            "กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ",
+          );
+          isValid = false;
         }
 
-        // ส่วนของคำถาม
         if (formData.section2_enabled) {
           const hasQuestion = formData.section2_models.some((model) => {
             if (!model.enabled) return false;
 
             return model.dimensions.some((dim) => {
               if (!dim.enabled) return false;
-
               return dim.questions.length > 0;
             });
           });
 
           if (!hasQuestion) {
-            showValidationPopup("กรุณาเลือกคำถามอย่างน้อย 1 ข้อ");
-            return false;
+            const section2 = document.querySelector('.section[data-sec="s2"]');
+            showFieldError(section2, "กรุณาเลือกคำถามอย่างน้อย 1 ข้อ");
+            isValid = false;
           }
         }
 
-        return true;
+        if (!isValid) {
+          showValidationSummary();
+          focusFirstError();
+        }
+
+        return isValid;
       }
 
       function buildFormPayload() {
@@ -2353,6 +2487,16 @@
         };
       }
 
+      function clearFieldError(input) {
+        input.classList.remove("input-error");
+
+        const error = input.parentElement.querySelector(".error-message");
+
+        if (error) {
+          error.classList.remove("show");
+        }
+      }
+
       function showSaveSuccessPopup() {
         const popup = document.getElementById("saveSuccessOverlay");
 
@@ -2365,6 +2509,21 @@
       }
 
       window.addEventListener("DOMContentLoaded", async () => {
+        document.querySelectorAll("input, select, textarea").forEach((el) => {
+          el.addEventListener("input", () => {
+            el.classList.remove("input-error");
+
+            const parent = el.closest(".item") || el.parentElement;
+            parent?.querySelector(".field-error-message")?.remove();
+          });
+
+          el.addEventListener("change", () => {
+            el.classList.remove("input-error");
+
+            const parent = el.closest(".item") || el.parentElement;
+            parent?.querySelector(".field-error-message")?.remove();
+          });
+        });
         try {
           await loadSurveyStructureForForm();
           renderInitialSection2Models();

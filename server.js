@@ -216,41 +216,65 @@ app.get("/api/dashboard/options", async (req, res) => {
     const role = String(req.query.role || "staff").trim();
 
     let sql = `
-      SELECT id, created_at, created_by, form_title, payload_json
-      FROM submissions
-      WHERE 1=1
+      SELECT
+        s.id,
+        s.form_id,
+        s.created_at,
+        s.created_by,
+        s.form_title,
+        s.payload_json
+      FROM submissions s
+      WHERE 1 = 1
     `;
+
     const params = [];
 
     if (role !== "manager") {
       const [forms] = await pool.execute(
-        "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+        `SELECT id
+         FROM survey_forms
+         WHERE created_by_username = ?`,
         [username],
       );
 
-      const formTitles = forms
-        .map((f) => String(f.form_title || "").trim())
-        .filter(Boolean);
-      if (formTitles.length > 0) {
-        sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
-        params.push(...formTitles);
+      const formIds = forms
+        .map((form) => Number(form.id))
+        .filter(Number.isFinite);
+
+      if (formIds.length > 0) {
+        sql += `
+          AND s.form_id IN (
+            ${formIds.map(() => "?").join(",")}
+          )
+        `;
+
+        params.push(...formIds);
       } else {
         sql += ` AND 1 = 0 `;
       }
     }
 
-    sql += ` ORDER BY created_at DESC LIMIT 5000`;
+    sql += ` ORDER BY s.created_at DESC LIMIT 5000`;
 
     const [rows] = await pool.execute(sql, params);
 
-    const forms = new Set();
+    const forms = new Map();
     const years = new Set();
     const depts = new Set();
 
     for (const row of rows) {
-      if (row.form_title) forms.add(String(row.form_title).trim());
+      const formId = Number(row.form_id);
+      const formTitle = String(row.form_title || "").trim();
+
+      if (Number.isFinite(formId) && formTitle) {
+        forms.set(formId, {
+          id: formId,
+          title: formTitle,
+        });
+      }
 
       const parsed = parseSubmissionPayload(row.payload_json);
+
       if (parsed.fiscal_year) years.add(parsed.fiscal_year);
       if (parsed.dept) depts.add(parsed.dept);
     }
@@ -267,7 +291,9 @@ app.get("/api/dashboard/options", async (req, res) => {
     }
 
     res.json({
-      forms: Array.from(forms).sort((a, b) => a.localeCompare(b, "th")),
+      forms: Array.from(forms.values()).sort((a, b) =>
+        a.title.localeCompare(b.title, "th"),
+      ),
       fiscalYears: Array.from(years).sort((a, b) => b - a),
       depts: Array.from(depts).sort((a, b) => a.localeCompare(b, "th")),
     });
@@ -363,13 +389,12 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const username = String(req.query.username || "").trim();
     const role = String(req.query.role || "staff").trim();
 
-    const singleFormTitle = String(req.query.form_title || "").trim();
-
-    const selectedFormTitles = String(req.query.form_titles || "")
+    const selectedFormIds = String(
+      req.query.form_ids || req.query.form_id || "",
+    )
       .split(",")
-      .map((value) => value.trim())
-      .filter(Boolean);
-
+      .map((value) => Number(value))
+      .filter(Number.isFinite);
     const selectedFiscalYears = String(
       req.query.fiscal_years || req.query.fiscal_year || "",
     )
@@ -388,16 +413,16 @@ app.get("/api/dashboard/summary", async (req, res) => {
      * โหลด Submission ตามสิทธิ์และตัวกรอง
      */
     let submissionSql = `
-      SELECT
-        id,
-        created_at,
-        created_by,
-        form_title,
-        payload_json
-      FROM submissions
-      WHERE 1 = 1
-    `;
-
+  SELECT
+    form_id,
+    id,
+    created_at,
+    created_by,
+    form_title,
+    payload_json
+  FROM submissions
+  WHERE 1 = 1
+`;
     const submissionParams = [];
 
     /*
@@ -407,41 +432,38 @@ app.get("/api/dashboard/summary", async (req, res) => {
     if (role !== "manager") {
       const [ownedForms] = await pool.execute(
         `
-        SELECT form_title
-        FROM survey_forms
-        WHERE created_by_username = ?
-        `,
+  SELECT id
+  FROM survey_forms
+  WHERE created_by_username = ?
+  `,
         [username],
       );
 
-      const ownedFormTitles = ownedForms
-        .map((form) => String(form.form_title || "").trim())
-        .filter(Boolean);
+      const ownedFormIds = ownedForms
+        .map((form) => Number(form.id))
+        .filter(Number.isFinite);
 
-      if (ownedFormTitles.length > 0) {
+      if (ownedFormIds.length > 0) {
         submissionSql += `
-          AND form_title IN (
-            ${ownedFormTitles.map(() => "?").join(",")}
-          )
-        `;
+    AND form_id IN (
+      ${ownedFormIds.map(() => "?").join(",")}
+    )
+  `;
 
-        submissionParams.push(...ownedFormTitles);
+        submissionParams.push(...ownedFormIds);
       } else {
         submissionSql += ` AND 1 = 0 `;
       }
     }
 
-    if (selectedFormTitles.length > 0) {
+    if (selectedFormIds.length > 0) {
       submissionSql += `
-        AND form_title IN (
-          ${selectedFormTitles.map(() => "?").join(",")}
-        )
-      `;
+    AND form_id IN (
+      ${selectedFormIds.map(() => "?").join(",")}
+    )
+  `;
 
-      submissionParams.push(...selectedFormTitles);
-    } else if (singleFormTitle) {
-      submissionSql += ` AND form_title = ? `;
-      submissionParams.push(singleFormTitle);
+      submissionParams.push(...selectedFormIds);
     }
 
     if (dateFrom) {
@@ -485,6 +507,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
 
       filteredSubmissions.push({
         id: row.id,
+        form_id: row.form_id,
         created_at: row.created_at,
         created_by: row.created_by,
         form_title: row.form_title,
@@ -745,8 +768,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
       },
 
       filters: {
-        form_title: singleFormTitle,
-        form_titles: selectedFormTitles,
+        form_ids: selectedFormIds,
         date_from: dateFrom,
         date_to: dateTo,
         fiscal_years: selectedFiscalYears,
@@ -1680,15 +1702,9 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
     try {
       await conn.beginTransaction();
 
-      await conn.execute(
-        `DELETE FROM submissions WHERE form_id = ?`,
-        [id],
-      );
+      await conn.execute(`DELETE FROM submissions WHERE form_id = ?`, [id]);
 
-      await conn.execute(
-        `DELETE FROM survey_forms WHERE id = ?`,
-        [id],
-      );
+      await conn.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
 
       await conn.commit();
 

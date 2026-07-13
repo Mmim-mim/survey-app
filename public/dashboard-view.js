@@ -105,10 +105,15 @@ function getFiscalYearsParam() {
 function renderFormOptions(forms) {
   formOptions.innerHTML = (forms || [])
     .map(
-      (name) => `
+      (form) => `
         <label class="multi-option">
-          <input type="checkbox" class="form-check" value="${esc(name)}" />
-          <span>${esc(name)}</span>
+          <input
+            type="checkbox"
+            class="form-check"
+            value="${esc(form.id)}"
+            data-title="${esc(form.title)}"
+          />
+          <span>${esc(form.title)}</span>
         </label>
       `,
     )
@@ -123,14 +128,14 @@ function updateFormButtonText() {
   if (!selectedForms.length) {
     formMultiBtn.textContent = "ทั้งหมด";
   } else if (selectedForms.length === 1) {
-    formMultiBtn.textContent = selectedForms[0];
+    formMultiBtn.textContent = selectedForms[0].title;
   } else {
     formMultiBtn.textContent = `เลือก ${selectedForms.length} ฟอร์ม`;
   }
 }
 
 function getFormsParam() {
-  return selectedForms.join(",");
+  return selectedForms.map((form) => form.id).join(",");
 }
 
 yearMultiBtn.addEventListener("click", () => {
@@ -191,7 +196,12 @@ formAll.addEventListener("change", () => {
 formOptions.addEventListener("change", () => {
   const checks = [...formOptions.querySelectorAll(".form-check")];
 
-  selectedForms = checks.filter((c) => c.checked).map((c) => c.value);
+  selectedForms = checks
+    .filter((c) => c.checked)
+    .map((c) => ({
+      id: c.value,
+      title: c.dataset.title || "",
+    }));
 
   formAll.checked = selectedForms.length === 0;
 
@@ -369,11 +379,7 @@ const STANDARD_GROUPS = {
       title: "การใช้งาน (Usability)",
     },
     {
-      keys: [
-        "information quality",
-        "infomation quality",
-        "คุณภาพของข้อมูล",
-      ],
+      keys: ["information quality", "infomation quality", "คุณภาพของข้อมูล"],
       title: "คุณภาพของข้อมูล (Information Quality)",
     },
     {
@@ -400,10 +406,7 @@ const STANDARD_GROUPS = {
       title: "ความเร็วในการประมวลผล (Processing Speed)",
     },
     {
-      keys: [
-        "interactive responsiveness",
-        "การตอบสนองแบบโต้ตอบ",
-      ],
+      keys: ["interactive responsiveness", "การตอบสนองแบบโต้ตอบ"],
       title: "การตอบสนอง (Interactive Responsiveness)",
     },
   ],
@@ -523,10 +526,7 @@ function renderTable(rows) {
   const visibleRows = [];
 
   for (const row of rows) {
-    const resolved = resolveStandardGroup(
-      row.model_title,
-      row.group_title,
-    );
+    const resolved = resolveStandardGroup(row.model_title, row.group_title);
 
     if (!resolved) continue;
 
@@ -580,20 +580,14 @@ function renderTable(rows) {
 
       const groupAverage = totalCount
         ? groupRows.reduce(
-            (sum, row) =>
-              sum +
-              Number(row.avg || 0) *
-                Number(row.count || 0),
+            (sum, row) => sum + Number(row.avg || 0) * Number(row.count || 0),
             0,
           ) / totalCount
         : 0;
 
       const groupSd = totalCount
         ? groupRows.reduce(
-            (sum, row) =>
-              sum +
-              Number(row.sd || 0) *
-                Number(row.count || 0),
+            (sum, row) => sum + Number(row.sd || 0) * Number(row.count || 0),
             0,
           ) / totalCount
         : 0;
@@ -641,20 +635,14 @@ function renderTable(rows) {
 
   const weightedAvg = totalCount
     ? visibleRows.reduce(
-        (sum, row) =>
-          sum +
-          Number(row.avg || 0) *
-            Number(row.count || 0),
+        (sum, row) => sum + Number(row.avg || 0) * Number(row.count || 0),
         0,
       ) / totalCount
     : 0;
 
   const weightedSd = totalCount
     ? visibleRows.reduce(
-        (sum, row) =>
-          sum +
-          Number(row.sd || 0) *
-            Number(row.count || 0),
+        (sum, row) => sum + Number(row.sd || 0) * Number(row.count || 0),
         0,
       ) / totalCount
     : 0;
@@ -672,8 +660,7 @@ function renderTable(rows) {
   }
 
   if (tableFooterCount) {
-    tableFooterCount.textContent =
-      totalCount.toLocaleString("th-TH");
+    tableFooterCount.textContent = totalCount.toLocaleString("th-TH");
   }
 }
 
@@ -727,7 +714,7 @@ async function loadSummary() {
   const qs = new URLSearchParams({
     username,
     role,
-    form_titles: getFormsParam(),
+    form_ids: getFormsParam(),
     fiscal_years: getFiscalYearsParam(),
     dept: fDept.value,
 
@@ -744,7 +731,7 @@ async function loadSummary() {
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
   sForm.textContent = selectedForms.length
-    ? selectedForms.join(", ")
+    ? selectedForms.map((form) => form.title).join(", ")
     : "ทั้งหมด";
   sYear.textContent = selectedYears.length
     ? selectedYears.join(", ")

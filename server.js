@@ -990,6 +990,7 @@ app.put("/api/forms/:id", async (req, res) => {
       end_date,
       fiscal_year,
       budget_received,
+      attachment_url,
 
       form,
     } = req.body || {};
@@ -1041,11 +1042,10 @@ app.put("/api/forms/:id", async (req, res) => {
            kpi_quality = ?,
            start_date = ?,
            end_date = ?,
-           fiscal_year = ?,
-          budget_received = ?,
-
-
-            form_json = ?
+                      fiscal_year = ?,
+           budget_received = ?,
+           attachment_url = ?,
+           form_json = ?
        WHERE id = ?`,
       [
         form_title || null,
@@ -1060,7 +1060,7 @@ app.put("/api/forms/:id", async (req, res) => {
         end_date || null,
         fiscal_year || null,
         budget_received || null,
-
+        attachment_url || null,
         form_json,
         id,
       ],

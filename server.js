@@ -229,11 +229,11 @@ app.get("/api/dashboard/options", async (req, res) => {
 
     const params = [];
 
-    if (role !== "manager") {
+    if (role === "staff") {
       const [forms] = await pool.execute(
         `SELECT id
-         FROM survey_forms
-         WHERE created_by_username = ?`,
+     FROM survey_forms
+     WHERE created_by_username = ?`,
         [username],
       );
 
@@ -243,17 +243,57 @@ app.get("/api/dashboard/options", async (req, res) => {
 
       if (formIds.length > 0) {
         sql += `
-          AND s.form_id IN (
-            ${formIds.map(() => "?").join(",")}
-          )
-        `;
+      AND s.form_id IN (
+        ${formIds.map(() => "?").join(",")}
+      )
+    `;
 
         params.push(...formIds);
       } else {
         sql += ` AND 1 = 0 `;
       }
-    }
+    } else if (role === "manager") {
+      const [userRows] = await pool.execute(
+        `SELECT dept_name
+     FROM users
+     WHERE username = ?
+     LIMIT 1`,
+        [username],
+      );
 
+      const managerDept = String(userRows[0]?.dept_name || "").trim();
+
+      if (!managerDept) {
+        sql += ` AND 1 = 0 `;
+      } else {
+        const [forms] = await pool.execute(
+          `SELECT id
+       FROM survey_forms
+       WHERE dept_name = ?`,
+          [managerDept],
+        );
+
+        const formIds = forms
+          .map((form) => Number(form.id))
+          .filter(Number.isFinite);
+
+        if (formIds.length > 0) {
+          sql += `
+        AND s.form_id IN (
+          ${formIds.map(() => "?").join(",")}
+        )
+      `;
+
+          params.push(...formIds);
+        } else {
+          sql += ` AND 1 = 0 `;
+        }
+      }
+    } else if (role === "admin" || role === "public") {
+      // เห็นข้อมูลภาพรวมทั้งหมด
+    } else {
+      sql += ` AND 1 = 0 `;
+    }
     sql += ` ORDER BY s.created_at DESC LIMIT 5000`;
 
     const [rows] = await pool.execute(sql, params);
@@ -424,36 +464,73 @@ app.get("/api/dashboard/summary", async (req, res) => {
   WHERE 1 = 1
 `;
     const submissionParams = [];
-
     /*
-     * Public Dashboard ส่ง role=manager
-     * เพื่อดูภาพรวมทั้งหมด
+     * จำกัดข้อมูล Dashboard ตามสิทธิ์ผู้ใช้
      */
-    if (role !== "manager") {
-      const [ownedForms] = await pool.execute(
-        `
-  SELECT id
-  FROM survey_forms
-  WHERE created_by_username = ?
-  `,
+    if (role === "staff") {
+      const [forms] = await pool.execute(
+        `SELECT id
+     FROM survey_forms
+     WHERE created_by_username = ?`,
         [username],
       );
 
-      const ownedFormIds = ownedForms
+      const formIds = forms
         .map((form) => Number(form.id))
         .filter(Number.isFinite);
 
-      if (ownedFormIds.length > 0) {
+      if (formIds.length > 0) {
         submissionSql += `
-    AND form_id IN (
-      ${ownedFormIds.map(() => "?").join(",")}
-    )
-  `;
+      AND form_id IN (
+        ${formIds.map(() => "?").join(",")}
+      )
+    `;
 
-        submissionParams.push(...ownedFormIds);
+        submissionParams.push(...formIds);
       } else {
         submissionSql += ` AND 1 = 0 `;
       }
+    } else if (role === "manager") {
+      const [userRows] = await pool.execute(
+        `SELECT dept_name
+     FROM users
+     WHERE username = ?
+     LIMIT 1`,
+        [username],
+      );
+
+      const managerDept = String(userRows[0]?.dept_name || "").trim();
+
+      if (!managerDept) {
+        submissionSql += ` AND 1 = 0 `;
+      } else {
+        const [forms] = await pool.execute(
+          `SELECT id
+       FROM survey_forms
+       WHERE dept_name = ?`,
+          [managerDept],
+        );
+
+        const formIds = forms
+          .map((form) => Number(form.id))
+          .filter(Number.isFinite);
+
+        if (formIds.length > 0) {
+          submissionSql += `
+        AND form_id IN (
+          ${formIds.map(() => "?").join(",")}
+        )
+      `;
+
+          submissionParams.push(...formIds);
+        } else {
+          submissionSql += ` AND 1 = 0 `;
+        }
+      }
+    } else if (role === "admin" || role === "public") {
+      // เห็นข้อมูลภาพรวมทั้งหมด
+    } else {
+      submissionSql += ` AND 1 = 0 `;
     }
 
     if (selectedFormIds.length > 0) {
@@ -1162,37 +1239,111 @@ app.delete("/api/forms/:id", async (req, res) => {
 // 1) OPTIONS
 app.get("/api/strategy-dashboard/options", async (req, res) => {
   try {
-    const [rows] = await pool.execute(`
-      SELECT uni_strategy, center_strategy
+    const username = String(req.query.username || "").trim();
+    const role = String(req.query.role || "staff").trim();
+
+    let formSql = `
+      SELECT
+        id,
+        uni_strategy,
+        center_strategy
       FROM survey_forms
-    `);
+      WHERE 1 = 1
+    `;
+
+    const formParams = [];
+
+    if (role === "staff") {
+      formSql += ` AND created_by_username = ? `;
+      formParams.push(username);
+    } else if (role === "manager") {
+      const [userRows] = await pool.execute(
+        `SELECT dept_name
+         FROM users
+         WHERE username = ?
+         LIMIT 1`,
+        [username],
+      );
+
+      const managerDept = String(userRows[0]?.dept_name || "").trim();
+
+      if (!managerDept) {
+        formSql += ` AND 1 = 0 `;
+      } else {
+        formSql += ` AND dept_name = ? `;
+        formParams.push(managerDept);
+      }
+    } else if (role === "admin" || role === "public") {
+      // เห็นข้อมูลภาพรวมทั้งหมด
+    } else {
+      formSql += ` AND 1 = 0 `;
+    }
+
+    const [rows] = await pool.execute(formSql, formParams);
+
+    const formIds = rows.map((row) => Number(row.id)).filter(Number.isFinite);
 
     const uniSet = new Set();
     const centerSet = new Set();
 
-    for (const r of rows) {
-      if (r.uni_strategy) uniSet.add(String(r.uni_strategy).trim());
-      if (r.center_strategy) centerSet.add(String(r.center_strategy).trim());
+    for (const row of rows) {
+      if (row.uni_strategy) {
+        uniSet.add(String(row.uni_strategy).trim());
+      }
+
+      if (row.center_strategy) {
+        centerSet.add(String(row.center_strategy).trim());
+      }
     }
 
-    const [submissionRows] = await pool.execute(`
-  SELECT payload_json, created_at
-  FROM submissions
-  ORDER BY created_at DESC
-`);
+    let submissionSql = `
+      SELECT
+        form_id,
+        payload_json,
+        created_at
+      FROM submissions
+      WHERE 1 = 1
+    `;
+
+    const submissionParams = [];
+
+    if (formIds.length > 0) {
+      submissionSql += `
+        AND form_id IN (
+          ${formIds.map(() => "?").join(",")}
+        )
+      `;
+
+      submissionParams.push(...formIds);
+    } else {
+      submissionSql += ` AND 1 = 0 `;
+    }
+
+    submissionSql += ` ORDER BY created_at DESC `;
+
+    const [submissionRows] = await pool.execute(
+      submissionSql,
+      submissionParams,
+    );
 
     const yearSet = new Set();
 
-    for (const s of submissionRows) {
-      const p = safeJsonParse(s.payload_json) || {};
-      let year = Number(p.fiscal_year);
+    for (const submission of submissionRows) {
+      const payload = safeJsonParse(submission.payload_json) || {};
+
+      let year = Number(payload.fiscal_year);
 
       if (!Number.isFinite(year) || !year) {
-        const d = new Date(s.created_at);
-        if (!isNaN(d)) year = d.getFullYear() + 543;
+        const date = new Date(submission.created_at);
+
+        if (!isNaN(date)) {
+          year = date.getFullYear() + 543;
+        }
       }
 
-      if (year) yearSet.add(year);
+      if (year) {
+        yearSet.add(year);
+      }
     }
 
     res.json({
@@ -1274,17 +1425,38 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
         f.uni_strategy,
         f.center_strategy
       FROM submissions s
-      LEFT JOIN survey_forms f
-        ON LOWER(TRIM(s.form_title)) = LOWER(TRIM(f.form_title))
-      WHERE 1=1
+LEFT JOIN survey_forms f
+  ON s.form_id = f.id
+WHERE 1=1
     `;
 
     const params = [];
 
-    // staff เห็นเฉพาะฟอร์มตัวเอง / manager เห็นทั้งหมด
-    if (role !== "manager") {
+    // จำกัดข้อมูล Strategy Dashboard ตามสิทธิ์ผู้ใช้
+    if (role === "staff") {
       sql += ` AND f.created_by_username = ? `;
       params.push(username);
+    } else if (role === "manager") {
+      const [userRows] = await pool.execute(
+        `SELECT dept_name
+     FROM users
+     WHERE username = ?
+     LIMIT 1`,
+        [username],
+      );
+
+      const managerDept = String(userRows[0]?.dept_name || "").trim();
+
+      if (!managerDept) {
+        sql += ` AND 1 = 0 `;
+      } else {
+        sql += ` AND f.dept_name = ? `;
+        params.push(managerDept);
+      }
+    } else if (role === "admin" || role === "public") {
+      // เห็นข้อมูลภาพรวมทั้งหมด
+    } else {
+      sql += ` AND 1 = 0 `;
     }
 
     // filter strategy แบบ multi-select
@@ -1361,12 +1533,13 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
     const formsByYearMap = new Map();
 
     for (const r of filtered) {
+      const formId = Number(r.form_id);
       const formTitle = r.form_title || "-";
       const year = r.fiscal_year || "-";
       const uni = r.uni_strategy || "-";
       const center = r.center_strategy || "-";
 
-      const tableKey = `${formTitle}__${uni}__${center}__${year}`;
+      const tableKey = `${formId}__${uni}__${center}__${year}`;
 
       if (!tableMap.has(tableKey)) {
         tableMap.set(tableKey, {
@@ -1444,7 +1617,9 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
 
     res.json({
       kpi: {
-        forms: new Set(filtered.map((r) => r.form_title)).size,
+        forms: new Set(
+          filtered.map((r) => Number(r.form_id)).filter(Number.isFinite),
+        ).size,
         respondents: filtered.length,
         avgSatisfaction: Number(avgNum(allScores).toFixed(2)),
         totalComments: comments.length,

@@ -95,10 +95,15 @@ function getFiscalYearsParam() {
 function renderFormOptions(forms) {
   formOptions.innerHTML = (forms || [])
     .map(
-      (name) => `
+      (form) => `
         <label class="multi-option">
-          <input type="checkbox" class="form-check" value="${esc(name)}" />
-          <span>${esc(name)}</span>
+          <input
+            type="checkbox"
+            class="form-check"
+            value="${esc(form.id)}"
+            data-title="${esc(form.title)}"
+          />
+          <span>${esc(form.title)}</span>
         </label>
       `,
     )
@@ -113,14 +118,14 @@ function updateFormButtonText() {
   if (!selectedForms.length) {
     formMultiBtn.textContent = "ทั้งหมด";
   } else if (selectedForms.length === 1) {
-    formMultiBtn.textContent = selectedForms[0];
+    formMultiBtn.textContent = selectedForms[0].title;
   } else {
     formMultiBtn.textContent = `เลือก ${selectedForms.length} ฟอร์ม`;
   }
 }
 
 function getFormsParam() {
-  return selectedForms.join(",");
+  return selectedForms.map((form) => form.id).join(",");
 }
 
 yearMultiBtn.addEventListener("click", () => {
@@ -181,7 +186,12 @@ formAll.addEventListener("change", () => {
 formOptions.addEventListener("change", () => {
   const checks = [...formOptions.querySelectorAll(".form-check")];
 
-  selectedForms = checks.filter((c) => c.checked).map((c) => c.value);
+  selectedForms = checks
+    .filter((c) => c.checked)
+    .map((c) => ({
+      id: c.value,
+      title: c.dataset.title || "",
+    }));
 
   formAll.checked = selectedForms.length === 0;
 
@@ -368,7 +378,7 @@ async function loadSummary() {
   const qs = new URLSearchParams({
     username,
     role,
-    form_titles: getFormsParam(),
+    form_ids: getFormsParam(),
     fiscal_years: getFiscalYearsParam(),
     dept: fDept.value,
 
@@ -385,7 +395,7 @@ async function loadSummary() {
   kpiComments.textContent = json.kpi?.totalComments || 0;
 
   sForm.textContent = selectedForms.length
-    ? selectedForms.join(", ")
+    ? selectedForms.map((form) => form.title).join(", ")
     : "ทั้งหมด";
   sYear.textContent = selectedYears.length
     ? selectedYears.join(", ")

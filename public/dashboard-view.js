@@ -41,7 +41,7 @@ const summaryTableBody = document.getElementById("summaryTableBody");
 const commentList = document.getElementById("commentList");
 
 const username = "";
-const role = "manager";
+const role = "public";
 
 if (kpiRole) kpiRole.textContent = "public";
 

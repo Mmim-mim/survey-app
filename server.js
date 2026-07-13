@@ -1110,9 +1110,24 @@ app.delete("/api/forms/:id", async (req, res) => {
       });
     }
 
-    await pool.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
+    const conn = await pool.getConnection();
 
-    res.json({ ok: true });
+    try {
+      await conn.beginTransaction();
+
+      await conn.execute(`DELETE FROM submissions WHERE form_id = ?`, [id]);
+
+      await conn.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
+
+      await conn.commit();
+
+      res.json({ ok: true });
+    } catch (error) {
+      await conn.rollback();
+      throw error;
+    } finally {
+      conn.release();
+    }
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -1649,6 +1664,7 @@ app.get("/api/admin/forms", async (req, res) => {
 });
 
 // ลบฟอร์ม
+// ลบฟอร์ม
 app.delete("/api/admin/forms/:id", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
@@ -1659,14 +1675,34 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
       return res.status(400).json({ error: "id ไม่ถูกต้อง" });
     }
 
-    await pool.execute(`DELETE FROM survey_forms WHERE id = ?`, [id]);
+    const conn = await pool.getConnection();
 
-    res.json({ ok: true });
+    try {
+      await conn.beginTransaction();
+
+      await conn.execute(
+        `DELETE FROM submissions WHERE form_id = ?`,
+        [id],
+      );
+
+      await conn.execute(
+        `DELETE FROM survey_forms WHERE id = ?`,
+        [id],
+      );
+
+      await conn.commit();
+
+      res.json({ ok: true });
+    } catch (error) {
+      await conn.rollback();
+      throw error;
+    } finally {
+      conn.release();
+    }
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
-
 /** -----------------------------
  *  QUESTION BANK API
  *  Hybrid Mode:

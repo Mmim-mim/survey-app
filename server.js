@@ -2021,11 +2021,11 @@ FROM survey_forms
     const formTitle = form.form_title || "";
 
     const [subs] = await pool.execute(
-      `SELECT id, created_at, created_by, form_title, payload_json
-       FROM submissions
-       WHERE form_title = ?
-       ORDER BY created_at DESC`,
-      [formTitle],
+      `SELECT id, form_id, created_at, created_by, form_title, payload_json
+   FROM submissions
+   WHERE form_id = ?
+   ORDER BY created_at DESC`,
+      [formId],
     );
 
     const allScores = [];

@@ -167,14 +167,23 @@ app.post("/api/login", async (req, res) => {
  * ----------------------------- */
 app.post("/api/submissions", async (req, res) => {
   try {
-    const { created_by, form_title, payload } = req.body;
-    if (!payload) return res.status(400).json({ error: "payload is required" });
+    const { form_id, created_by, form_title, payload } = req.body;
+
+    if (!form_id) {
+      return res.status(400).json({ error: "form_id is required" });
+    }
+
+    if (!payload) {
+      return res.status(400).json({ error: "payload is required" });
+    }
 
     const payload_json = JSON.stringify(payload);
 
     const [result] = await pool.execute(
-      "INSERT INTO submissions (created_by, form_title, payload_json) VALUES (?, ?, ?)",
-      [created_by || null, form_title || null, payload_json],
+      `INSERT INTO submissions
+        (form_id, created_by, form_title, payload_json)
+       VALUES (?, ?, ?, ?)`,
+      [form_id, created_by || null, form_title || null, payload_json],
     );
 
     res.json({ ok: true, id: result.insertId });
@@ -267,80 +276,214 @@ app.get("/api/dashboard/options", async (req, res) => {
   }
 });
 
+function normalizeQuestionText(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLowerCase();
+}
+
+function splitLegacyQuestionPath(value) {
+  const parts = String(value || "")
+    .split(">")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return {
+    model_title: parts[0] || "",
+    group_title: parts.slice(1).join(" > ") || "",
+  };
+}
+
+function getRatingQuestionText(rating) {
+  return String(
+    rating?.questionText ||
+      rating?.question_text ||
+      rating?.question ||
+      rating?.label ||
+      rating?.title ||
+      "",
+  ).trim();
+}
+
+function getRatingValue(rating) {
+  const value = Number(
+    rating?.value ?? rating?.score ?? rating?.rating ?? rating?.answer_score,
+  );
+
+  return Number.isFinite(value) ? value : null;
+}
+
+function formatDashboardGroupTitle(groupTitle) {
+  const raw = String(groupTitle || "").trim();
+  const key = raw.toLowerCase();
+
+  const titleMap = {
+    "affect of service": "ความรู้สึกที่มีต่อบริการ (Affect of Service)",
+
+    "information control": "การควบคุมสารสนเทศ (Information Control)",
+
+    "library as place": "ลักษณะกายภาพของห้องสมุด (Library as Place)",
+
+    tangibles: "ลักษณะทางกายภาพ (Tangibles)",
+
+    reliability: "ความน่าเชื่อถือ (Reliability)",
+
+    responsiveness: "การตอบสนองของพนักงาน (Responsiveness)",
+
+    assurance: "ความไว้วางใจ (Assurance)",
+
+    empathy: "การเอาใจใส่ (Empathy)",
+
+    usability: "การใช้งาน (Usability)",
+
+    "information quality": "คุณภาพของข้อมูล (Information Quality)",
+
+    "service interaction": "ปฏิสัมพันธ์ด้านบริการ (Service Interaction)",
+
+    "ease of use": "การใช้งานง่าย (Ease of Use)",
+
+    "aesthetic design": "การออกแบบที่สวยงาม (Aesthetic Design)",
+
+    "processing speed": "ความเร็วในการประมวลผล (Processing Speed)",
+
+    efficiency: "ประสิทธิภาพ (Efficiency)",
+
+    "system availability": "ความพร้อมของระบบ (System Availability)",
+
+    fulfillment: "การปฏิบัติตามสัญญา (Fulfillment)",
+
+    privacy: "ความเป็นส่วนตัว (Privacy)",
+  };
+
+  return titleMap[key] || raw || "หัวข้อทั่วไป";
+}
 app.get("/api/dashboard/summary", async (req, res) => {
   try {
     const username = String(req.query.username || "").trim();
     const role = String(req.query.role || "staff").trim();
 
-    const formTitle = String(req.query.form_title || "").trim();
+    const singleFormTitle = String(req.query.form_title || "").trim();
 
-    const formTitles = String(req.query.form_titles || "")
+    const selectedFormTitles = String(req.query.form_titles || "")
       .split(",")
-      .map((v) => v.trim())
+      .map((value) => value.trim())
       .filter(Boolean);
 
+    const selectedFiscalYears = String(
+      req.query.fiscal_years || req.query.fiscal_year || "",
+    )
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map(Number)
+      .filter(Number.isFinite);
     const dateFrom = String(req.query.date_from || "").trim();
+
     const dateTo = String(req.query.date_to || "").trim();
-    const fiscalYear = req.query.fiscal_year
-      ? Number(req.query.fiscal_year)
-      : null;
-    const deptQ = String(req.query.dept || "").trim();
 
-    let sql = `
-      SELECT id, created_at, created_by, form_title, payload_json
+    const deptFilter = String(req.query.dept || "").trim();
+
+    /*
+     * โหลด Submission ตามสิทธิ์และตัวกรอง
+     */
+    let submissionSql = `
+      SELECT
+        id,
+        created_at,
+        created_by,
+        form_title,
+        payload_json
       FROM submissions
-      WHERE 1=1
+      WHERE 1 = 1
     `;
-    const params = [];
 
+    const submissionParams = [];
+
+    /*
+     * Public Dashboard ส่ง role=manager
+     * เพื่อดูภาพรวมทั้งหมด
+     */
     if (role !== "manager") {
-      const [forms] = await pool.execute(
-        "SELECT form_title FROM survey_forms WHERE created_by_username = ?",
+      const [ownedForms] = await pool.execute(
+        `
+        SELECT form_title
+        FROM survey_forms
+        WHERE created_by_username = ?
+        `,
         [username],
       );
 
-      const formTitles = forms
-        .map((f) => String(f.form_title || "").trim())
+      const ownedFormTitles = ownedForms
+        .map((form) => String(form.form_title || "").trim())
         .filter(Boolean);
 
-      if (formTitles.length > 0) {
-        sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
-        params.push(...formTitles);
+      if (ownedFormTitles.length > 0) {
+        submissionSql += `
+          AND form_title IN (
+            ${ownedFormTitles.map(() => "?").join(",")}
+          )
+        `;
+
+        submissionParams.push(...ownedFormTitles);
       } else {
-        sql += ` AND 1 = 0 `;
+        submissionSql += ` AND 1 = 0 `;
       }
     }
 
-    if (formTitles.length) {
-      sql += ` AND form_title IN (${formTitles.map(() => "?").join(",")}) `;
-      params.push(...formTitles);
-    } else if (formTitle) {
-      sql += ` AND form_title = ? `;
-      params.push(formTitle);
+    if (selectedFormTitles.length > 0) {
+      submissionSql += `
+        AND form_title IN (
+          ${selectedFormTitles.map(() => "?").join(",")}
+        )
+      `;
+
+      submissionParams.push(...selectedFormTitles);
+    } else if (singleFormTitle) {
+      submissionSql += ` AND form_title = ? `;
+      submissionParams.push(singleFormTitle);
     }
 
     if (dateFrom) {
-      sql += ` AND DATE(created_at) >= ? `;
-      params.push(dateFrom);
+      submissionSql += ` AND DATE(created_at) >= ? `;
+      submissionParams.push(dateFrom);
     }
 
     if (dateTo) {
-      sql += ` AND DATE(created_at) <= ? `;
-      params.push(dateTo);
+      submissionSql += ` AND DATE(created_at) <= ? `;
+      submissionParams.push(dateTo);
     }
 
-    sql += ` ORDER BY created_at DESC LIMIT 5000`;
+    submissionSql += `
+      ORDER BY created_at DESC
+      LIMIT 5000
+    `;
 
-    const [rows] = await pool.execute(sql, params);
+    const [submissionRows] = await pool.execute(
+      submissionSql,
+      submissionParams,
+    );
 
-    const filtered = [];
-    for (const row of rows) {
+    /*
+     * แปลง Payload และกรองปี/หน่วยงาน
+     */
+    const filteredSubmissions = [];
+
+    for (const row of submissionRows) {
       const parsed = parseSubmissionPayload(row.payload_json);
 
-      if (fiscalYear && parsed.fiscal_year !== fiscalYear) continue;
-      if (deptQ && parsed.dept !== deptQ) continue;
+      if (
+        selectedFiscalYears.length > 0 &&
+        !selectedFiscalYears.includes(Number(parsed.fiscal_year))
+      ) {
+        continue;
+      }
 
-      filtered.push({
+      if (deptFilter && String(parsed.dept || "").trim() !== deptFilter) {
+        continue;
+      }
+
+      filteredSubmissions.push({
         id: row.id,
         created_at: row.created_at,
         created_by: row.created_by,
@@ -349,112 +492,290 @@ app.get("/api/dashboard/summary", async (req, res) => {
       });
     }
 
-    const respondentCount = filtered.length;
+    /*
+     * สร้าง Lookup:
+     * ข้อความคำถาม → Model → Group
+     */
+    const [questionRows] = await pool.execute(`
+      SELECT
+        q.question_text,
+        q.category,
+        q.used_in_label,
+
+        g.title AS group_title,
+        c.title AS category_title
+
+      FROM question_bank q
+
+      LEFT JOIN survey_question_groups g
+        ON q.group_id = g.id
+
+      LEFT JOIN survey_question_categories c
+        ON g.category_id = c.id
+
+      WHERE q.status = 'active'
+    `);
+
+    const questionStructureMap = new Map();
+
+    for (const row of questionRows) {
+      const questionKey = normalizeQuestionText(row.question_text);
+
+      if (!questionKey) continue;
+
+      let modelTitle = String(row.category_title || "").trim();
+
+      let groupTitle = String(row.group_title || "").trim();
+
+      /*
+       * รองรับข้อมูลเก่า:
+       * LibQUAL+TM > Affect of Service
+       */
+      if (!modelTitle || !groupTitle) {
+        const legacyPath =
+          String(row.used_in_label || "").trim() ||
+          String(row.category || "").trim();
+
+        const parsedPath = splitLegacyQuestionPath(legacyPath);
+
+        if (!modelTitle) {
+          modelTitle = parsedPath.model_title;
+        }
+
+        if (!groupTitle) {
+          groupTitle = parsedPath.group_title;
+        }
+      }
+
+      if (!modelTitle) {
+        modelTitle = "แบบประเมินทั่วไป";
+      }
+
+      groupTitle = formatDashboardGroupTitle(groupTitle);
+
+      if (!questionStructureMap.has(questionKey)) {
+        questionStructureMap.set(questionKey, {
+          model_title: modelTitle,
+          group_title: groupTitle,
+        });
+      }
+    }
+
+    function resolveRatingStructure(rating) {
+      const questionText = getRatingQuestionText(rating);
+      const questionKey = normalizeQuestionText(questionText);
+
+      const matched = questionStructureMap.get(questionKey);
+
+      let modelTitle = String(
+        rating?.modelTitle ||
+          rating?.model_title ||
+          rating?.model ||
+          rating?.categoryTitle ||
+          rating?.category_title ||
+          "",
+      ).trim();
+
+      let groupTitle = String(
+        rating?.groupTitle ||
+          rating?.group_title ||
+          rating?.group ||
+          rating?.dimensionTitle ||
+          rating?.dimension_title ||
+          "",
+      ).trim();
+
+      if (rating?.category && String(rating.category).includes(">")) {
+        const parsed = splitLegacyQuestionPath(rating.category);
+
+        if (!modelTitle) modelTitle = parsed.model_title;
+        if (!groupTitle) groupTitle = parsed.group_title;
+      }
+
+      if (!modelTitle && matched) {
+        modelTitle = matched.model_title;
+      }
+
+      if (!groupTitle && matched) {
+        groupTitle = matched.group_title;
+      }
+
+      modelTitle = String(modelTitle || "").trim();
+
+      if (modelTitle === "แบบประเมินทั่วไป" && matched && matched.model_title) {
+        modelTitle = matched.model_title;
+      }
+
+      if (!modelTitle) {
+        modelTitle = "แบบประเมินทั่วไป";
+      }
+
+      return {
+        questionText,
+        modelTitle,
+        groupTitle: formatDashboardGroupTitle(groupTitle),
+      };
+    }
+
+    const respondentCount = filteredSubmissions.length;
 
     const allRatingValues = [];
     const itemMap = new Map();
+    const barMap = new Map();
     const comments = [];
 
     let satisfiedCount = 0;
     let unsatisfiedCount = 0;
 
-    const barMap = new Map();
+    /*
+     * อ่านคะแนนทั้งหมด
+     */
+    for (const submission of filteredSubmissions) {
+      for (const rating of submission.ratings) {
+        const structure = resolveRatingStructure(rating);
 
-    for (const row of filtered) {
-      for (const r of row.ratings) {
-        const label = String(r.questionText || r.label || "").trim();
-        const value = Number(r.value);
+        const questionText = structure.questionText;
 
-        if (!label || !Number.isFinite(value)) continue;
+        const modelTitle = structure.modelTitle;
+
+        const groupTitle = structure.groupTitle;
+
+        const value = getRatingValue(rating);
+
+        if (!questionText || value === null || value <= 0) {
+          continue;
+        }
 
         allRatingValues.push(value);
 
-        if (!itemMap.has(label)) itemMap.set(label, []);
-        itemMap.get(label).push(value);
+        /*
+         * ใช้ Model + Group + Question เป็น Key
+         */
+        const itemKey = [modelTitle, groupTitle, questionText].join("__");
 
-        if (!barMap.has(label)) {
-          barMap.set(label, { positive: 0, negative: 0 });
+        if (!itemMap.has(itemKey)) {
+          itemMap.set(itemKey, {
+            model_title: modelTitle,
+            group_title: groupTitle,
+            question: questionText,
+            values: [],
+          });
+        }
+
+        itemMap.get(itemKey).values.push(value);
+
+        if (!barMap.has(itemKey)) {
+          barMap.set(itemKey, {
+            model_title: modelTitle,
+            group_title: groupTitle,
+            question: questionText,
+            positive: 0,
+            negative: 0,
+          });
         }
 
         if (value >= 4) {
-          satisfiedCount++;
-          barMap.get(label).positive++;
+          satisfiedCount += 1;
+          barMap.get(itemKey).positive += 1;
         } else {
-          unsatisfiedCount++;
-          barMap.get(label).negative++;
+          unsatisfiedCount += 1;
+          barMap.get(itemKey).negative += 1;
         }
       }
 
-      for (const c of row.comments) {
+      /*
+       * อ่านความคิดเห็น
+       */
+      for (const comment of submission.comments) {
         const text =
-          typeof c === "string"
-            ? c.trim()
-            : String(c.comment || c.text || c.message || "").trim();
+          typeof comment === "string"
+            ? comment.trim()
+            : String(
+                comment?.comment || comment?.text || comment?.message || "",
+              ).trim();
 
         if (!text) continue;
 
         comments.push({
           text,
-          created_at: row.created_at,
-          created_by: row.created_by,
-          form_title: row.form_title,
+          created_at: submission.created_at,
+          created_by: submission.created_by,
+          form_title: submission.form_title,
         });
       }
     }
 
-    const items = Array.from(itemMap.entries()).map(
-      ([question, values], index) => ({
-        no: index + 1,
-        question,
-        avg: Number(avg(values).toFixed(2)),
-        sd: Number(stddev(values).toFixed(2)),
-        count: values.length,
-      }),
-    );
+    /*
+     * สร้างตารางคำถามรายข้อ
+     * Frontend จะนำไปสรุปเป็น:
+     * Model → Group
+     */
+    const tableItems = Array.from(itemMap.values()).map((item, index) => ({
+      no: index + 1,
+      model_title: item.model_title,
+      group_title: item.group_title,
+      question: item.question,
+      avg: Number(avg(item.values).toFixed(2)),
+      sd: Number(stddev(item.values).toFixed(2)),
+      count: item.values.length,
+    }));
 
-    const overallAvg = Number(avg(allRatingValues).toFixed(2));
+    const overallAverage = Number(avg(allRatingValues).toFixed(2));
 
+    /*
+     * สร้างกราฟรายคำถาม
+     */
     const barLabels = [];
     const barPositive = [];
     const barNegative = [];
 
-    for (const [label, counts] of barMap.entries()) {
-      barLabels.push(label);
-      barPositive.push(counts.positive);
-      barNegative.push(counts.negative);
+    for (const item of barMap.values()) {
+      barLabels.push(item.question);
+      barPositive.push(item.positive);
+      barNegative.push(item.negative);
     }
 
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
-    res.json({
+    return res.json({
       kpi: {
         respondents: respondentCount,
-        avgSatisfaction: overallAvg,
+        avgSatisfaction: overallAverage,
         totalComments: comments.length,
       },
+
       filters: {
-        form_title: formTitle,
+        form_title: singleFormTitle,
+        form_titles: selectedFormTitles,
         date_from: dateFrom,
         date_to: dateTo,
-        fiscal_year: fiscalYear,
-        dept: deptQ,
+        fiscal_years: selectedFiscalYears,
+        dept: deptFilter,
       },
-      table: items,
+
+      table: tableItems,
+
       charts: {
         pie: {
           labels: ["พึงพอใจ", "ควรปรับปรุง"],
           values: [satisfiedCount, unsatisfiedCount],
         },
+
         bar: {
           labels: barLabels,
           positive: barPositive,
           negative: barNegative,
         },
       },
+
       comments: comments.slice(0, 50),
     });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  } catch (error) {
+    console.error("GET /api/dashboard/summary error:", error);
+
+    return res.status(500).json({
+      error: error.message || "โหลดข้อมูล Dashboard ไม่สำเร็จ",
+    });
   }
 });
 /** -----------------------------
@@ -1898,7 +2219,7 @@ FROM survey_forms
           ) {
             pushText("", value);
           }
-          
+
           return;
         }
 

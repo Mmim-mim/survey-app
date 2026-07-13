@@ -454,8 +454,6 @@
       let data = {};
 
       function renderPage() {
-        
-
         const sec1El = document.getElementById("sec1");
         const sec2El = document.getElementById("sec2");
         const sec3El = document.getElementById("sec3");
@@ -1174,6 +1172,7 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
+                form_id: formId,
                 created_by: pf_fullname || null,
                 form_title: formTitle,
                 payload,

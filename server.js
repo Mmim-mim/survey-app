@@ -433,7 +433,9 @@ app.get("/api/dashboard/summary", async (req, res) => {
       req.query.form_ids || req.query.form_id || "",
     )
       .split(",")
-      .map((value) => Number(value))
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .map(Number)
       .filter(Number.isFinite);
     const selectedFiscalYears = String(
       req.query.fiscal_years || req.query.fiscal_year || "",

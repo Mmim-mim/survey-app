@@ -766,11 +766,12 @@ app.get("/api/dashboard/summary", async (req, res) => {
 
         itemMap.get(itemKey).values.push(value);
 
-        if (!barMap.has(itemKey)) {
-          barMap.set(itemKey, {
+        const groupKey = [modelTitle, groupTitle].join("__");
+
+        if (!barMap.has(groupKey)) {
+          barMap.set(groupKey, {
             model_title: modelTitle,
             group_title: groupTitle,
-            question: questionText,
             positive: 0,
             negative: 0,
           });
@@ -778,10 +779,10 @@ app.get("/api/dashboard/summary", async (req, res) => {
 
         if (value >= 4) {
           satisfiedCount += 1;
-          barMap.get(itemKey).positive += 1;
+          barMap.get(groupKey).positive += 1;
         } else {
           unsatisfiedCount += 1;
-          barMap.get(itemKey).negative += 1;
+          barMap.get(groupKey).negative += 1;
         }
       }
 
@@ -832,7 +833,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
     const barNegative = [];
 
     for (const item of barMap.values()) {
-      barLabels.push(item.question);
+      barLabels.push(item.group_title);
       barPositive.push(item.positive);
       barNegative.push(item.negative);
     }

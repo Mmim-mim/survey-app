@@ -474,6 +474,246 @@
         background: rgba(255, 255, 255, 0.35);
       }
 
+      /* ===== สรุปผลการประเมินสำหรับผู้บริหาร ===== */
+
+      .executive-summary {
+        margin-bottom: 16px;
+        overflow: hidden;
+      }
+
+      .executive-summary-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid var(--mfu-line);
+        background: linear-gradient(90deg, #fff8f1, #fffdf9);
+      }
+
+      .executive-summary-header h3 {
+        margin: 0;
+        color: #8f2929;
+        font-size: 20px;
+        font-weight: 900;
+      }
+
+      .executive-summary-header p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .executive-summary-body {
+        display: grid;
+        grid-template-columns: 180px 1fr 1fr;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .executive-score-box,
+      .executive-detail-box {
+        min-width: 0;
+        padding: 16px;
+        border: 1px solid #f0ded2;
+        border-radius: 14px;
+        background: #fffdf9;
+      }
+
+      .executive-score-box {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+        background: linear-gradient(145deg, #fff6eb, #ffffff);
+      }
+
+      .executive-score-label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .executive-score-value {
+        margin: 8px 0 4px;
+        color: #a92e2e;
+        font-size: 42px;
+        line-height: 1;
+        font-weight: 900;
+      }
+
+      .executive-score-level {
+        color: #76552d;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .executive-detail-title {
+        margin-bottom: 10px;
+        color: #8f2929;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .executive-list {
+        display: grid;
+        gap: 9px;
+      }
+
+      .executive-item {
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #fff7ef;
+      }
+
+      .executive-item-name {
+        color: #3f3030;
+        line-height: 1.5;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .executive-item-meta {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .executive-empty {
+        color: var(--muted);
+        padding: 12px 0;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .executive-score-progress {
+        height: 9px;
+        margin: 14px 0 8px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #f0e2d8;
+      }
+
+      .executive-score-progress-bar {
+        width: 0%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #b34a43, #e3a94f);
+        transition: width 0.35s ease;
+      }
+
+      .executive-score-percent {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .executive-detail-box.is-strength {
+        border-color: #cfe8d9;
+        background: linear-gradient(145deg, #f1fbf5, #ffffff);
+      }
+
+      .executive-detail-box.is-improvement {
+        border-color: #f0d8bd;
+        background: linear-gradient(145deg, #fff7eb, #ffffff);
+      }
+
+      .executive-stars {
+        margin-top: 8px;
+        color: #e0a236;
+        font-size: 20px;
+        letter-spacing: 2px;
+        line-height: 1;
+      }
+
+      .executive-score-badge {
+        display: inline-flex;
+        align-items: center;
+        margin-top: 9px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .is-strength .executive-score-badge {
+        color: #267048;
+        background: #dff3e7;
+      }
+
+      .is-improvement .executive-score-badge {
+        color: #9b531f;
+        background: #ffead2;
+      }
+
+      /* ===== Top 3 Executive Insight ===== */
+
+      .executive-rank-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .executive-rank-item {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        min-height: 58px;
+        padding: 9px 11px;
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(235, 218, 207, 0.8);
+      }
+
+      .executive-rank-number {
+        display: grid;
+        place-items: center;
+        width: 31px;
+        height: 31px;
+        border-radius: 50%;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .is-strength .executive-rank-number {
+        color: #267048;
+        background: #dff3e7;
+      }
+
+      .is-improvement .executive-rank-number {
+        color: #9b531f;
+        background: #ffead2;
+      }
+
+      .executive-rank-content {
+        min-width: 0;
+      }
+
+      .executive-rank-name {
+        color: #3f3030;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
+      .executive-rank-stars {
+        margin-top: 3px;
+        color: #dfa137;
+        font-size: 15px;
+        letter-spacing: 1px;
+        line-height: 1;
+      }
+
+      @media (max-width: 720px) {
+        .executive-rank-item {
+          grid-template-columns: 34px minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .executive-summary-body {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .result-table-panel {
         margin-bottom: 16px;
         padding: 0;
@@ -583,26 +823,28 @@
 
       .chart-center-summary {
         position: absolute;
-        left: 25%;
-        top: 54%;
-        transform: translate(-50%, -50%);
-        z-index: 2;
-        text-align: center;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         pointer-events: none;
-      }
-
-      .chart-center-summary span {
-        display: block;
-        color: var(--muted);
-        font-size: 14px;
-        font-weight: 800;
+        text-align: center;
       }
 
       .chart-center-summary strong {
-        display: block;
-        color: var(--mfu-red);
+        color: #9f2929;
         font-size: 30px;
         font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.5px;
+      }
+
+      .chart-center-summary span {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
       }
 
       .comments-panel {
@@ -919,11 +1161,7 @@
         .simple-chart-grid {
           grid-template-columns: 1fr;
         }
-
-        .chart-center-summary {
-          left: 50%;
-        }
-
+        
         .overview-divider {
           display: none;
         }
@@ -1245,6 +1483,137 @@
         color: #ffffff;
         box-shadow: 0 -4px 16px rgba(120, 50, 50, 0.08);
       }
+
+      /* ===== Ranking Summary แทนกราฟรายข้อ ===== */
+
+      .ranking-panel {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ranking-panel-heading {
+        margin-bottom: 14px;
+      }
+
+      .ranking-panel-heading h3 {
+        margin-bottom: 3px;
+      }
+
+      .ranking-panel-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .ranking-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        flex: 1;
+      }
+
+      .ranking-column {
+        min-width: 0;
+        padding: 14px;
+        border: 1px solid var(--mfu-line);
+        border-radius: 14px;
+      }
+
+      .ranking-positive {
+        background: linear-gradient(145deg, #f1fbf5, #ffffff);
+        border-color: #cfe8d9;
+      }
+
+      .ranking-negative {
+        background: linear-gradient(145deg, #fff7eb, #ffffff);
+        border-color: #f0d8bd;
+      }
+
+      .ranking-title {
+        margin-bottom: 11px;
+        color: #7a2929;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1.45;
+      }
+
+      .ranking-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ranking-item {
+        display: grid;
+        grid-template-columns: 29px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: center;
+        min-height: 48px;
+        padding: 8px 10px;
+        border: 1px solid rgba(232, 214, 201, 0.85);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.78);
+      }
+
+      .ranking-number {
+        display: grid;
+        place-items: center;
+        width: 27px;
+        height: 27px;
+        border-radius: 50%;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .ranking-positive .ranking-number {
+        color: #267048;
+        background: #dff3e7;
+      }
+
+      .ranking-negative .ranking-number {
+        color: #9b531f;
+        background: #ffead2;
+      }
+
+      .ranking-name {
+        min-width: 0;
+        overflow: hidden;
+        color: #3f3030;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1.4;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .ranking-value {
+        min-width: 34px;
+        text-align: right;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .ranking-positive .ranking-value {
+        color: #267048;
+      }
+
+      .ranking-negative .ranking-value {
+        color: #a55d27;
+      }
+
+      .ranking-empty {
+        padding: 22px 10px;
+        color: var(--muted);
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      @media (max-width: 900px) {
+        .ranking-columns {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
 
@@ -1361,9 +1730,58 @@
         <div class="overview-item">
           <span class="overview-label">ความพึงพอใจ</span>
           <strong>
-            <span id="kpiSatisfactionPercent">0.0</span>
+            <span id="kpiSatisfactionPercent">0.0 </span>
             <small>%</small>
           </strong>
+        </div>
+      </section>
+
+      <!-- สรุปผลการประเมินสำหรับผู้บริหาร -->
+      <section class="panel executive-summary">
+        <div class="executive-summary-header">
+          <h3>📊 สรุปผลการประเมิน</h3>
+          <p>สรุปภาพรวม จุดเด่น และประเด็นที่ควรพัฒนาจากผลการประเมิน</p>
+        </div>
+
+        <div class="executive-summary-body">
+          <div class="executive-score-box">
+            <div class="executive-score-label">คะแนนเฉลี่ยรวม</div>
+
+            <div class="executive-score-value" id="executiveAvg">0.00</div>
+
+            <div class="executive-score-level" id="executiveLevel">
+              ยังไม่มีข้อมูล
+            </div>
+
+            <div class="executive-score-progress">
+              <div
+                class="executive-score-progress-bar"
+                id="executiveProgressBar"
+              ></div>
+            </div>
+
+            <div class="executive-score-percent" id="executiveScorePercent">
+              0%
+            </div>
+          </div>
+
+          <div class="executive-detail-box is-strength">
+            <div class="executive-detail-title">🏆 3 อันดับจุดเด่น</div>
+
+            <div class="executive-list" id="executiveStrengths">
+              <div class="executive-empty">ยังไม่มีข้อมูล</div>
+            </div>
+          </div>
+
+          <div class="executive-detail-box is-improvement">
+            <div class="executive-detail-title">
+              ⚠️ 3 อันดับประเด็นที่ควรพัฒนา
+            </div>
+
+            <div class="executive-list" id="executiveImprovements">
+              <div class="executive-empty">ยังไม่มีข้อมูล</div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1423,16 +1841,35 @@
           </div>
 
           <div class="chart-center-summary">
+            <strong id="chartSatisfactionPercent"> 0.0% </strong>
             <span>ความพึงพอใจ</span>
-            <strong> <span id="chartSatisfactionPercent">0.0</span>% </strong>
           </div>
         </div>
 
-        <div class="panel">
-          <h3>พึงพอใจและควรปรับปรุงรายข้อ</h3>
+        <div class="panel ranking-panel">
+          <div class="ranking-panel-heading">
+            <h3>สรุปหัวข้อที่ควรให้ความสำคัญ</h3>
+            <p>แสดงเฉพาะ 5 อันดับแรกจากข้อมูลที่เลือก</p>
+          </div>
 
-          <div class="chart-wrap simple-chart">
-            <canvas id="barChart"></canvas>
+          <div class="ranking-columns">
+            <div class="ranking-column ranking-positive">
+              <div class="ranking-title">
+                🏆 5 อันดับที่ได้รับความพึงพอใจสูงสุด
+              </div>
+
+              <div id="topPositiveList" class="ranking-list">
+                <div class="ranking-empty">ยังไม่มีข้อมูล</div>
+              </div>
+            </div>
+
+            <div class="ranking-column ranking-negative">
+              <div class="ranking-title">⚠️ 5 อันดับที่ควรปรับปรุง</div>
+
+              <div id="topNegativeList" class="ranking-list">
+                <div class="ranking-empty">ยังไม่มีข้อมูล</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

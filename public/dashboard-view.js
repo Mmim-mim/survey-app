@@ -39,6 +39,14 @@ const chartSatisfactionPercent = document.getElementById(
 
 const summaryTableBody = document.getElementById("summaryTableBody");
 const commentList = document.getElementById("commentList");
+const topPositiveList = document.getElementById("topPositiveList");
+const topNegativeList = document.getElementById("topNegativeList");
+const executiveAvg = document.getElementById("executiveAvg");
+const executiveLevel = document.getElementById("executiveLevel");
+const executiveStrengths = document.getElementById("executiveStrengths");
+const executiveImprovements = document.getElementById("executiveImprovements");
+const executiveProgressBar = document.getElementById("executiveProgressBar");
+const executiveScorePercent = document.getElementById("executiveScorePercent");
 
 const username = "";
 const role = "public";
@@ -210,7 +218,6 @@ formOptions.addEventListener("change", () => {
 });
 
 let pieChart;
-let barChart;
 
 function buildCharts() {
   pieChart = new Chart(document.getElementById("pieChart"), {
@@ -241,66 +248,6 @@ function buildCharts() {
               weight: "700",
             },
           },
-        },
-      },
-    },
-  });
-
-  barChart = new Chart(document.getElementById("barChart"), {
-    type: "bar",
-    data: {
-      labels: [],
-      datasets: [
-        {
-          label: "พึงพอใจ",
-          data: [],
-          backgroundColor: "#9b1c1c",
-          borderRadius: 7,
-        },
-        {
-          label: "ควรปรับปรุง",
-          data: [],
-          backgroundColor: "#c9a34e",
-          borderRadius: 7,
-        },
-      ],
-    },
-    options: {
-      indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: {
-            color: "#2a1a1a",
-            font: {
-              family: "Noto Sans Thai",
-              weight: "700",
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          ticks: { color: "#7a5c5c" },
-          grid: { color: "rgba(234, 216, 200, 0.7)" },
-        },
-        y: {
-          afterFit: function (scale) {
-            scale.width = 210;
-          },
-          ticks: {
-            color: "#7a5c5c",
-            font: {
-              size: 11,
-              family: "Noto Sans Thai",
-            },
-            callback: function (value) {
-              const label = this.getLabelForValue(value);
-              return label.length > 28 ? label.substring(0, 28) + "..." : label;
-            },
-          },
-          grid: { display: false },
         },
       },
     },
@@ -664,6 +611,172 @@ function renderTable(rows) {
   }
 }
 
+function getEvaluationLevel(score) {
+  const value = Number(score);
+
+  if (!Number.isFinite(value) || value <= 0) {
+    return {
+      text: "ยังไม่มีข้อมูล",
+      className: "neutral",
+    };
+  }
+
+  if (value >= 4.5) {
+    return {
+      text: "ดีเยี่ยม",
+      className: "excellent",
+    };
+  }
+
+  if (value >= 4.0) {
+    return {
+      text: "ดีมาก",
+      className: "very-good",
+    };
+  }
+
+  if (value >= 3.5) {
+    return {
+      text: "ดี",
+      className: "good",
+    };
+  }
+
+  if (value >= 3.0) {
+    return {
+      text: "พอใช้",
+      className: "fair",
+    };
+  }
+
+  return {
+    text: "ควรปรับปรุง",
+    className: "poor",
+  };
+}
+
+function renderScoreStars(score) {
+  const value = Math.max(0, Math.min(5, Number(score) || 0));
+  const filled = Math.round(value);
+
+  return `${"★".repeat(filled)}${"☆".repeat(5 - filled)}`;
+}
+
+function renderExecutiveSummary(kpi, insights) {
+  const average = Number(kpi?.avgSatisfaction || 0);
+  const hasAverage = Number.isFinite(average) && average > 0;
+
+  const scorePercent = hasAverage
+    ? Math.max(0, Math.min(100, (average / 5) * 100))
+    : 0;
+
+  if (executiveAvg) {
+    executiveAvg.textContent = hasAverage ? average.toFixed(2) : "0.00";
+  }
+
+  const level = getEvaluationLevel(average);
+
+  if (executiveLevel) {
+    executiveLevel.textContent = level.text;
+
+    executiveLevel.className = "executive-score-level " + level.className;
+  }
+
+  if (executiveProgressBar) {
+    executiveProgressBar.style.width = `${scorePercent.toFixed(1)}%`;
+  }
+
+  if (executiveScorePercent) {
+    executiveScorePercent.textContent = hasAverage
+      ? `${scorePercent.toFixed(1)}% ของคะแนนเต็ม`
+      : "ยังไม่มีข้อมูล";
+  }
+
+  /*
+   * ใช้ Top 3 จาก Backend
+   * พร้อมรองรับข้อมูล Backend รุ่นเดิม
+   */
+  const topStrengths = Array.isArray(insights?.topStrengths)
+    ? insights.topStrengths
+    : insights?.strongest
+      ? [insights.strongest]
+      : [];
+
+  const topImprovements = Array.isArray(insights?.topImprovements)
+    ? insights.topImprovements
+    : insights?.weakest
+      ? [insights.weakest]
+      : [];
+
+  if (executiveStrengths) {
+    executiveStrengths.innerHTML = topStrengths.length
+      ? `
+        <div class="executive-rank-list">
+          ${topStrengths
+            .map(
+              (item, index) => `
+                <div class="executive-rank-item">
+                  <div class="executive-rank-number">
+                    ${["🥇", "🥈", "🥉"][index] || index + 1}
+                  </div>
+
+                  <div class="executive-rank-content">
+                    <div class="executive-rank-name">
+                      ${esc(item.group_title || "-")}
+                    </div>
+
+                    <div class="executive-rank-stars">
+                      ${renderScoreStars(item.avg)}
+                    </div>
+                  </div>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      `
+      : `
+        <div class="executive-empty">
+          ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์จุดเด่น
+        </div>
+      `;
+  }
+
+  if (executiveImprovements) {
+    executiveImprovements.innerHTML = topImprovements.length
+      ? `
+        <div class="executive-rank-list">
+          ${topImprovements
+            .map(
+              (item, index) => `
+                <div class="executive-rank-item">
+                  <div class="executive-rank-number">
+                    ${index + 1}
+                  </div>
+
+                  <div class="executive-rank-content">
+                    <div class="executive-rank-name">
+                      ${esc(item.group_title || "-")}
+                    </div>
+
+                    <div class="executive-rank-stars">
+                      ${renderScoreStars(item.avg)}
+                    </div>
+                  </div>
+                </div>
+              `,
+            )
+            .join("")}
+        </div>
+      `
+      : `
+        <div class="executive-empty">
+          ยังไม่มีข้อมูลเพียงพอสำหรับวิเคราะห์ประเด็นที่ควรพัฒนา
+        </div>
+      `;
+  }
+}
+
 function renderComments(rows) {
   if (!Array.isArray(rows) || rows.length === 0) {
     commentList.innerHTML = `<div class="empty">ยังไม่มีข้อเสนอแนะ</div>`;
@@ -673,15 +786,107 @@ function renderComments(rows) {
   commentList.innerHTML = rows
     .map(
       (c) => `
-    <div class="comment-item">
-      <div class="comment-meta">
-        ${esc(c.created_by || "-")} • ${esc(c.form_title || "-")} • ${new Date(c.created_at).toLocaleString("th-TH")}
-      </div>
-      <div>${esc(c.text)}</div>
-    </div>
-  `,
+        <div class="comment-item">
+          <div class="comment-meta">
+            ${esc(c.form_title || "-")} •
+            ${new Date(c.created_at).toLocaleString("th-TH")}
+          </div>
+
+          <div>${esc(c.text)}</div>
+        </div>
+      `,
     )
     .join("");
+}
+
+function renderRankingLists(barData) {
+  const labels = Array.isArray(barData?.labels) ? barData.labels : [];
+  const positive = Array.isArray(barData?.positive) ? barData.positive : [];
+  const negative = Array.isArray(barData?.negative) ? barData.negative : [];
+
+  const rows = labels
+    .map((label, index) => {
+      const rawLabel = String(label || "").trim();
+
+      const resolved = resolveStandardGroup("", rawLabel);
+
+      return {
+        label: resolved?.groupTitle || "",
+        positive: Number(positive[index] || 0),
+        negative: Number(negative[index] || 0),
+      };
+    })
+
+    .filter(
+      (row) =>
+        row.label &&
+        (Number.isFinite(row.positive) || Number.isFinite(row.negative)),
+    );
+  const topPositive = [...rows]
+    .filter((row) => row.positive > 0)
+    .sort(
+      (a, b) => b.positive - a.positive || a.label.localeCompare(b.label, "th"),
+    )
+    .slice(0, 5);
+
+  const topNegative = [...rows]
+    .filter((row) => row.negative > 0)
+    .sort(
+      (a, b) => b.negative - a.negative || a.label.localeCompare(b.label, "th"),
+    )
+    .slice(0, 5);
+
+  if (topPositiveList) {
+    topPositiveList.innerHTML = topPositive.length
+      ? topPositive
+          .map(
+            (item, index) => `
+              <div class="ranking-item" title="${esc(item.label)}">
+                <div class="ranking-number">${index + 1}</div>
+
+                <div class="ranking-name">
+                  ${esc(item.label)}
+                </div>
+
+                <div class="ranking-value">
+                  ${item.positive.toLocaleString("th-TH")}
+                </div>
+              </div>
+            `,
+          )
+          .join("")
+      : `
+        <div class="ranking-empty">
+          ยังไม่มีข้อมูลความพึงพอใจ
+        </div>
+      `;
+  }
+
+  if (topNegativeList) {
+    topNegativeList.innerHTML = topNegative.length
+      ? topNegative
+          .map(
+            (item, index) => `
+              <div class="ranking-item" title="${esc(item.label)}">
+                <div class="ranking-number">${index + 1}</div>
+
+                <div class="ranking-name">
+                  ${esc(item.label)}
+                </div>
+
+                <div class="ranking-value">
+                  ${item.negative.toLocaleString("th-TH")}
+                </div>
+              </div>
+            `,
+          )
+          .join("")
+      : `
+        <div class="ranking-empty">
+          ยังไม่มีหัวข้อที่ควรปรับปรุง
+        </div>
+      `;
+  }
 }
 
 function updateCharts(charts) {
@@ -701,13 +906,10 @@ function updateCharts(charts) {
   }
 
   if (chartSatisfactionPercent) {
-    chartSatisfactionPercent.textContent = percent.toFixed(1);
+    chartSatisfactionPercent.textContent = `${percent.toFixed(1)}%`;
   }
 
-  barChart.data.labels = charts?.bar?.labels || [];
-  barChart.data.datasets[0].data = charts?.bar?.positive || [];
-  barChart.data.datasets[1].data = charts?.bar?.negative || [];
-  barChart.update();
+  renderRankingLists(charts?.bar || {});
 }
 
 async function loadSummary() {
@@ -751,6 +953,7 @@ async function loadSummary() {
     lastUpdated.textContent = new Date().toLocaleString("th-TH");
   }
 
+  renderExecutiveSummary(json.kpi || {}, json.insights || {});
   renderTable(json.table || []);
   renderComments(json.comments || []);
   updateCharts(json.charts || {});

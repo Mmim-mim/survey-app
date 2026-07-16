@@ -838,6 +838,83 @@ app.get("/api/dashboard/summary", async (req, res) => {
       barNegative.push(item.negative);
     }
 
+    /*
+     * Executive Insight
+     * รวมคะแนนตาม Model + Group ก่อนวิเคราะห์
+     */
+    const insightGroupMap = new Map();
+
+    for (const row of tableItems) {
+      const modelTitle = String(row.model_title || "").trim();
+      const groupTitle = String(row.group_title || "").trim();
+      const rowAverage = Number(row.avg);
+      const rowCount = Number(row.count);
+
+      if (
+        !groupTitle ||
+        !Number.isFinite(rowAverage) ||
+        !Number.isFinite(rowCount) ||
+        rowCount <= 0
+      ) {
+        continue;
+      }
+
+      const key = `${modelTitle}__${groupTitle}`;
+
+      if (!insightGroupMap.has(key)) {
+        insightGroupMap.set(key, {
+          model_title: modelTitle,
+          group_title: groupTitle,
+          weightedTotal: 0,
+          count: 0,
+        });
+      }
+
+      const group = insightGroupMap.get(key);
+
+      group.weightedTotal += rowAverage * rowCount;
+      group.count += rowCount;
+    }
+
+    const insightRows = Array.from(insightGroupMap.values()).map((group) => ({
+      model_title: group.model_title,
+      group_title: group.group_title,
+      avg: group.count
+        ? Number((group.weightedTotal / group.count).toFixed(2))
+        : 0,
+      count: group.count,
+    }));
+
+    /*
+     * เรียงผลวิเคราะห์จากคะแนนเฉลี่ย
+     */
+    const sortedHighest = [...insightRows].sort(
+      (a, b) => b.avg - a.avg || b.count - a.count,
+    );
+
+    const sortedLowest = [...insightRows].sort(
+      (a, b) => a.avg - b.avg || b.count - a.count,
+    );
+
+    /*
+     * รองรับของเดิม
+     */
+    const strongest = sortedHighest[0] || null;
+    const weakest = sortedLowest[0] || null;
+
+    /*
+     * Top 3 สำหรับ Executive Summary
+     */
+    const topStrengths = sortedHighest.slice(0, 3);
+
+    const topImprovements = sortedLowest.slice(0, 3);
+
+    /*
+     * เก็บ Watchlist ไว้ใน Backend ก่อน
+     * แต่ยังไม่แสดงหน้า Dashboard ตอนนี้
+     */
+    const watchlist = sortedLowest.filter((row) => row.avg < 3.5).slice(0, 5);
+
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     return res.json({
@@ -845,6 +922,14 @@ app.get("/api/dashboard/summary", async (req, res) => {
         respondents: respondentCount,
         avgSatisfaction: overallAverage,
         totalComments: comments.length,
+      },
+
+      insights: {
+        strongest,
+        weakest,
+        topStrengths,
+        topImprovements,
+        watchlist,
       },
 
       filters: {

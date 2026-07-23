@@ -1158,8 +1158,11 @@ const ALLOW_MANAGER_EDIT = false;
 app.put("/api/forms/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
+
     if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "invalid id" });
+      return res.status(400).json({
+        error: "invalid id",
+      });
     }
 
     const {
@@ -1178,21 +1181,31 @@ app.put("/api/forms/:id", async (req, res) => {
       fiscal_year,
       budget_received,
       attachment_url,
-
       form,
+
+      // Frontend จะส่ง true มาเมื่อผู้ใช้กดยืนยันแล้ว
+      confirm_existing_responses,
     } = req.body || {};
 
     if (!form) {
-      return res.status(400).json({ error: "form is required" });
+      return res.status(400).json({
+        error: "form is required",
+      });
     }
 
     const reqUsername = String(username || "").trim();
     const reqRole = String(role || "staff").trim();
 
     if (!reqUsername) {
-      return res.status(400).json({ error: "username is required" });
+      return res.status(400).json({
+        error: "username is required",
+      });
     }
 
+    /*
+     * ตรวจสอบว่าฟอร์มมีอยู่จริง
+     * และตรวจสอบเจ้าของฟอร์ม
+     */
     const [foundRows] = await pool.execute(
       `SELECT id, created_by_username
        FROM survey_forms
@@ -1202,7 +1215,9 @@ app.put("/api/forms/:id", async (req, res) => {
     );
 
     if (!foundRows.length) {
-      return res.status(404).json({ error: "form not found" });
+      return res.status(404).json({
+        error: "form not found",
+      });
     }
 
     const existing = foundRows[0];
@@ -1215,8 +1230,39 @@ app.put("/api/forms/:id", async (req, res) => {
         error: "สามารถแก้ไขได้เฉพาะฟอร์มที่ตัวเองสร้างเท่านั้น",
       });
     }
+
+    /*
+     * ตรวจสอบจำนวนคำตอบเดิมของแบบประเมิน
+     */
+    const [submissionRows] = await pool.execute(
+      `SELECT COUNT(*) AS total
+       FROM submissions
+       WHERE form_id = ?`,
+      [id],
+    );
+
+    const existingResponseCount = Number(submissionRows[0]?.total || 0);
+    console.log("existingResponseCount =", existingResponseCount);
+
+    /*
+     * ถ้ามีผู้ตอบแล้ว แต่ผู้ใช้ยังไม่ได้ยืนยัน
+     * ให้ส่งสถานะ 409 กลับไปที่ Frontend
+     */
+    if (existingResponseCount > 0 && confirm_existing_responses !== true) {
+      return res.status(409).json({
+        error: "FORM_HAS_RESPONSES",
+        code: "FORM_HAS_RESPONSES",
+        response_count: existingResponseCount,
+        message: "แบบประเมินนี้มีผู้ตอบแล้ว กรุณายืนยันก่อนบันทึกการแก้ไข",
+      });
+    }
+
     const form_json = JSON.stringify(form);
 
+    /*
+     * เมื่อไม่มีผู้ตอบ หรือผู้ใช้กดยืนยันแล้ว
+     * จึงดำเนินการอัปเดตฟอร์ม
+     */
     await pool.execute(
       `UPDATE survey_forms
        SET form_title = ?,
@@ -1229,7 +1275,7 @@ app.put("/api/forms/:id", async (req, res) => {
            kpi_quality = ?,
            start_date = ?,
            end_date = ?,
-                      fiscal_year = ?,
+           fiscal_year = ?,
            budget_received = ?,
            attachment_url = ?,
            form_json = ?
@@ -1253,9 +1299,17 @@ app.put("/api/forms/:id", async (req, res) => {
       ],
     );
 
-    res.json({ ok: true, id });
+    return res.json({
+      ok: true,
+      id,
+      response_count: existingResponseCount,
+    });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    console.error("PUT /api/forms/:id error:", e);
+
+    return res.status(500).json({
+      error: e.message || "อัปเดตฟอร์มไม่สำเร็จ",
+    });
   }
 });
 

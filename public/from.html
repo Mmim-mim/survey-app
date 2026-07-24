@@ -2002,7 +2002,7 @@
       function refreshAllQuestionSuggestions() {
         document.querySelectorAll(".questions").forEach((stack) => {
           refreshQuestionSuggestions(stack);
-          
+
         });
       }
 
@@ -2650,9 +2650,7 @@
                   return {
                     questionId: row.dataset.questionId,
 
-                    questionBankId:
-                      Number(row.dataset.questionBankId || 0) || null,
-
+                    questionBankId:Number(row.dataset.questionBankId || 0) || null,
                     text,
                   };
                 })

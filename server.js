@@ -372,6 +372,10 @@ function getRatingQuestionText(rating) {
   ).trim();
 }
 
+function getRatingQuestionId(rating) {
+  return String(rating?.questionId || rating?.question_id || "").trim();
+}
+
 function getRatingValue(rating) {
   const value = Number(
     rating?.value ?? rating?.score ?? rating?.rating ?? rating?.answer_score,
@@ -737,6 +741,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
         const structure = resolveRatingStructure(rating);
 
         const questionText = structure.questionText;
+        const questionId = getRatingQuestionId(rating);
 
         const modelTitle = structure.modelTitle;
 
@@ -751,12 +756,18 @@ app.get("/api/dashboard/summary", async (req, res) => {
         allRatingValues.push(value);
 
         /*
-         * ใช้ Model + Group + Question เป็น Key
+         * ข้อมูลใหม่ใช้ questionId เป็นตัวรวมคะแนน
+         * ข้อมูลเก่าที่ยังไม่มี questionId ใช้ข้อความเป็น fallback
          */
-        const itemKey = [modelTitle, groupTitle, questionText].join("__");
+        const questionIdentity = questionId
+          ? `id:${questionId}`
+          : `legacy:${normalizeQuestionText(questionText)}`;
+
+        const itemKey = [modelTitle, groupTitle, questionIdentity].join("__");
 
         if (!itemMap.has(itemKey)) {
           itemMap.set(itemKey, {
+            question_id: questionId || null,
             model_title: modelTitle,
             group_title: groupTitle,
             question: questionText,
@@ -764,7 +775,17 @@ app.get("/api/dashboard/summary", async (req, res) => {
           });
         }
 
-        itemMap.get(itemKey).values.push(value);
+        const item = itemMap.get(itemKey);
+
+        /*
+         * ใช้ข้อความล่าสุดเป็นข้อความที่แสดง
+         * แต่ยังรวมคะแนนด้วย questionId เดิม
+         */
+        if (questionText) {
+          item.question = questionText;
+        }
+
+        item.values.push(value);
 
         const groupKey = [modelTitle, groupTitle].join("__");
 
@@ -815,6 +836,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
      */
     const tableItems = Array.from(itemMap.values()).map((item, index) => ({
       no: index + 1,
+      question_id: item.question_id,
       model_title: item.model_title,
       group_title: item.group_title,
       question: item.question,

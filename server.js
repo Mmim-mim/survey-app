@@ -2494,31 +2494,28 @@ FROM survey_forms
       return "ดีมาก";
     }
 
-    function addScore(group, question, score) {
+    function addScore(group, question, score, questionId = "") {
       const n = Number(score);
 
       if (!Number.isFinite(n) || n <= 0) return;
 
       const groupName = String(group || "ไม่ระบุหมวด").trim();
       const questionText = String(question || "ไม่ระบุคำถาม").trim();
+      const normalizedQuestionId = String(questionId || "").trim();
 
       allScores.push(n);
 
-      const questionId = String(
-        value.questionId || value.question_id || "",
-      ).trim();
-
       /*
-       * ข้อมูลใหม่รวมคะแนนด้วย questionId
-       * ข้อมูลเก่าที่ยังไม่มี questionId ใช้ Group + ข้อความคำถาม
+       * ข้อมูลใหม่รวมด้วย questionId
+       * ข้อมูลเก่าที่ยังไม่มี ID รวมด้วยหมวดและข้อความ
        */
-      const qKey = questionId
-        ? `id:${questionId}`
+      const qKey = normalizedQuestionId
+        ? `id:${normalizedQuestionId}`
         : `legacy:${groupName}__${normalizeQuestionText(questionText)}`;
 
       if (!questionMap.has(qKey)) {
         questionMap.set(qKey, {
-          question_id: questionId || null,
+          question_id: normalizedQuestionId || null,
           group: groupName,
           question: questionText,
           scores: [],
@@ -2528,8 +2525,8 @@ FROM survey_forms
       const questionItem = questionMap.get(qKey);
 
       /*
-       * submissions โหลดล่าสุดก่อน
-       * จึงเก็บข้อความที่พบครั้งแรกไว้เป็นข้อความล่าสุด
+       * เก็บข้อความที่พบครั้งแรก
+       * เนื่องจาก Submission โหลดรายการล่าสุดก่อน
        */
       if (!questionItem.question && questionText) {
         questionItem.question = questionText;
@@ -2575,8 +2572,12 @@ FROM survey_forms
         value.answer_score ||
         null;
 
+      const questionId = String(
+        value.questionId || value.question_id || "",
+      ).trim();
+
       if (question && score) {
-        addScore(group, question, score);
+        addScore(group, question, score, questionId);
       }
 
       Object.entries(value).forEach(([key, child]) => {

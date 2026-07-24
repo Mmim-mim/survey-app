@@ -2504,17 +2504,38 @@ FROM survey_forms
 
       allScores.push(n);
 
-      const qKey = `${groupName}__${questionText}`;
+      const questionId = String(
+        value.questionId || value.question_id || "",
+      ).trim();
+
+      /*
+       * ข้อมูลใหม่รวมคะแนนด้วย questionId
+       * ข้อมูลเก่าที่ยังไม่มี questionId ใช้ Group + ข้อความคำถาม
+       */
+      const qKey = questionId
+        ? `id:${questionId}`
+        : `legacy:${groupName}__${normalizeQuestionText(questionText)}`;
 
       if (!questionMap.has(qKey)) {
         questionMap.set(qKey, {
+          question_id: questionId || null,
           group: groupName,
           question: questionText,
           scores: [],
         });
       }
 
-      questionMap.get(qKey).scores.push(n);
+      const questionItem = questionMap.get(qKey);
+
+      /*
+       * submissions โหลดล่าสุดก่อน
+       * จึงเก็บข้อความที่พบครั้งแรกไว้เป็นข้อความล่าสุด
+       */
+      if (!questionItem.question && questionText) {
+        questionItem.question = questionText;
+      }
+
+      questionItem.scores.push(n);
 
       if (!groupMap.has(groupName)) {
         groupMap.set(groupName, []);
@@ -2654,9 +2675,11 @@ FROM survey_forms
         item.scores.reduce((sum, n) => sum + n, 0) / item.scores.length;
 
       return {
+        question_id: item.question_id || null,
         group: item.group,
         question: item.question,
         average: Number(avg.toFixed(2)),
+        count: item.scores.length,
       };
     });
 

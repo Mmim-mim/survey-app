@@ -850,7 +850,38 @@
           ? data.section2_models
           : [];
 
-        function makeRatingTable(title, items, namePrefix) {
+        function normalizePreviewQuestion(question, index = 0) {
+          if (question && typeof question === "object") {
+            return {
+              questionId: String(
+                question.questionId || question.question_id || "",
+              ).trim(),
+
+              questionBankId:
+                Number(question.questionBankId ?? question.question_bank_id) ||
+                null,
+
+              text: String(
+                question.text ||
+                  question.questionText ||
+                  question.question_text ||
+                  "",
+              ).trim(),
+            };
+          }
+
+          /*
+           * รองรับฟอร์มเก่าที่คำถามเป็นข้อความอย่างเดียว
+           * ฟอร์มเก่ายังไม่มี questionId
+           */
+          return {
+            questionId: "",
+            questionBankId: null,
+            text: String(question || "").trim() || `ข้อ ${index + 1}`,
+          };
+        }
+
+        function makeRatingTable(modelTitle, groupTitle, items, namePrefix) {
           if (!items || !items.length) return null;
 
           const wrap = document.createElement("div");
@@ -860,29 +891,61 @@
           const thead = document.createElement("thead");
           const tbody = document.createElement("tbody");
 
+          /*
+           * เก็บชื่อ Model และ Group ไว้ในตาราง
+           * เวลาส่งคำตอบจะไม่ต้องเดาจากข้อความ
+           */
+          tbl.dataset.modelTitle = modelTitle || "";
+          tbl.dataset.groupTitle = groupTitle || "";
+
           thead.innerHTML = `
     <tr>
-      <th class="col-head">${title}</th>
-      <th>5</th><th>4</th><th>3</th><th>2</th><th>1</th>
+      <th class="col-head">${groupTitle}</th>
+      <th>5</th>
+      <th>4</th>
+      <th>3</th>
+      <th>2</th>
+      <th>1</th>
     </tr>
   `;
 
           const sub = document.createElement("tr");
           sub.className = "q-head";
-          sub.innerHTML = `<td>หัวข้อประเมิน</td><td></td><td></td><td></td><td></td><td></td>`;
+          sub.innerHTML =
+            `<td>หัวข้อประเมิน</td>` +
+            `<td></td><td></td><td></td><td></td><td></td>`;
+
           tbody.appendChild(sub);
 
-          items.forEach((q, idx) => {
+          items.forEach((rawQuestion, idx) => {
+            const question = normalizePreviewQuestion(rawQuestion, idx);
+
+            if (!question.text) return;
+
             const tr = document.createElement("tr");
+
+            tr.dataset.questionId = question.questionId || "";
+            tr.dataset.questionBankId = question.questionBankId
+              ? String(question.questionBankId)
+              : "";
+
             tr.innerHTML = `
-      <td>${q || "-"}</td>
+      <td class="question-text">${question.text}</td>
       ${[5, 4, 3, 2, 1]
         .map(
-          (level) =>
-            `<td style="text-align:center"><input type="radio" name="${namePrefix}_${idx}" value="${level}"></td>`,
+          (level) => `
+            <td style="text-align:center">
+              <input
+                type="radio"
+                name="${namePrefix}_${idx}"
+                value="${level}"
+              >
+            </td>
+          `,
         )
         .join("")}
     `;
+
             tbody.appendChild(tr);
           });
 
@@ -900,7 +963,10 @@
               (dim) =>
                 dim.enabled !== false &&
                 Array.isArray(dim.questions) &&
-                dim.questions.some((q) => String(q || "").trim()),
+                dim.questions.some(
+                  (q, questionIndex) =>
+                    normalizePreviewQuestion(q, questionIndex).text,
+                ),
             );
 
             if (!enabledDimensions.length) return;
@@ -914,11 +980,14 @@
             box.appendChild(head);
 
             enabledDimensions.forEach((dim, dimIndex) => {
-              const questions = dim.questions
-                .map((q) => String(q || "").trim())
-                .filter(Boolean);
+              const questions = (dim.questions || [])
+                .map((q, questionIndex) =>
+                  normalizePreviewQuestion(q, questionIndex),
+                )
+                .filter((q) => q.text);
 
               const tbl = makeRatingTable(
+                model.title || `หัวข้อ ${modelIndex + 1}`,
                 dim.title || `ด้าน ${dimIndex + 1}`,
                 questions,
                 `m${modelIndex}_d${dimIndex}`,
@@ -1080,30 +1149,48 @@
           // ===== 1) เก็บคำตอบ Rating ทั้งหมด + เก็บ "ข้อความคำถาม" ไปด้วย =====
           // ratings: [{ groupKey, groupTitle, questionIndex, questionText, value }]
           const ratings = [];
+
           document.querySelectorAll("#ratingTables table").forEach((tbl) => {
+            const modelTitle =
+              String(tbl.dataset.modelTitle || "").trim() || "แบบประเมินทั่วไป";
+
             const groupTitle =
+              String(tbl.dataset.groupTitle || "").trim() ||
               tbl.querySelector("thead th.col-head")?.textContent?.trim() ||
               "ไม่ระบุหัวข้อ";
 
-            // เดา groupKey จาก title (กันซ้ำง่ายๆ)
             const groupKey = groupTitle.replace(/\s+/g, "_").slice(0, 60);
 
             const rows = Array.from(
               tbl.querySelectorAll("tbody tr:not(.q-head)"),
             );
+
             rows.forEach((row, idx) => {
-              const qText =
+              const questionText =
+                row.querySelector(".question-text")?.textContent?.trim() ||
                 row.querySelector("td")?.textContent?.trim() ||
                 `ข้อ ${idx + 1}`;
+
+              const questionId = String(row.dataset.questionId || "").trim();
+
+              const questionBankId =
+                Number(row.dataset.questionBankId || 0) || null;
+
               const checked = row.querySelector("input[type=radio]:checked");
-              const val = checked ? Number(checked.value) : null;
+
+              const value = checked ? Number(checked.value) : null;
 
               ratings.push({
-                groupKey,
+                questionId,
+                questionBankId,
+
+                modelTitle,
                 groupTitle,
+                groupKey,
+
                 questionIndex: idx,
-                questionText: qText,
-                value: val,
+                questionText,
+                value,
               });
             });
           });

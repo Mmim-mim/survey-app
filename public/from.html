@@ -1852,6 +1852,63 @@
       // =====================================================
 
       let questionDatalistCounter = 0;
+      let questionDatalistCounter = 0;
+
+      /*
+       * สร้าง Question ID ถาวรสำหรับคำถามภายในฟอร์ม
+       * ID นี้จะไม่เปลี่ยนเมื่อแก้ข้อความคำถาม
+       */
+      function createQuestionId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return `q_${window.crypto.randomUUID()}`;
+        }
+
+        return `q_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      }
+
+      /*
+       * รองรับข้อมูลทั้งสองรูปแบบ:
+       *
+       * รูปแบบเก่า:
+       * "ความพร้อมของอุปกรณ์"
+       *
+       * รูปแบบใหม่:
+       * {
+       *   questionId: "q_xxx",
+       *   questionBankId: 25,
+       *   text: "ความพร้อมของอุปกรณ์"
+       * }
+       */
+      function normalizeQuestionItem(question) {
+        if (question && typeof question === "object") {
+          return {
+            questionId: String(
+              question.questionId || question.question_id || question.id || "",
+            ).trim(),
+
+            questionBankId:
+              Number(
+                question.questionBankId ??
+                  question.question_bank_id ??
+                  question.bankId,
+              ) || null,
+
+            text: String(
+              question.text ||
+                question.questionText ||
+                question.question_text ||
+                question.label ||
+                "",
+            ).trim(),
+          };
+        }
+
+        return {
+          questionId: "",
+          questionBankId: null,
+          text: String(question || "").trim(),
+        };
+      }
 
       function normalizeQuestionValue(value) {
         return String(value || "")
@@ -2123,7 +2180,7 @@
 
       function addQuestion(
         stack,
-        value = "",
+        questionData = "",
         listId = "questionSuggestions",
         isDefault = false,
       ) {
@@ -2135,7 +2192,32 @@
         const input = row.querySelector(".dim-question");
         const delBtn = row.querySelector(".remove-question");
 
-        input.value = value || "";
+        const question = normalizeQuestionItem(questionData);
+
+        /*
+         * กรณีแก้ไขฟอร์ม:
+         * - ถ้ามี questionId เดิม ให้ใช้ ID เดิม
+         *
+         * กรณีคัดลอกฟอร์ม:
+         * - สร้าง Question ID ใหม่ เพราะเป็นฟอร์มคนละชุด
+         *
+         * กรณีสร้างคำถามใหม่:
+         * - สร้าง Question ID ใหม่
+         */
+        const questionId =
+          pageMode === "copy" || !question.questionId
+            ? createQuestionId()
+            : question.questionId;
+
+        row.dataset.questionId = questionId;
+
+        if (question.questionBankId) {
+          row.dataset.questionBankId = String(question.questionBankId);
+        } else {
+          delete row.dataset.questionBankId;
+        }
+
+        input.value = question.text || "";
         input.setAttribute("list", listId);
 
         if (!isDefault && delBtn) {
@@ -2146,10 +2228,6 @@
         bindQuestionRow(row, stack);
         renumberStack(stack);
 
-        /*
-         * Phase 3.2.1
-         * หลังเพิ่มช่องใหม่ ให้ซ่อนคำถามที่เลือกไปแล้ว
-         */
         refreshQuestionSuggestions(stack);
       }
 
@@ -2543,27 +2621,58 @@
             const title =
               modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
               "";
+
             const enabled =
               !!modelEl.querySelector(".main-model-toggle")?.checked;
 
             const dimensions = Array.from(
               modelEl.querySelectorAll("[data-subgroup-item]"),
-            ).map((groupEl) => ({
-              title:
-                groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
-              enabled: !!groupEl.querySelector(".subtoggle")?.checked,
-              questions: Array.from(
-                groupEl.querySelectorAll(".questions .dim-question"),
+            ).map((groupEl) => {
+              const questions = Array.from(
+                groupEl.querySelectorAll(".questions .item"),
               )
-                .map((el) => String(el.value || "").trim())
-                .filter(Boolean),
-            }));
+                .map((row) => {
+                  const input = row.querySelector(".dim-question");
+                  const text = String(input?.value || "").trim();
 
-            return { title, enabled, dimensions };
+                  if (!text) return null;
+
+                  /*
+                   * ป้องกันกรณีแถวเก่าหรือแถวที่ยังไม่มี ID
+                   */
+                  if (!row.dataset.questionId) {
+                    row.dataset.questionId = createQuestionId();
+                  }
+
+                  return {
+                    questionId: row.dataset.questionId,
+
+                    questionBankId:
+                      Number(row.dataset.questionBankId || 0) || null,
+
+                    text,
+                  };
+                })
+                .filter(Boolean);
+
+              return {
+                title:
+                  groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
+
+                enabled: !!groupEl.querySelector(".subtoggle")?.checked,
+
+                questions,
+              };
+            });
+
+            return {
+              title,
+              enabled,
+              dimensions,
+            };
           },
         );
       }
-
       function addGoalInput(value = "") {
         const goalList = document.getElementById("goalList");
         if (!goalList) return;

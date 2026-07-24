@@ -3142,18 +3142,31 @@ app.get("/api/survey-structure/form", async (req, res) => {
       const text = String(q.question_text || "").trim();
       if (!text) return;
 
+      /*
+       * questionBankId ใช้บอกว่าคำถามต้นฉบับมาจากข้อใดใน Question Bank
+       * questionId ยังไม่สร้างตรงนี้ เพราะแต่ละฟอร์มต้องมี ID ของตัวเอง
+       */
+      const questionItem = {
+        questionBankId: Number(q.id) || null,
+        text,
+      };
+
       if (q.group_id) {
-        if (!questionsByGroupId[q.group_id])
+        if (!questionsByGroupId[q.group_id]) {
           questionsByGroupId[q.group_id] = [];
-        questionsByGroupId[q.group_id].push(text);
+        }
+
+        questionsByGroupId[q.group_id].push(questionItem);
       }
 
       const datalistId = String(q.datalist_id || "").trim();
+
       if (datalistId) {
         if (!questionsByDatalistId[datalistId]) {
           questionsByDatalistId[datalistId] = [];
         }
-        questionsByDatalistId[datalistId].push(text);
+
+        questionsByDatalistId[datalistId].push(questionItem);
       }
     });
 

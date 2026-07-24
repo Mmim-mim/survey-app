@@ -1851,13 +1851,14 @@
       // Phase 3.2.1: ซ่อนคำถามที่ถูกเลือกแล้วใน Group เดียวกัน
       // =====================================================
 
-      let questionDatalistCounter = 0;
+
       let questionDatalistCounter = 0;
 
       /*
        * สร้าง Question ID ถาวรสำหรับคำถามภายในฟอร์ม
        * ID นี้จะไม่เปลี่ยนเมื่อแก้ข้อความคำถาม
        */
+
       function createQuestionId() {
         if (window.crypto && typeof window.crypto.randomUUID === "function") {
           return `q_${window.crypto.randomUUID()}`;
@@ -1879,6 +1880,7 @@
        *   text: "ความพร้อมของอุปกรณ์"
        * }
        */
+
       function normalizeQuestionItem(question) {
         if (question && typeof question === "object") {
           return {
@@ -2000,6 +2002,7 @@
       function refreshAllQuestionSuggestions() {
         document.querySelectorAll(".questions").forEach((stack) => {
           refreshQuestionSuggestions(stack);
+          
         });
       }
 

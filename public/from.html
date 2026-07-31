@@ -1854,22 +1854,16 @@
       let questionDatalistCounter = 0;
 
       /*
-       * เก็บ Question Bank โดยใช้ข้อความคำถามเป็น Key
-       * เพื่อหา ID เมื่อลูกค้าเลือกคำถามจาก Dropdown
+       * เก็บคำถามโดยจับคู่จาก:
+       * ID ของ Datalist + ข้อความคำถาม
        */
-      const questionBankByText = new Map();
+      const questionBankByListAndText = new Map();
 
-      /*
-       * สร้าง Question ID ถาวรสำหรับคำถามภายในฟอร์ม
-       * ID นี้จะไม่เปลี่ยนเมื่อแก้ข้อความคำถาม
-       */
-
-      function createQuestionId() {
-        if (window.crypto && typeof window.crypto.randomUUID === "function") {
-          return `q_${window.crypto.randomUUID()}`;
-        }
-
-        return `q_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      function createQuestionBankLookupKey(listId, questionText) {
+        return [
+          String(listId || "").trim(),
+          normalizeQuestionValue(questionText),
+        ].join("__");
       }
 
       /*
@@ -2000,9 +1994,14 @@
             /*
              * Copy Question Bank ID ไปยัง Datalist ที่ผ่านการกรองด้วย
              */
+            const lookupKey = createQuestionBankLookupKey(
+              sourceListId,
+              questionText,
+            );
+
             const questionBankId =
               sourceOption.dataset.questionBankId ||
-              questionBankByText.get(normalizedText)?.id ||
+              questionBankByListAndText.get(lookupKey)?.id ||
               "";
 
             if (questionBankId) {
@@ -2028,19 +2027,40 @@
 
         /*
          * ตรวจข้อความในช่อง แล้วผูก Question Bank ID
+         * โดยใช้ Datalist ต้นฉบับ + ข้อความคำถาม
          */
         const updateQuestionBankId = () => {
           if (!input) return;
 
-          const normalizedText = normalizeQuestionValue(input.value);
-          const matched = questionBankByText.get(normalizedText);
+          const questionText = String(input.value || "").trim();
+
+          if (!questionText) {
+            delete row.dataset.questionBankId;
+            return;
+          }
+
+          /*
+           * ต้องใช้ ID ของ Datalist ต้นฉบับ
+           * ไม่ใช่ filteredQuestionSuggestions_x
+           */
+          const sourceListId = String(
+            input.dataset.sourceListId ||
+              input.getAttribute("list") ||
+              "questionSuggestions",
+          ).trim();
+
+          const lookupKey = createQuestionBankLookupKey(
+            sourceListId,
+            questionText,
+          );
+
+          const matched = questionBankByListAndText.get(lookupKey);
 
           if (matched?.id) {
             row.dataset.questionBankId = String(matched.id);
           } else {
             /*
-             * ถ้าพิมพ์เองหรือแก้ข้อความจนไม่ตรง Question Bank
-             * ให้ถือว่าเป็น Custom Question
+             * ไม่ตรงกับ Question Bank จึงถือเป็นคำถาม Custom
              */
             delete row.dataset.questionBankId;
           }
@@ -2077,7 +2097,6 @@
           });
         }
       }
-
       function getSuggestionListIdBySubgroupTitle(title = "") {
         const t = String(title || "")
           .trim()
@@ -3404,13 +3423,14 @@
           const res = await fetch("/api/question-bank/active");
           const rows = await res.json();
 
-          if (!res.ok || !Array.isArray(rows) || rows.length === 0) {
+          if (!res.ok || !Array.isArray(rows)) {
+            console.warn("Question Bank response is invalid:", rows);
             return;
           }
 
           const grouped = {};
 
-          questionBankByText.clear();
+          questionBankByListAndText.clear();
 
           rows.forEach((row) => {
             const listId = String(row.datalist_id || "").trim();
@@ -3419,10 +3439,9 @@
 
             if (!listId || !text) return;
 
-            /*
-             * เก็บข้อมูล Question Bank ไว้ค้นหาภายหลัง
-             */
-            questionBankByText.set(normalizeQuestionValue(text), {
+            const lookupKey = createQuestionBankLookupKey(listId, text);
+
+            questionBankByListAndText.set(lookupKey, {
               id: questionBankId,
               text,
               datalistId: listId,

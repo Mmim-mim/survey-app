@@ -1851,8 +1851,13 @@
       // Phase 3.2.1: ซ่อนคำถามที่ถูกเลือกแล้วใน Group เดียวกัน
       // =====================================================
 
-
       let questionDatalistCounter = 0;
+
+      /*
+       * เก็บ Question Bank โดยใช้ข้อความคำถามเป็น Key
+       * เพื่อหา ID เมื่อลูกค้าเลือกคำถามจาก Dropdown
+       */
+      const questionBankByText = new Map();
 
       /*
        * สร้าง Question ID ถาวรสำหรับคำถามภายในฟอร์ม
@@ -1992,6 +1997,18 @@
             const option = document.createElement("option");
             option.value = questionText;
 
+            /*
+             * Copy Question Bank ID ไปยัง Datalist ที่ผ่านการกรองด้วย
+             */
+            const questionBankId =
+              sourceOption.dataset.questionBankId ||
+              questionBankByText.get(normalizedText)?.id ||
+              "";
+
+            if (questionBankId) {
+              option.dataset.questionBankId = String(questionBankId);
+            }
+
             filteredDatalist.appendChild(option);
           });
 
@@ -2002,7 +2019,6 @@
       function refreshAllQuestionSuggestions() {
         document.querySelectorAll(".questions").forEach((stack) => {
           refreshQuestionSuggestions(stack);
-
         });
       }
 
@@ -2011,31 +2027,41 @@
         const delBtn = row.querySelector(".remove-question");
 
         /*
-         * เมื่อเลือกหรือแก้ข้อความคำถาม
-         * ให้คำนวณรายการคำถามที่เหลือใหม่
+         * ตรวจข้อความในช่อง แล้วผูก Question Bank ID
          */
+        const updateQuestionBankId = () => {
+          if (!input) return;
+
+          const normalizedText = normalizeQuestionValue(input.value);
+          const matched = questionBankByText.get(normalizedText);
+
+          if (matched?.id) {
+            row.dataset.questionBankId = String(matched.id);
+          } else {
+            /*
+             * ถ้าพิมพ์เองหรือแก้ข้อความจนไม่ตรง Question Bank
+             * ให้ถือว่าเป็น Custom Question
+             */
+            delete row.dataset.questionBankId;
+          }
+        };
+
         if (input) {
           input.addEventListener("input", () => {
+            updateQuestionBankId();
             refreshQuestionSuggestions(stack);
           });
 
           input.addEventListener("change", () => {
+            updateQuestionBankId();
             refreshQuestionSuggestions(stack);
 
-            /*
-             * หลังเลือกคำถามจาก Dropdown
-             * ให้ปิดรายการคำถามทันที
-             */
             setTimeout(() => {
               input.blur();
             }, 0);
           });
         }
 
-        /*
-         * เมื่อลบคำถาม
-         * ให้คำถามนั้นกลับเข้า Dropdown
-         */
         if (delBtn) {
           delBtn.addEventListener("click", () => {
             const filteredListId = input?.dataset?.filteredListId;
@@ -2650,7 +2676,8 @@
                   return {
                     questionId: row.dataset.questionId,
 
-                    questionBankId:Number(row.dataset.questionBankId || 0) || null,
+                    questionBankId:
+                      Number(row.dataset.questionBankId || 0) || null,
                     text,
                   };
                 })
@@ -3383,14 +3410,32 @@
 
           const grouped = {};
 
+          questionBankByText.clear();
+
           rows.forEach((row) => {
             const listId = String(row.datalist_id || "").trim();
             const text = String(row.question_text || "").trim();
+            const questionBankId = Number(row.id) || null;
 
             if (!listId || !text) return;
 
-            if (!grouped[listId]) grouped[listId] = [];
-            grouped[listId].push(text);
+            /*
+             * เก็บข้อมูล Question Bank ไว้ค้นหาภายหลัง
+             */
+            questionBankByText.set(normalizeQuestionValue(text), {
+              id: questionBankId,
+              text,
+              datalistId: listId,
+            });
+
+            if (!grouped[listId]) {
+              grouped[listId] = [];
+            }
+
+            grouped[listId].push({
+              id: questionBankId,
+              text,
+            });
           });
 
           Object.entries(grouped).forEach(([listId, questions]) => {
@@ -3404,18 +3449,19 @@
 
             datalist.innerHTML = "";
 
-            questions.forEach((q) => {
+            questions.forEach((question) => {
               const option = document.createElement("option");
-              option.value = q;
+
+              option.value = question.text;
+
+              if (question.id) {
+                option.dataset.questionBankId = String(question.id);
+              }
+
               datalist.appendChild(option);
             });
           });
 
-          /*
-           * Phase 3.2.1
-           * หลังโหลดคำถามจาก Question Bank แล้ว
-           * ให้คำนวณรายการคำถามที่ยังไม่ได้เลือกใหม่
-           */
           refreshAllQuestionSuggestions();
         } catch (err) {
           console.warn("load question bank failed:", err);

@@ -656,8 +656,9 @@
       }
     </style>
     <link rel="stylesheet" href="global.css" />
+    <link rel="stylesheet" href="responsive.css" />
   </head>
-  <body>
+  <body class="page-index">
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar">
       <div class="sidebar-header">เมนู</div>
@@ -928,50 +929,76 @@
 
               return `
 <tr>
-  <td style="text-align:center;">${i + 1}</td>
-  <td style="text-align:center;">${r.created_by_username || "-"}</td>
-  <td>${r.form_title || "-"}</td>
-  <td style="text-align:center;">${r.dept_name || "-"}</td>
+  <td data-label="ลำดับ" style="text-align:center;">
+    ${i + 1}
+  </td>
 
-  <!-- วันที่เข้าร่วม -->
-  <td style="text-align:center;">${dateText}</td>
+  <td data-label="ชื่อ-นามสกุล" style="text-align:center;">
+    ${r.created_by_username || "-"}
+  </td>
 
-  <!-- 🔥 จัดการฟอร์ม -->
-  <td style="text-align:center;">
-  <div class="action-icons">
-    <button class="icon-btn" onclick="previewForm(${r.id})" title="ดูฟอร์ม">
-  <i class="fa-regular fa-eye"></i>
-</button>
-    <button class="icon-btn" onclick="copyLink(${r.id})" title="คัดลอกลิงก์">
-  <i class="fa-solid fa-paperclip"></i>
-</button>
-    ${editButton}
-    <button class="icon-btn" onclick="copyForm(${r.id})" title="คัดลอกฟอร์ม">
-  <i class="fa-regular fa-clone"></i>
-</button>
-<button
-  class="icon-btn danger-btn"
-  onclick='openDeleteConfirm(${r.id}, ${JSON.stringify(r.form_title || "-")})'
-  title="ลบฟอร์ม"
->
-  <i class="fa-regular fa-trash-can"></i>
-</button>
-  </div>
-</td>
+  <td data-label="หัวข้อ">
+    ${r.form_title || "-"}
+  </td>
 
-  <!-- ผลการดำเนินงาน -->
-<td style="text-align:center;">
-  <button
-    id="resultBadge-${r.id}"
-    class="result-badge result-empty result-clickable"
-    onclick="openResult(${r.id})"
-    title="คลิกเพื่อดูผลการดำเนินงาน"
-  >
-    <span class="score">...</span>
-    <span class="level">กำลังโหลด</span>
-    <span class="result-view-text">ดูผลการดำเนินงาน</span>
-  </button>
-</td>
+  <td data-label="ฝ่ายที่สังกัด" style="text-align:center;">
+    ${r.dept_name || "-"}
+  </td>
+
+  <td data-label="วันที่เข้าร่วม" style="text-align:center;">
+    ${dateText}
+  </td>
+
+  <td data-label="จัดการฟอร์ม" class="mobile-action-cell">
+    <div class="action-icons">
+      <button
+        class="icon-btn"
+        onclick="previewForm(${r.id})"
+        title="ดูฟอร์ม"
+      >
+        <i class="fa-regular fa-eye"></i>
+      </button>
+
+      <button
+        class="icon-btn"
+        onclick="copyLink(${r.id})"
+        title="คัดลอกลิงก์"
+      >
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+
+      ${editButton}
+
+      <button
+        class="icon-btn"
+        onclick="copyForm(${r.id})"
+        title="คัดลอกฟอร์ม"
+      >
+        <i class="fa-regular fa-clone"></i>
+      </button>
+
+      <button
+        class="icon-btn danger-btn"
+        onclick='openDeleteConfirm(${r.id}, ${JSON.stringify(r.form_title || "-")})'
+        title="ลบฟอร์ม"
+      >
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    </div>
+  </td>
+
+  <td data-label="ผลการดำเนินงาน" class="mobile-result-cell">
+    <button
+      id="resultBadge-${r.id}"
+      class="result-badge result-empty result-clickable"
+      onclick="openResult(${r.id})"
+      title="คลิกเพื่อดูผลการดำเนินงาน"
+    >
+      <span class="score">...</span>
+      <span class="level">กำลังโหลด</span>
+      <span class="result-view-text">ดูผลการดำเนินงาน</span>
+    </button>
+  </td>
 </tr>
 `;
             })

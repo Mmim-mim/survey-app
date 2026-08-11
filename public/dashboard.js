@@ -323,24 +323,39 @@ async function loadOptions() {
 }
 
 function renderTable(rows) {
+
   if (!Array.isArray(rows) || rows.length === 0) {
-    summaryTableBody.innerHTML = `<tr><td colspan="5" class="empty">ยังไม่มีข้อมูล</td></tr>`;
+    summaryTableBody.innerHTML =
+      `<tr><td colspan="5" class="empty">ยังไม่มีข้อมูล</td></tr>`;
     return;
   }
 
-  summaryTableBody.innerHTML = rows
-    .map(
-      (r) => `
-    <tr>
-      <td>${r.no}</td>
-      <td>${esc(r.question)}</td>
-      <td>${Number(r.avg || 0).toFixed(2)}</td>
-      <td>${Number(r.sd || 0).toFixed(2)}</td>
-      <td>${r.count || 0}</td>
-    </tr>
-  `,
-    )
-    .join("");
+  summaryTableBody.innerHTML = rows.map(r => `
+<tr>
+
+<td data-label="ลำดับ">
+${r.no}
+</td>
+
+<td data-label="รายการ">
+${esc(r.question)}
+</td>
+
+<td data-label="ค่าเฉลี่ย">
+${Number(r.avg || 0).toFixed(2)}
+</td>
+
+<td data-label="S.D.">
+${Number(r.sd || 0).toFixed(2)}
+</td>
+
+<td data-label="จำนวน">
+${r.count || 0}
+</td>
+
+</tr>
+`).join("");
+
 }
 
 function renderComments(rows) {

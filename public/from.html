@@ -1193,9 +1193,10 @@
       }
     </style>
     <link rel="stylesheet" href="global.css" />
+    <link rel="stylesheet" href="responsive.css" />
   </head>
 
-  <body>
+  <body class="page-form-builder">
     <div class="wrap">
       <div id="validationSummary" class="validation-summary">
         กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน
@@ -1246,7 +1247,7 @@
         </div>
 
         <!-- ====== ตัวชี้วัด ====== -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+        <div class="form-builder-main-grid">
           <!-- 🔵 ซ้าย: ตัวชี้วัด -->
           <div class="section">
             <div class="head">
@@ -1350,7 +1351,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+          <div class="form-builder-project-grid">
             <!-- ซ้าย -->
             <div class="group">
               <div class="title" style="font-size: 16px; margin-bottom: 10px">
@@ -1761,1980 +1762,1999 @@
     </div>
 
     <script>
-      function showEditWarningPopup(responseCount) {
-        return new Promise((resolve) => {
-          const overlay = document.getElementById("editWarningOverlay");
-          const countElement = document.getElementById(
-            "editWarningResponseCount",
-          );
-          const cancelButton = document.getElementById("editWarningCancelBtn");
-          const confirmButton = document.getElementById(
-            "editWarningConfirmBtn",
-          );
-
-          if (!overlay || !countElement || !cancelButton || !confirmButton) {
-            resolve(false);
-            return;
-          }
-
-          countElement.textContent = Number(responseCount || 0).toLocaleString(
-            "th-TH",
-          );
-
-          let isFinished = false;
-
-          function closePopup(result) {
-            if (isFinished) return;
-
-            isFinished = true;
-            overlay.classList.remove("show");
-
-            cancelButton.removeEventListener("click", handleCancel);
-            confirmButton.removeEventListener("click", handleConfirm);
-            overlay.removeEventListener("click", handleOverlayClick);
-            document.removeEventListener("keydown", handleKeydown);
-
-            resolve(result);
-          }
-
-          function handleCancel() {
-            closePopup(false);
-          }
-
-          function handleConfirm() {
-            closePopup(true);
-          }
-
-          function handleOverlayClick(event) {
-            if (event.target === overlay) {
-              closePopup(false);
-            }
-          }
-
-          function handleKeydown(event) {
-            if (event.key === "Escape") {
-              closePopup(false);
-            }
-          }
-
-          cancelButton.addEventListener("click", handleCancel);
-          confirmButton.addEventListener("click", handleConfirm);
-          overlay.addEventListener("click", handleOverlayClick);
-          document.addEventListener("keydown", handleKeydown);
-
-          overlay.classList.add("show");
-
-          requestAnimationFrame(() => {
-            confirmButton.focus();
-          });
-        });
-      }
-      function renumber(stack) {
-        stack
-          .querySelectorAll(".item .num")
-          .forEach((n, i) => (n.textContent = i + 1 + "."));
-      }
-
-      function attachDelete(btn, stack) {
-        btn.addEventListener("click", () => {
-          btn.closest(".item").remove();
-          renumber(stack);
-        });
-      }
-
-      function renumberStack(stack) {
-        stack.querySelectorAll(".item .num").forEach((n, i) => {
-          n.textContent = `${i + 1}.`;
-        });
-      }
-      // =====================================================
-      // Phase 3.2.1: ซ่อนคำถามที่ถูกเลือกแล้วใน Group เดียวกัน
-      // =====================================================
-
-      let questionDatalistCounter = 0;
-
-      /*
-       * เก็บคำถามโดยจับคู่จาก:
-       * ID ของ Datalist + ข้อความคำถาม
-       */
-      const questionBankByListAndText = new Map();
-
-      function createQuestionBankLookupKey(listId, questionText) {
-        return [
-          String(listId || "").trim(),
-          normalizeQuestionValue(questionText),
-        ].join("__");
-      }
-
-      /*
-       * รองรับข้อมูลทั้งสองรูปแบบ:
-       *
-       * รูปแบบเก่า:
-       * "ความพร้อมของอุปกรณ์"
-       *
-       * รูปแบบใหม่:
-       * {
-       *   questionId: "q_xxx",
-       *   questionBankId: 25,
-       *   text: "ความพร้อมของอุปกรณ์"
-       * }
-       */
-
-      function normalizeQuestionItem(question) {
-        if (question && typeof question === "object") {
-          return {
-            questionId: String(
-              question.questionId || question.question_id || question.id || "",
-            ).trim(),
-
-            questionBankId:
-              Number(
-                question.questionBankId ??
-                  question.question_bank_id ??
-                  question.bankId,
-              ) || null,
-
-            text: String(
-              question.text ||
-                question.questionText ||
-                question.question_text ||
-                question.label ||
-                "",
-            ).trim(),
-          };
-        }
-
-        return {
-          questionId: "",
-          questionBankId: null,
-          text: String(question || "").trim(),
-        };
-      }
-
-      function normalizeQuestionValue(value) {
-        return String(value || "")
-          .trim()
-          .replace(/\s+/g, " ")
-          .toLowerCase();
-      }
-
-      function refreshQuestionSuggestions(stack) {
-        if (!stack) return;
-
-        const inputs = Array.from(stack.querySelectorAll(".dim-question"));
-
-        /*
-         * เก็บคำถามทั้งหมดที่ถูกเลือกหรือกรอกอยู่ใน Group นี้
-         */
-        const selectedQuestions = new Set(
-          inputs
-            .map((input) => normalizeQuestionValue(input.value))
-            .filter(Boolean),
-        );
-
-        inputs.forEach((input) => {
-          /*
-           * เก็บ ID ของ datalist ต้นฉบับไว้ครั้งแรก
-           * เช่น affectOfServiceSuggestions
-           */
-          if (!input.dataset.sourceListId) {
-            input.dataset.sourceListId =
-              input.getAttribute("list") || "questionSuggestions";
-          }
-
-          const sourceListId = input.dataset.sourceListId;
-          const sourceDatalist = document.getElementById(sourceListId);
-
-          if (!sourceDatalist) return;
-
-          /*
-           * แต่ละช่องคำถามจะมี datalist กรองของตัวเอง
-           * เพื่อไม่ให้กระทบ Group อื่น
-           */
-          if (!input.dataset.filteredListId) {
-            questionDatalistCounter += 1;
-
-            input.dataset.filteredListId = `filteredQuestionSuggestions_${questionDatalistCounter}`;
-          }
-
-          const filteredListId = input.dataset.filteredListId;
-
-          let filteredDatalist = document.getElementById(filteredListId);
-
-          if (!filteredDatalist) {
-            filteredDatalist = document.createElement("datalist");
-            filteredDatalist.id = filteredListId;
-            document.body.appendChild(filteredDatalist);
-          }
-
-          const currentQuestion = normalizeQuestionValue(input.value);
-
-          filteredDatalist.innerHTML = "";
-
-          sourceDatalist.querySelectorAll("option").forEach((sourceOption) => {
-            const questionText = String(sourceOption.value || "").trim();
-
-            const normalizedText = normalizeQuestionValue(questionText);
-
-            if (!normalizedText) return;
-
-            /*
-             * ซ่อนคำถามที่ถูกเลือกในช่องอื่น
-             * แต่ยังคงคำถามปัจจุบันของช่องนี้ไว้
-             */
-            const isSelectedByAnotherInput =
-              selectedQuestions.has(normalizedText) &&
-              normalizedText !== currentQuestion;
-
-            if (isSelectedByAnotherInput) return;
-
-            const option = document.createElement("option");
-            option.value = questionText;
-
-            /*
-             * Copy Question Bank ID ไปยัง Datalist ที่ผ่านการกรองด้วย
-             */
-            const lookupKey = createQuestionBankLookupKey(
-              sourceListId,
-              questionText,
-            );
-
-            const questionBankId =
-              sourceOption.dataset.questionBankId ||
-              questionBankByListAndText.get(lookupKey)?.id ||
-              "";
-
-            if (questionBankId) {
-              option.dataset.questionBankId = String(questionBankId);
-            }
-
-            filteredDatalist.appendChild(option);
-          });
-
-          input.setAttribute("list", filteredListId);
-        });
-      }
-
-      function refreshAllQuestionSuggestions() {
-        document.querySelectorAll(".questions").forEach((stack) => {
-          refreshQuestionSuggestions(stack);
-        });
-      }
-
-      function bindQuestionRow(row, stack) {
-        const input = row.querySelector(".dim-question");
-        const delBtn = row.querySelector(".remove-question");
-
-        /*
-         * ตรวจข้อความในช่อง แล้วผูก Question Bank ID
-         * โดยใช้ Datalist ต้นฉบับ + ข้อความคำถาม
-         */
-        const updateQuestionBankId = () => {
-          if (!input) return;
-
-          const questionText = String(input.value || "").trim();
-
-          if (!questionText) {
-            delete row.dataset.questionBankId;
-            return;
-          }
-
-          /*
-           * ต้องใช้ ID ของ Datalist ต้นฉบับ
-           * ไม่ใช่ filteredQuestionSuggestions_x
-           */
-          const sourceListId = String(
-            input.dataset.sourceListId ||
-              input.getAttribute("list") ||
-              "questionSuggestions",
-          ).trim();
-
-          const lookupKey = createQuestionBankLookupKey(
-            sourceListId,
-            questionText,
-          );
-
-          const matched = questionBankByListAndText.get(lookupKey);
-
-          if (matched?.id) {
-            row.dataset.questionBankId = String(matched.id);
-          } else {
-            /*
-             * ไม่ตรงกับ Question Bank จึงถือเป็นคำถาม Custom
-             */
-            delete row.dataset.questionBankId;
-          }
-        };
-
-        if (input) {
-          input.addEventListener("input", () => {
-            updateQuestionBankId();
-            refreshQuestionSuggestions(stack);
-          });
-
-          input.addEventListener("change", () => {
-            updateQuestionBankId();
-            refreshQuestionSuggestions(stack);
-
-            setTimeout(() => {
-              input.blur();
-            }, 0);
-          });
-        }
-
-        if (delBtn) {
-          delBtn.addEventListener("click", () => {
-            const filteredListId = input?.dataset?.filteredListId;
-
-            row.remove();
-
-            if (filteredListId) {
-              document.getElementById(filteredListId)?.remove();
-            }
-
-            renumberStack(stack);
-            refreshQuestionSuggestions(stack);
-          });
-        }
-      }
-      function getSuggestionListIdBySubgroupTitle(title = "") {
-        const t = String(title || "")
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, " ");
-
-        if (
-          t.includes("affect of service") ||
-          t.includes("ความรู้สึกที่มีต่อบริการ")
-        ) {
-          return "affectOfServiceSuggestions";
-        }
-
-        if (
-          t.includes("information control") ||
-          t.includes("การควบคุมสารสนเทศ")
-        ) {
-          return "informationControlSuggestions";
-        }
-
-        if (
-          t.includes("library as place") ||
-          t.includes("ลักษณะกายภาพของห้องสมุด")
-        ) {
-          return "libraryAsPlaceSuggestions";
-        }
-
-        if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
-          return "tangiblesSuggestions";
-        }
-
-        if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
-          return "reliabilitySuggestions";
-        }
-
-        if (
-          t.includes("responsiveness") ||
-          t.includes("การตอบสนองของพนักงาน")
-        ) {
-          return "responsivenessSuggestions";
-        }
-
-        if (t.includes("empathy") || t.includes("การเอาใจใส่จากพนักงาน")) {
-          return "empathySuggestions";
-        }
-
-        if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
-          return "assuranceSuggestions";
-        }
-
-        if (t.includes("usability") || t.includes("การใช้งาน")) {
-          return "usabilitySuggestions";
-        }
-
-        if (
-          t.includes("information quality") ||
-          t.includes("infomation quality") ||
-          t.includes("คุณภาพของข้อมูล")
-        ) {
-          return "informationQualitySuggestions";
-        }
-
-        if (
-          t.includes("service interaction") ||
-          t.includes("การตอบสนองต่อการบริการ")
-        ) {
-          return "serviceInteractionSuggestions";
-        }
-
-        if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
-          return "easeOfUseSuggestions";
-        }
-
-        if (
-          t.includes("aesthetic design") ||
-          t.includes("การออกแบบที่สวยงาม")
-        ) {
-          return "aestheticDesignSuggestions";
-        }
-
-        if (
-          t.includes("processing speed") ||
-          t.includes("ความเร็วในการประมวลผล")
-        ) {
-          return "processingSpeedSuggestions";
-        }
-
-        if (
-          t.includes("interactive responsiveness") ||
-          t.includes("การตอบสนองของเว็บไซต์")
-        ) {
-          return "interactiveResponsivenessSuggestions";
-        }
-
-        if (t.includes("efficiency") || t.includes("ประสิทธิภาพของระบบ")) {
-          return "efficiencySuggestions";
-        }
-
-        if (
-          t.includes("system availability") ||
-          t.includes("คุณภาพและความถูกต้องของระบบ")
-        ) {
-          return "systemAvailabilitySuggestions";
-        }
-
-        if (
-          t.includes("fulfillment") ||
-          t.includes("ความง่ายและความเป็นมิตรต่อผู้ใช้งาน")
-        ) {
-          return "fulfillmentSuggestions";
-        }
-
-        if (
-          t.includes("privacy") ||
-          t.includes("ความยืดหยุ่นและการปรับตัวของระบบ")
-        ) {
-          return "privacySuggestions";
-        }
-
-        if (
-          t.includes("data integration") ||
-          t.includes("การเชื่อมโยงข้อมูลและการนำส่ง")
-        ) {
-          return "dataIntegrationDeliverySuggestions";
-        }
-
-        return "questionSuggestions";
-      }
-
-      function addQuestion(
-        stack,
-        questionData = "",
-        listId = "questionSuggestions",
-        isDefault = false,
-      ) {
-        const tpl = document
-          .getElementById("question-row-template")
-          .content.cloneNode(true);
-
-        const row = tpl.querySelector(".item");
-        const input = row.querySelector(".dim-question");
-        const delBtn = row.querySelector(".remove-question");
-
-        const question = normalizeQuestionItem(questionData);
-
-        /*
-         * กรณีแก้ไขฟอร์ม:
-         * - ถ้ามี questionId เดิม ให้ใช้ ID เดิม
-         *
-         * กรณีคัดลอกฟอร์ม:
-         * - สร้าง Question ID ใหม่ เพราะเป็นฟอร์มคนละชุด
-         *
-         * กรณีสร้างคำถามใหม่:
-         * - สร้าง Question ID ใหม่
-         */
-        const questionId =
-          pageMode === "copy" || !question.questionId
-            ? createQuestionId()
-            : question.questionId;
-
-        row.dataset.questionId = questionId;
-
-        if (question.questionBankId) {
-          row.dataset.questionBankId = String(question.questionBankId);
-        } else {
-          delete row.dataset.questionBankId;
-        }
-
-        input.value = question.text || "";
-        input.setAttribute("list", listId);
-
-        if (!isDefault && delBtn) {
-          delBtn.style.display = "";
-        }
-
-        stack.appendChild(row);
-        bindQuestionRow(row, stack);
-        renumberStack(stack);
-
-        refreshQuestionSuggestions(stack);
-      }
-
-      function bindSubgroup(group) {
-        const stack = group.querySelector(".questions");
-        const addBtn = group.querySelector(".add-question");
-        const delBtn = group.querySelector(".remove-subgroup");
-        const toggle = group.querySelector(".subtoggle");
-        const titleInput = group.querySelector(".subgroup-title");
-
-        const subgroupBody = group.querySelector(".subgroup-body");
-        const collapseBtn = group.querySelector(".subgroup-collapse-btn");
-
-        let isCollapsed = false;
-
-        addBtn.addEventListener("click", () => {
-          const titleText = titleInput?.value?.trim() || "";
-          const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
-
-          addQuestion(stack, "", subgroupListId, false);
-        });
-
-        if (delBtn) {
-          delBtn.addEventListener("click", () => {
-            group.remove();
-          });
-        }
-
-        /*
-         * แสดงหรือซ่อนเนื้อหาตามสถานะยุบ–ขยาย
-         */
-        const updateCollapsedState = () => {
-          const enabled = toggle.checked;
-
-          if (subgroupBody) {
-            subgroupBody.style.display = enabled && !isCollapsed ? "" : "none";
-          }
-
-          if (collapseBtn) {
-            collapseBtn.textContent = isCollapsed ? "▸" : "▾";
-
-            collapseBtn.setAttribute(
-              "aria-expanded",
-              isCollapsed ? "false" : "true",
-            );
-          }
-        };
-
-        /*
-         * เปิดหรือปิดการใช้งาน Subgroup
-         */
-        const updateEnabledState = () => {
-          const enabled = toggle.checked;
-
-          group.classList.toggle("disabled", !enabled);
-
-          group
-            .querySelectorAll("input,button,textarea,select")
-            .forEach((el) => {
-              /*
-               * สวิตช์ต้องกดเปิดกลับได้
-               * ปุ่มลบยังต้องใช้งานได้
-               * ลูกศรควบคุมแยกด้านล่าง
-               */
-              if (el === toggle || el === delBtn || el === collapseBtn) return;
-
-              el.disabled = !enabled;
-            });
-
-          if (delBtn) {
-            delBtn.disabled = false;
-          }
-
-          if (collapseBtn) {
-            collapseBtn.disabled = !enabled;
-          }
-
-          updateCollapsedState();
-        };
-
-        /*
-         * คลิกลูกศรเพื่อยุบหรือขยาย
-         * ไม่เปลี่ยนสถานะของสวิตช์
-         */
-        if (collapseBtn) {
-          collapseBtn.addEventListener("click", () => {
-            if (!toggle.checked) return;
-
-            isCollapsed = !isCollapsed;
-            updateCollapsedState();
-          });
-        }
-
-        toggle.addEventListener("change", updateEnabledState);
-
-        updateEnabledState();
-      }
-      function addSubgroup(
-        subgroupsRoot,
-        data = {},
-        isDefault = false,
-        keepQuestions = false,
-      ) {
-        const tpl = document
-          .getElementById("subgroup-template")
-          .content.cloneNode(true);
-
-        const group = tpl.querySelector("[data-subgroup-item]");
-        const titleInput = group.querySelector(".subgroup-title");
-        const stack = group.querySelector(".questions");
-        const delBtn = group.querySelector(".remove-subgroup");
-        const questions = Array.isArray(data.questions) ? data.questions : [];
-
-        titleInput.value = data.title || "";
-
-        if (!isDefault && delBtn) {
-          delBtn.style.display = "";
-        }
-
-        subgroupsRoot.appendChild(group);
-        bindSubgroup(group);
-
-        const subgroupListId = getSuggestionListIdBySubgroupTitle(
-          data.title || "",
-        );
-
-        if (keepQuestions && questions.length) {
-          questions.forEach((q, i) => {
-            addQuestion(stack, q, subgroupListId, i < 2);
-          });
-
-          const st = group.querySelector(".subtoggle");
-          if (st) {
-            st.checked = data.enabled !== false;
-            st.dispatchEvent(new Event("change"));
-          }
-        } else {
-          addQuestion(stack, "", subgroupListId, true);
-          addQuestion(stack, "", subgroupListId, true);
-        }
-      }
-
-      function bindMainModel(block) {
-        const toggle = block.querySelector(".main-model-toggle");
-        const body = block.querySelector(".main-model-body");
-        const titleEl = block.querySelector(".main-model-title");
-        const collapseBtn = block.querySelector(".main-model-collapse-btn");
-
-        let isCollapsed = false;
-
-        /*
-         * สวิตช์ใช้สำหรับเปิดหรือปิดการใช้งานโมเดล
-         */
-        const updateEnabledState = () => {
-          const enabled = toggle.checked;
-
-          block.classList.toggle("disabled", !enabled);
-
-          /*
-           * ถ้าปิดโมเดล ให้ซ่อนรายละเอียด
-           * ถ้าเปิดโมเดล ให้แสดงตามสถานะยุบ–ขยาย
-           */
-          if (body) {
-            body.style.display = enabled && !isCollapsed ? "" : "none";
-          }
-
-          if (collapseBtn) {
-            collapseBtn.disabled = !enabled;
-            collapseBtn.style.opacity = enabled ? "1" : "0.45";
-            collapseBtn.style.cursor = enabled ? "pointer" : "not-allowed";
-          }
-        };
-
-        /*
-         * ยุบหรือขยายรายละเอียด โดยไม่เปลี่ยนสถานะสวิตช์
-         */
-        const updateCollapsedState = () => {
-          const enabled = toggle.checked;
-
-          if (body) {
-            body.style.display = enabled && !isCollapsed ? "" : "none";
-          }
-
-          if (collapseBtn) {
-            collapseBtn.textContent = isCollapsed ? "▸" : "▾";
-            collapseBtn.setAttribute(
-              "aria-expanded",
-              isCollapsed ? "false" : "true",
-            );
-          }
-        };
-
-        const toggleCollapse = () => {
-          if (!toggle.checked) return;
-
-          isCollapsed = !isCollapsed;
-          updateCollapsedState();
-        };
-
-        toggle.addEventListener("change", updateEnabledState);
-
-        if (collapseBtn) {
-          collapseBtn.addEventListener("click", toggleCollapse);
-        }
-
-        /*
-         * คลิกชื่อโมเดลเพื่อยุบ–ขยาย
-         * ไม่ใช้ชื่อโมเดลในการเปิด–ปิดสวิตช์แล้ว
-         */
-        if (titleEl) {
-          titleEl.addEventListener("click", toggleCollapse);
-        }
-
-        updateEnabledState();
-        updateCollapsedState();
-      }
-      function addMainModel(data = {}, keepQuestions = false) {
-        const tpl = document
-          .getElementById("main-model-template")
-          .content.cloneNode(true);
-
-        const block = tpl.querySelector("[data-main-model]");
-        const titleEl = block.querySelector(".main-model-title");
-        const toggle = block.querySelector(".main-model-toggle");
-        const subgroupsRoot = block.querySelector(".subgroups");
-
-        titleEl.textContent = data.title || "หัวข้อใหม่";
-
-        document.getElementById("mainModels").appendChild(block);
-
-        if (toggle) {
-          // ให้ LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL แสดงชื่อ
-          // แต่ปิดรายละเอียดไว้ก่อนเสมอ ตอนเปิดฟอร์ม
-          if (keepQuestions) {
-            toggle.checked = data.enabled !== false;
-          } else {
-            toggle.checked = false;
-          }
-        }
-
-        bindMainModel(block);
-        if (Array.isArray(data.dimensions) && data.dimensions.length) {
-          data.dimensions.forEach((dim, i) =>
-            addSubgroup(
-              subgroupsRoot,
-              dim,
-              i < data.dimensions.length,
-              keepQuestions,
-            ),
-          );
-        } else {
-          addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 1" }, true);
-          addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 2" }, true);
-        }
-
-        toggle?.dispatchEvent(new Event("change"));
-      }
-
-      let defaultMainModels = [];
-
-      async function loadSurveyStructureForForm() {
-        const res = await fetch("/api/survey-structure/form");
-        const json = await res.json().catch(() => ({}));
-
-        if (!res.ok) {
-          throw new Error(json.error || "โหลดโครงสร้างแบบประเมินไม่สำเร็จ");
-        }
-
-        defaultMainModels = Array.isArray(json.models) ? json.models : [];
-      }
-
-      let savedDraft = {};
-      try {
-        savedDraft = JSON.parse(localStorage.getItem("surveyDraft") || "{}");
-      } catch (_) {
-        savedDraft = {};
-      }
-
-      const qs = new URLSearchParams(window.location.search);
-      const mode = (qs.get("mode") || "").trim().toLowerCase();
-
-      const pageMode =
-        mode === "edit" ? "edit" : mode === "copy" ? "copy" : "create";
-      const editingFormId = qs.get("id");
-
-      const currentUser = (localStorage.getItem("user") || "").trim();
-      const currentRole = (localStorage.getItem("role") || "staff").trim();
-      const currentDisplayName = (
-        localStorage.getItem("displayName") || currentUser
-      ).trim();
-
-      function setValue(selector, value) {
-        const el = document.querySelector(selector);
-        if (el) el.value = value ?? "";
-      }
-
-      function toDateInputValue(value) {
-        if (!value) return "";
-
-        const text = String(value).trim();
-
-        // กรณีเป็น YYYY-MM-DD อยู่แล้ว
-        if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-          return text;
-        }
-
-        // กรณีมาจาก MySQL/JSON เช่น 2026-06-18T00:00:00.000Z
-        if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
-          return text.slice(0, 10);
-        }
-
-        const d = new Date(text);
-        if (isNaN(d)) return "";
-
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-
-        return `${yyyy}-${mm}-${dd}`;
-      }
-
-      function setCheckboxValues(name, values = []) {
-        const set = new Set(Array.isArray(values) ? values : []);
-        document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
-          el.checked = set.has(el.value);
-        });
-      }
-
-      function toggleSectionBySec(secNo, enabled) {
-        const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
-        if (!sec) return;
-
-        const cb = sec.querySelector(".toggle");
-        if (!cb) return;
-
-        cb.checked = !!enabled;
-        cb.dispatchEvent(new Event("change"));
-      }
-
-      function addSimpleRows(
-        containerSelector,
-        items = [],
-        inputName = "items[]",
-      ) {
-        const root = document.querySelector(containerSelector);
-        if (!root) return;
-
-        root.innerHTML = "";
-
-        const values = Array.isArray(items) && items.length ? items : ["", ""];
-
-        values.forEach((text, index) => {
-          const row = document.createElement("div");
-          row.className = "item";
-          row.innerHTML = `
-            <span class="num">${index + 1}.</span>
-            <input class="input" type="text" name="${inputName}" placeholder="กรอกคำถาม..." />
-            ${index >= 2 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
-          `;
-          row.querySelector("input").value = text || "";
-          root.appendChild(row);
-
-          const delBtn = row.querySelector(".del");
-          if (delBtn) attachDelete(delBtn, root);
-        });
-
-        renumber(root);
-      }
-
-      function getSectionEnabled(secNo) {
-        const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
-        const cb = sec?.querySelector(".toggle");
-        return !!cb?.checked;
-      }
-
-      function getCheckedValues(name) {
-        return Array.from(
-          document.querySelectorAll(`input[name="${name}"]:checked`),
-        ).map((el) => el.value);
-      }
-
-      function getInputValues(selector) {
-        return Array.from(document.querySelectorAll(selector))
-          .map((el) => String(el.value || "").trim())
-          .filter(Boolean);
-      }
-
-      function collectSection2Models() {
-        return Array.from(document.querySelectorAll("[data-main-model]")).map(
-          (modelEl) => {
-            const title =
-              modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
-              "";
-
-            const enabled =
-              !!modelEl.querySelector(".main-model-toggle")?.checked;
-
-            const dimensions = Array.from(
-              modelEl.querySelectorAll("[data-subgroup-item]"),
-            ).map((groupEl) => {
-              const questions = Array.from(
-                groupEl.querySelectorAll(".questions .item"),
-              )
-                .map((row) => {
-                  const input = row.querySelector(".dim-question");
-                  const text = String(input?.value || "").trim();
-
-                  if (!text) return null;
-
-                  /*
-                   * ป้องกันกรณีแถวเก่าหรือแถวที่ยังไม่มี ID
-                   */
-                  if (!row.dataset.questionId) {
-                    row.dataset.questionId = createQuestionId();
+            function showEditWarningPopup(responseCount) {
+              return new Promise((resolve) => {
+                const overlay = document.getElementById("editWarningOverlay");
+                const countElement = document.getElementById(
+                  "editWarningResponseCount",
+                );
+                const cancelButton = document.getElementById("editWarningCancelBtn");
+                const confirmButton = document.getElementById(
+                  "editWarningConfirmBtn",
+                );
+
+                if (!overlay || !countElement || !cancelButton || !confirmButton) {
+                  resolve(false);
+                  return;
+                }
+
+                countElement.textContent = Number(responseCount || 0).toLocaleString(
+                  "th-TH",
+                );
+
+                let isFinished = false;
+
+                function closePopup(result) {
+                  if (isFinished) return;
+
+                  isFinished = true;
+                  overlay.classList.remove("show");
+
+                  cancelButton.removeEventListener("click", handleCancel);
+                  confirmButton.removeEventListener("click", handleConfirm);
+                  overlay.removeEventListener("click", handleOverlayClick);
+                  document.removeEventListener("keydown", handleKeydown);
+
+                  resolve(result);
+                }
+
+                function handleCancel() {
+                  closePopup(false);
+                }
+
+                function handleConfirm() {
+                  closePopup(true);
+                }
+
+                function handleOverlayClick(event) {
+                  if (event.target === overlay) {
+                    closePopup(false);
                   }
-
-                  return {
-                    questionId: row.dataset.questionId,
-
-                    questionBankId:
-                      Number(row.dataset.questionBankId || 0) || null,
-                    text,
-                  };
-                })
-                .filter(Boolean);
-
-              return {
-                title:
-                  groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
-
-                enabled: !!groupEl.querySelector(".subtoggle")?.checked,
-
-                questions,
-              };
-            });
-
-            return {
-              title,
-              enabled,
-              dimensions,
-            };
-          },
-        );
-      }
-      function addGoalInput(value = "") {
-        const goalList = document.getElementById("goalList");
-        if (!goalList) return;
-
-        const row = document.createElement("div");
-        row.className = "item goal-item";
-
-        row.innerHTML = `
-    <input
-      type="text"
-      class="input goal-input"
-      placeholder="เป้าหมายเพิ่มเติม"
-      value="${String(value || "").replaceAll('"', "&quot;")}"
-    />
-    <button type="button" class="btn soft goal-remove-btn">ลบ</button>
-  `;
-
-        row.querySelector(".goal-remove-btn").addEventListener("click", () => {
-          row.remove();
-        });
-
-        goalList.appendChild(row);
-      }
-
-      function collectGoalText() {
-        return Array.from(document.querySelectorAll(".goal-input"))
-          .map((el) => String(el.value || "").trim())
-          .filter(Boolean)
-          .join("\n");
-      }
-
-      function applyGoalText(value = "") {
-        const goalList = document.getElementById("goalList");
-        const firstInput = document.getElementById("goal_text");
-        if (!goalList || !firstInput) return;
-
-        goalList
-          .querySelectorAll(".goal-item:not(:first-child)")
-          .forEach((el) => {
-            el.remove();
-          });
-
-        const goals = Array.isArray(value)
-          ? value
-          : String(value || "")
-              .split(/\n+/)
-              .map((v) => v.trim())
-              .filter(Boolean);
-
-        firstInput.value = goals[0] || "";
-
-        goals.slice(1).forEach((goal) => {
-          addGoalInput(goal);
-        });
-      }
-
-      document.getElementById("addGoalBtn")?.addEventListener("click", () => {
-        addGoalInput();
-      });
-
-      function collectExtraSections() {
-        return Array.from(
-          document.querySelectorAll('.custom-dimension[data-role="section"]'),
-        ).map((el) => ({
-          title: el.querySelector(".dim-title")?.value?.trim() || "",
-          questions: Array.from(el.querySelectorAll(".dim-question"))
-            .map((q) => String(q.value || "").trim())
-            .filter(Boolean),
-        }));
-      }
-
-      function calculateFiscalYear(startDateValue) {
-        if (!startDateValue) return "";
-
-        const date = new Date(startDateValue);
-        if (isNaN(date)) return "";
-
-        const yearBE = date.getFullYear() + 543;
-        const month = date.getMonth() + 1;
-
-        return month >= 10 ? String(yearBE + 1) : String(yearBE);
-      }
-
-      function clearAllFieldErrors() {
-        document.querySelectorAll(".input-error").forEach((el) => {
-          el.classList.remove("input-error");
-        });
-
-        document.querySelectorAll(".field-error-message").forEach((el) => {
-          el.remove();
-        });
-
-        const summary = document.getElementById("validationSummary");
-        if (summary) {
-          summary.classList.remove("show");
-          summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
-        }
-      }
-
-      function showFieldError(input, message) {
-        if (!input) return;
-
-        input.classList.add("input-error");
-
-        const next = input.nextElementSibling;
-
-        if (next && next.classList.contains("field-error-message")) {
-          next.remove();
-        }
-
-        const error = document.createElement("div");
-        error.className = "field-error-message";
-        error.textContent = message;
-
-        input.insertAdjacentElement("afterend", error);
-      }
-
-      function focusFirstError() {
-        const firstError = document.querySelector(".input-error");
-
-        if (firstError) {
-          firstError.scrollIntoView({
-            behavior: "smooth",
-            block: "center",
-          });
-
-          setTimeout(() => {
-            firstError.focus?.();
-          }, 250);
-        }
-      }
-
-      function showValidationSummary() {
-        const summary = document.getElementById("validationSummary");
-        if (!summary) return;
-
-        summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
-        summary.classList.add("show");
-
-        summary.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-
-      function validateBeforeSave(formData) {
-        clearAllFieldErrors();
-
-        let isValid = true;
-
-        const formTitleInput = document.querySelector('[name="form_title"]');
-        const startDateInput = document.getElementById("start_date");
-        const endDateInput = document.getElementById("end_date");
-        const goalInput = document.getElementById("goal_text");
-        const kpiQuantityInput = document.getElementById("kpi_quantity");
-        const kpiQualityInput = document.getElementById("kpi_quality");
-        const budgetInput = document.getElementById("budget_received");
-        const deptInput = document.getElementById("dept_name");
-        const missionInput = document.getElementById("center_mission");
-        const centerStrategyInput = document.getElementById("center_strategy");
-
-        if (!formData.form_title) {
-          showFieldError(formTitleInput, "กรุณากรอกชื่อโครงการ");
-          isValid = false;
-        }
-
-        if (!formData.start_date) {
-          showFieldError(startDateInput, "กรุณาเลือกวันที่เริ่มต้น");
-          isValid = false;
-        }
-
-        if (!formData.end_date) {
-          showFieldError(endDateInput, "กรุณาเลือกวันที่สิ้นสุด");
-          isValid = false;
-        }
-
-        if (formData.start_date && formData.end_date) {
-          if (formData.end_date < formData.start_date) {
-            showFieldError(
-              endDateInput,
-              "วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น",
-            );
-            isValid = false;
-          }
-        }
-
-        if (!formData.goal_text) {
-          showFieldError(goalInput, "กรุณากรอกเป้าหมายโครงการ");
-          isValid = false;
-        }
-
-        if (!formData.kpi_quantity) {
-          showFieldError(kpiQuantityInput, "กรุณากรอกตัวชี้วัดเชิงปริมาณ");
-          isValid = false;
-        }
-
-        if (!formData.kpi_quality) {
-          showFieldError(kpiQualityInput, "กรุณากรอกตัวชี้วัดเชิงคุณภาพ");
-          isValid = false;
-        }
-
-        const budget = Number(formData.budget_received);
-
-        if (formData.budget_received === "") {
-          showFieldError(budgetInput, "กรุณากรอกงบประมาณ");
-          isValid = false;
-        } else if (!Number.isFinite(budget) || budget < 0) {
-          showFieldError(budgetInput, "งบประมาณต้องมากกว่าหรือเท่ากับ 0 บาท");
-          isValid = false;
-        }
-
-        if (!formData.dept_name) {
-          showFieldError(deptInput, "กรุณาเลือกฝ่ายที่สังกัด");
-          isValid = false;
-        }
-
-        if (!formData.center_mission) {
-          showFieldError(missionInput, "กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
-          isValid = false;
-        }
-
-        // TODO: เปิดเมื่อเพิ่มข้อมูลยุทธศาสตร์มหาวิทยาลัยแล้ว
-        // const uniStrategyInput = document.getElementById("uni_strategy");
-        // if (!formData.uni_strategy) {
-        //   showFieldError(uniStrategyInput, "กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
-        //   isValid = false;
-        // }
-
-        if (!formData.center_strategy) {
-          showFieldError(
-            centerStrategyInput,
-            "กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ",
-          );
-          isValid = false;
-        }
-
-        if (formData.section2_enabled) {
-          const hasQuestion = formData.section2_models.some((model) => {
-            if (!model.enabled) return false;
-
-            return model.dimensions.some((dim) => {
-              if (!dim.enabled) return false;
-              return dim.questions.length > 0;
-            });
-          });
-
-          if (!hasQuestion) {
-            const section2 = document.querySelector('.section[data-sec="s2"]');
-            showFieldError(section2, "กรุณาเลือกคำถามอย่างน้อย 1 ข้อ");
-            isValid = false;
-          }
-
-          /*
-           * Phase 3.2.2
-           * ป้องกันคำถามซ้ำ แม้ผู้ใช้จะพิมพ์คำถามเอง
-           */
-          const questionInputs = Array.from(
-            document.querySelectorAll('.section[data-sec="s2"] .dim-question'),
-          ).filter((input) => {
-            /*
-             * ตรวจเฉพาะคำถามใน Model และ Group ที่เปิดใช้งาน
-             */
-            const model = input.closest("[data-main-model]");
-            const group = input.closest("[data-subgroup-item]");
-
-            const modelToggle = model?.querySelector(".main-model-toggle");
-
-            const groupToggle = group?.querySelector(".subtoggle");
-
-            const modelEnabled = !modelToggle || modelToggle.checked;
-
-            const groupEnabled = !groupToggle || groupToggle.checked;
-
-            return modelEnabled && groupEnabled;
-          });
-
-          const questionMap = new Map();
-
-          questionInputs.forEach((input) => {
-            const questionKey = normalizeQuestionValue(input.value);
-
-            /*
-             * ไม่ตรวจช่องว่าง
-             */
-            if (!questionKey) return;
-
-            if (!questionMap.has(questionKey)) {
-              questionMap.set(questionKey, []);
+                }
+
+                function handleKeydown(event) {
+                  if (event.key === "Escape") {
+                    closePopup(false);
+                  }
+                }
+
+                cancelButton.addEventListener("click", handleCancel);
+                confirmButton.addEventListener("click", handleConfirm);
+                overlay.addEventListener("click", handleOverlayClick);
+                document.addEventListener("keydown", handleKeydown);
+
+                overlay.classList.add("show");
+
+                requestAnimationFrame(() => {
+                  confirmButton.focus();
+                });
+              });
+            }
+            function renumber(stack) {
+              stack
+                .querySelectorAll(".item .num")
+                .forEach((n, i) => (n.textContent = i + 1 + "."));
             }
 
-            questionMap.get(questionKey).push(input);
-          });
+            function attachDelete(btn, stack) {
+              btn.addEventListener("click", () => {
+                btn.closest(".item").remove();
+                renumber(stack);
+              });
+            }
 
-          questionMap.forEach((duplicateInputs) => {
+            function renumberStack(stack) {
+              stack.querySelectorAll(".item .num").forEach((n, i) => {
+                n.textContent = `${i + 1}.`;
+              });
+            }
+            // =====================================================
+            // Phase 3.2.1: ซ่อนคำถามที่ถูกเลือกแล้วใน Group เดียวกัน
+            // =====================================================
+
+            let questionDatalistCounter = 0;
+
             /*
-             * มีมากกว่า 1 ช่อง แปลว่าเป็นคำถามซ้ำ
+             * เก็บคำถามโดยจับคู่จาก:
+             * ID ของ Datalist + ข้อความคำถาม
              */
-            if (duplicateInputs.length <= 1) return;
-
-            duplicateInputs.forEach((input) => {
-              const currentStack = input.closest(".questions");
-
-              const inputsInCurrentGroup = currentStack
-                ? Array.from(currentStack.querySelectorAll(".dim-question"))
-                : questionInputs;
-
-              /*
-               * หาข้ออื่นที่มีคำถามเดียวกัน
-               */
-              const duplicateInput = duplicateInputs.find(
-                (otherInput) => otherInput !== input,
-              );
-
-              const duplicateNumber =
-                inputsInCurrentGroup.indexOf(duplicateInput) + 1;
-
-              const message =
-                duplicateNumber > 0
-                  ? `⚠ ซ้ำกับข้อ ${duplicateNumber}`
-                  : "⚠ พบคำถามซ้ำ";
-
-              showFieldError(input, message);
-            });
-
-            isValid = false;
-          });
-        }
-
-        if (!isValid) {
-          showValidationSummary();
-          focusFirstError();
-        }
-
-        return isValid;
-      }
-
-      function buildFormPayload() {
-        return {
-          form_title:
-            document.querySelector('[name="form_title"]')?.value?.trim() || "",
-          form_desc:
-            document.querySelector('[name="form_desc"]')?.value?.trim() || "",
-
-          goal_text: collectGoalText(),
-          kpi_quantity:
-            document.getElementById("kpi_quantity")?.value?.trim() || "",
-          kpi_quality:
-            document.getElementById("kpi_quality")?.value?.trim() || "",
-          start_date: document.getElementById("start_date").value,
-          end_date: document.getElementById("end_date").value,
-          fiscal_year: calculateFiscalYear(
-            document.getElementById("start_date").value,
-          ),
-          budget_received:
-            document.getElementById("budget_received")?.value || "",
-
-          dept_name: document.getElementById("dept_name")?.value || "",
-          uni_strategy: document.getElementById("uni_strategy")?.value || "",
-          center_strategy:
-            document.getElementById("center_strategy")?.value || "",
-          center_mission:
-            document.getElementById("center_mission")?.value || "",
-
-          section1_enabled: getSectionEnabled(1),
-          profile: getCheckedValues("profile[]"),
-
-          section2_enabled: getSectionEnabled(2),
-          section2_models: collectSection2Models(),
-
-          section3_enabled: getSectionEnabled(3),
-          dissatisfaction_text:
-            document
-              .querySelector('[name="dissatisfaction_text"]')
-              ?.value?.trim() || "",
-
-          section4_enabled: getSectionEnabled(4),
-          engagement_question:
-            "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่",
-
-          section5_enabled: getSectionEnabled(5),
-          suggestion_prompt:
-            document
-              .querySelector('[name="suggestion_prompt"]')
-              ?.value?.trim() || "",
-
-          extra_sections: collectExtraSections(),
-        };
-      }
-
-      function applyFormToPage(data) {
-        if (!data) return;
-
-        setValue('[name="form_title"]', data.form_title);
-        setValue('[name="form_desc"]', data.form_desc);
-
-        applyGoalText(data.goal_text);
-        setValue("#kpi_quantity", data.kpi_quantity);
-        setValue("#kpi_quality", data.kpi_quality);
-        setValue("#start_date", toDateInputValue(data.start_date));
-        setValue("#end_date", toDateInputValue(data.end_date));
-        setValue("#budget_received", data.budget_received || "");
-
-        setValue("#dept_name", data.dept_name);
-        setValue("#uni_strategy", data.uni_strategy);
-        setValue("#center_strategy", data.center_strategy);
-        setValue("#center_mission", data.center_mission);
-
-        toggleSectionBySec(1, data.section1_enabled !== false);
-        setCheckboxValues("profile[]", data.profile || []);
-
-        toggleSectionBySec(2, data.section2_enabled !== false);
-        const mainModelsEl = document.getElementById("mainModels");
-        if (mainModelsEl) mainModelsEl.innerHTML = "";
-
-        if (
-          Array.isArray(data.section2_models) &&
-          data.section2_models.length
-        ) {
-          data.section2_models.forEach((m) => addMainModel(m, true));
-        } else {
-          defaultMainModels.forEach((m) => addMainModel(m));
-        }
-
-        toggleSectionBySec(3, data.section3_enabled !== false);
-        setValue(
-          '[name="dissatisfaction_text"]',
-          data.dissatisfaction_text || "",
-        );
-
-        toggleSectionBySec(4, data.section4_enabled !== false);
-
-        toggleSectionBySec(5, data.section5_enabled !== false);
-        setValue('[name="suggestion_prompt"]', data.suggestion_prompt);
-
-        document
-          .querySelectorAll('.custom-dimension[data-role="section"]')
-          .forEach((el) => el.remove());
-
-        if (Array.isArray(data.extra_sections)) {
-          data.extra_sections.forEach((sec) => {
-            const footer = document.querySelector(".footer");
-            mountDimension(footer, "section");
-
-            const blocks = document.querySelectorAll(
-              '.custom-dimension[data-role="section"]',
-            );
-            const block = blocks[blocks.length - 1];
-            if (!block) return;
-
-            const titleInput = block.querySelector(".dim-title");
-            if (titleInput) titleInput.value = sec.title || "";
-
-            const stack = block.querySelector(".stack");
-            stack.innerHTML = "";
-
-            const qs =
-              Array.isArray(sec.questions) && sec.questions.length
-                ? sec.questions
-                : [""];
-
-            qs.forEach((q, i) => {
-              const row = document.createElement("div");
-              row.className = "item";
-              row.innerHTML = `
-                <span class="num">${i + 1}.</span>
-                <input class="input dim-question" type="text" placeholder="กรอกคำถาม..." />
-                ${i > 0 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
-              `;
-              row.querySelector(".dim-question").value = q || "";
-              stack.appendChild(row);
-
-              const delBtn = row.querySelector(".del");
-              if (delBtn) attachDelete(delBtn, stack);
-            });
-
-            renumber(stack);
-          });
-        }
-
-        renumberDimensions();
-      }
-
-      async function loadFormForEdit() {
-        if (pageMode !== "edit" || !editingFormId) return;
-
-        const res = await fetch(
-          `/api/forms/${encodeURIComponent(editingFormId)}`,
-        );
-        const json = await res.json();
-
-        if (!res.ok) {
-          throw new Error(json?.error || "โหลดข้อมูลฟอร์มไม่สำเร็จ");
-        }
-
-        const ownerUsername = String(json.created_by_username || "").trim();
-        const isOwner = ownerUsername === currentUser;
-        const isManager = currentRole === "manager";
-
-        if (!isOwner && !isManager) {
-          throw new Error("คุณไม่มีสิทธิ์แก้ไขฟอร์มนี้");
-        }
-
-        const merged = {
-          ...(json.form || {}),
-          form_title: json.form_title ?? json.form?.form_title ?? "",
-          form_desc: json.form_desc ?? json.form?.form_desc ?? "",
-          dept_name: json.dept_name ?? json.form?.dept_name ?? "",
-          uni_strategy: json.uni_strategy ?? json.form?.uni_strategy ?? "",
-          center_strategy:
-            json.center_strategy ?? json.form?.center_strategy ?? "",
-          center_mission:
-            json.center_mission ?? json.form?.center_mission ?? "",
-          goal_text: json.goal_text ?? json.form?.goal_text ?? "",
-          kpi_quantity: json.kpi_quantity ?? json.form?.kpi_quantity ?? "",
-          kpi_quality: json.kpi_quality ?? json.form?.kpi_quality ?? "",
-          start_date: json.start_date ?? json.form?.start_date ?? "",
-          end_date: json.end_date ?? json.form?.end_date ?? "",
-          budget_received:
-            json.budget_received ?? json.form?.budget_received ?? "",
-        };
-        applyFormToPage(merged);
-
-        const submitBtn = document.querySelector(
-          '#formSurvey button[type="submit"]',
-        );
-        if (submitBtn) submitBtn.textContent = "อัปเดตฟอร์ม";
-      }
-
-      function renderInitialSection2Models() {
-        const mainModelsEl = document.getElementById("mainModels");
-        if (mainModelsEl) mainModelsEl.innerHTML = "";
-
-        if (
-          Array.isArray(savedDraft.section2_models) &&
-          savedDraft.section2_models.length
-        ) {
-          savedDraft.section2_models.forEach((m) => addMainModel(m));
-        } else {
-          defaultMainModels.forEach((m) => addMainModel(m));
-        }
-      }
-
-      function renumberDimensions() {
-        // ไม่ต้องแสดงเลขลำดับ
-      }
-
-      // Toggle section (เปิด/ปิดทั้งส่วน)
-      document.querySelectorAll(".section .toggle").forEach((cb) => {
-        const sec = cb.closest(".section");
-
-        const setDisabled = () => {
-          const enabled = cb.checked;
-
-          sec.classList.toggle("disabled", !enabled);
-
-          sec.querySelectorAll("input,button,textarea,select").forEach((el) => {
-            if (el === cb) return;
-            el.disabled = !enabled;
-          });
-
-          // เฉพาะส่วนที่ 2:
-          // ถ้าปิดส่วนของคำถาม ให้ซ่อน LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL ทั้งหมด
-          // if (sec.dataset.sec === "s2") {
-          //   const mainModels = sec.querySelector("#mainModels");
-          //   if (mainModels) {
-          //     mainModels.style.display = enabled ? "" : "none";
-          //   }
-          // }
-
-          // ถ้าเปิด section ให้ toggle ย่อยกดได้
-          // แต่ไม่บังคับเปิดหัวข้อย่อยเอง
-          if (enabled) {
-            sec.querySelectorAll(".subtoggle").forEach((st) => {
-              st.disabled = false;
-              st.dispatchEvent(new Event("change"));
-            });
-          }
-        };
-
-        cb.addEventListener("change", setDisabled);
-        setDisabled();
-      });
-
-      // Subgroup toggle
-      document.querySelectorAll("[data-subgroup]").forEach((gr) => {
-        const st = gr.querySelector(".subtoggle");
-
-        const update = () => {
-          const enabled = st.checked;
-          gr.classList.toggle("disabled", !enabled);
-          gr.querySelectorAll("input,button,textarea,select").forEach((el) => {
-            if (el === st) return;
-            el.disabled = !enabled;
-          });
-        };
-
-        st.checked = false;
-        update();
-        st.addEventListener("change", update);
-      });
-
-      // Add rows
-      function addRow(sel, name) {
-        const list = document.querySelector(sel);
-        const idx = list.querySelectorAll(".item").length + 1;
-
-        let listId = "questionSuggestions";
-
-        if (name === "q21[]") listId = "serviceSuggestions";
-        else if (name === "q22[]") listId = "comfortSuggestions";
-        else if (name === "q23[]") listId = "staffSuggestions";
-        else if (name === "dissatisfied[]") listId = "dissSuggestions";
-        else if (name === "engagement[]") listId = "engagementSuggestions";
-
-        const div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `
-          <span class="num">${idx}.</span>
-          <input class="input dim-question" type="text" name="${name}" list="${listId}" placeholder="กรอกคำถาม...">
-          <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
-        `;
-        list.appendChild(div);
-        attachDelete(div.querySelector(".del"), list);
-      }
-
-      const nameMap = {
-        "#q21": "q21[]",
-        "#q22": "q22[]",
-        "#q23": "q23[]",
-      };
-
-      document.querySelectorAll("[data-add]").forEach((b) => {
-        b.addEventListener("click", () => {
-          const sel = b.getAttribute("data-add");
-          addRow(sel, nameMap[sel] || "items[]");
-        });
-      });
-
-      function mountDimension(anchorEl, role) {
-        const tpl = document
-          .getElementById("dimension-template")
-          .content.cloneNode(true);
-
-        const block = tpl.querySelector(".custom-dimension");
-        block.dataset.role = role;
-        block.querySelector(".remove-dim")?.addEventListener("click", () => {
-          block.remove();
-          if (role === "section") renumberDimensions();
-        });
-
-        if (role === "rating") {
-          const secNum = block.querySelector(".sec-num");
-          if (secNum) secNum.remove();
-        }
-
-        block.querySelector(".add-inside").addEventListener("click", () => {
-          const stack = block.querySelector(".stack");
-          const idx = stack.querySelectorAll(".item").length + 1;
-
-          let listId = "questionSuggestions";
-          if (role === "section") listId = "serviceSuggestions";
-          else if (role === "diss") listId = "dissSuggestions";
-          else if (role === "engage") listId = "engagementSuggestions";
-
-          const row = document.createElement("div");
-          row.className = "item";
-          row.innerHTML = `
-          <span class="num">${idx}.</span>
-          <input class="input dim-question" type="text" list="${listId}" placeholder="กรอกคำถาม...">
-          <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
-        `;
-          stack.appendChild(row);
-          attachDelete(row.querySelector(".del"), stack);
-        });
-
-        anchorEl.insertAdjacentElement("beforebegin", block);
-
-        if (role === "section") renumberDimensions();
-      }
-
-      // ส่วนที่ 5+: แทรกก่อน footer
-      document
-        .getElementById("addDimensionBottom")
-        .addEventListener("click", (e) => {
-          const footer = e.target.closest(".footer");
-          mountDimension(footer, "section");
-        });
-
-      // บังคับให้เลือกประเภทได้ทีละ 1 (checkbox -> single select)
-      document.querySelectorAll(".form-type").forEach((cb) => {
-        cb.addEventListener("change", (e) => {
-          if (!e.target.checked) return;
-          document.querySelectorAll(".form-type").forEach((x) => {
-            if (x !== e.target) x.checked = false;
-          });
-        });
-      });
-
-      async function loadQuestionBankIntoDatalists() {
-        try {
-          const res = await fetch("/api/question-bank/active");
-          const rows = await res.json();
-
-          if (!res.ok || !Array.isArray(rows)) {
-            console.warn("Question Bank response is invalid:", rows);
-            return;
-          }
-
-          const grouped = {};
-
-          questionBankByListAndText.clear();
-
-          rows.forEach((row) => {
-            const listId = String(row.datalist_id || "").trim();
-            const text = String(row.question_text || "").trim();
-            const questionBankId = Number(row.id) || null;
-
-            if (!listId || !text) return;
-
-            const lookupKey = createQuestionBankLookupKey(listId, text);
-
-            questionBankByListAndText.set(lookupKey, {
-              id: questionBankId,
-              text,
-              datalistId: listId,
-            });
-
-            if (!grouped[listId]) {
-              grouped[listId] = [];
+            const questionBankByListAndText = new Map();
+
+            function createQuestionBankLookupKey(listId, questionText) {
+              return [
+                String(listId || "").trim(),
+                normalizeQuestionValue(questionText),
+              ].join("__");
             }
 
-            grouped[listId].push({
-              id: questionBankId,
-              text,
-            });
-          });
+            /*
+             * รองรับข้อมูลทั้งสองรูปแบบ:
+             *
+             * รูปแบบเก่า:
+             * "ความพร้อมของอุปกรณ์"
+             *
+             * รูปแบบใหม่:
+             * {
+             *   questionId: "q_xxx",
+             *   questionBankId: 25,
+             *   text: "ความพร้อมของอุปกรณ์"
+             * }
+             */
 
-          Object.entries(grouped).forEach(([listId, questions]) => {
-            let datalist = document.getElementById(listId);
+            function normalizeQuestionItem(question) {
+              if (question && typeof question === "object") {
+                return {
+                  questionId: String(
+                    question.questionId || question.question_id || question.id || "",
+                  ).trim(),
 
-            if (!datalist) {
-              datalist = document.createElement("datalist");
-              datalist.id = listId;
-              document.body.appendChild(datalist);
-            }
+                  questionBankId:
+                    Number(
+                      question.questionBankId ??
+                        question.question_bank_id ??
+                        question.bankId,
+                    ) || null,
 
-            datalist.innerHTML = "";
-
-            questions.forEach((question) => {
-              const option = document.createElement("option");
-
-              option.value = question.text;
-
-              if (question.id) {
-                option.dataset.questionBankId = String(question.id);
+                  text: String(
+                    question.text ||
+                      question.questionText ||
+                      question.question_text ||
+                      question.label ||
+                      "",
+                  ).trim(),
+                };
               }
 
-              datalist.appendChild(option);
-            });
-          });
-
-          refreshAllQuestionSuggestions();
-        } catch (err) {
-          console.warn("load question bank failed:", err);
-        }
-      }
-
-      async function loadProjectDropdowns() {
-        try {
-          const res = await fetch("/api/question-bank/active");
-          const rows = await res.json();
-
-          if (!res.ok || !Array.isArray(rows)) {
-            return;
-          }
-
-          const selectMap = {
-            dept_name: document.getElementById("dept_name"),
-            uni_strategy: document.getElementById("uni_strategy"),
-            center_mission: document.getElementById("center_mission"),
-            center_strategy: document.getElementById("center_strategy"),
-          };
-
-          Object.values(selectMap).forEach((select) => {
-            if (!select) return;
-
-            const firstOptionText =
-              select.querySelector("option")?.textContent || "-- เลือก --";
-
-            select.innerHTML = "";
-
-            const firstOption = document.createElement("option");
-            firstOption.value = "";
-            firstOption.textContent = firstOptionText;
-            select.appendChild(firstOption);
-          });
-
-          rows.forEach((row) => {
-            const datalistId = String(row.datalist_id || "").trim();
-            const text = String(row.question_text || "").trim();
-
-            const select = selectMap[datalistId];
-
-            if (!select || !text) return;
-
-            const option = document.createElement("option");
-            option.value = text;
-            option.textContent = text;
-            select.appendChild(option);
-          });
-        } catch (err) {
-          console.warn("load project dropdowns failed:", err);
-        }
-      }
-
-      function showValidationPopup(message) {
-        const popup = document.getElementById("validationOverlay");
-        const msg = document.getElementById("validationMessage");
-        const okBtn = document.getElementById("validationOkBtn");
-
-        if (msg) msg.textContent = message || "กรุณาตรวจสอบข้อมูล";
-
-        popup.classList.add("show");
-
-        okBtn.onclick = () => {
-          popup.classList.remove("show");
-        };
-      }
-
-      function clearFieldError(input) {
-        input.classList.remove("input-error");
-
-        const error = input.parentElement.querySelector(".error-message");
-
-        if (error) {
-          error.classList.remove("show");
-        }
-      }
-
-      function showSaveSuccessPopup() {
-        const popup = document.getElementById("saveSuccessOverlay");
-
-        popup.classList.add("show");
-
-        setTimeout(() => {
-          popup.classList.remove("show");
-          window.location.href = "index.html";
-        }, 1500);
-      }
-
-      window.addEventListener("DOMContentLoaded", async () => {
-        document.querySelectorAll("input, select, textarea").forEach((el) => {
-          el.addEventListener("input", () => {
-            el.classList.remove("input-error");
-
-            const parent = el.closest(".item") || el.parentElement;
-            parent?.querySelector(".field-error-message")?.remove();
-          });
-
-          el.addEventListener("change", () => {
-            el.classList.remove("input-error");
-
-            const parent = el.closest(".item") || el.parentElement;
-            parent?.querySelector(".field-error-message")?.remove();
-          });
-        });
-        try {
-          await loadSurveyStructureForForm();
-          renderInitialSection2Models();
-
-          await loadQuestionBankIntoDatalists();
-          await loadProjectDropdowns();
-
-          if (pageMode === "edit") {
-            await loadFormForEdit();
-          } else if (pageMode === "copy") {
-            const copied = JSON.parse(localStorage.getItem("copyForm") || "{}");
-            if (!Object.keys(copied).length) {
-              throw new Error("ไม่พบข้อมูลสำหรับคัดลอกฟอร์ม");
-            }
-            applyFormToPage(copied);
-
-            const submitBtn = document.querySelector(
-              '#formSurvey button[type="submit"]',
-            );
-            if (submitBtn) submitBtn.textContent = "บันทึกเป็นฟอร์มใหม่";
-          }
-        } catch (err) {
-          alert("เปิดหน้าไม่สำเร็จ: " + err.message);
-          window.location.href = "index.html";
-        }
-      });
-
-      // Save -> DB -> กลับหน้า index.html
-      document
-        .getElementById("formSurvey")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-
-          const submitBtn = e.target.querySelector('button[type="submit"]');
-
-          try {
-            if (submitBtn) submitBtn.disabled = true;
-
-            const formData = buildFormPayload();
-
-            if (!validateBeforeSave(formData)) {
-              return;
+              return {
+                questionId: "",
+                questionBankId: null,
+                text: String(question || "").trim(),
+              };
             }
 
-            const payload = {
-              created_by: currentDisplayName || currentUser,
-              created_by_username: currentUser,
-              username: currentUser,
-              role: currentRole,
+            function normalizeQuestionValue(value) {
+              return String(value || "")
+                .trim()
+                .replace(/\s+/g, " ")
+                .toLowerCase();
+            }
 
-              form_title: formData.form_title,
-              dept_name: formData.dept_name,
-              uni_strategy: formData.uni_strategy,
-              center_strategy: formData.center_strategy,
-              center_mission: formData.center_mission,
-              goal_text: formData.goal_text,
-              kpi_quantity: formData.kpi_quantity,
-              kpi_quality: formData.kpi_quality,
-              start_date: formData.start_date || null,
-              end_date: formData.end_date || null,
-              fiscal_year: formData.fiscal_year || null,
-              budget_received: formData.budget_received || null,
+            function refreshQuestionSuggestions(stack) {
+              if (!stack) return;
 
-              attachment_url:
-                document.getElementById("attachmentUrl")?.value.trim() || "",
-
-              form: formData,
-            };
-
-            let res;
-            let json;
-
-            if (pageMode === "edit" && editingFormId) {
-              const updateUrl = `/api/forms/${encodeURIComponent(editingFormId)}`;
+              const inputs = Array.from(stack.querySelectorAll(".dim-question"));
 
               /*
-               * ส่งคำขออัปเดตครั้งแรก
-               * Backend จะตรวจเองว่าฟอร์มมีผู้ตอบแล้วหรือไม่
+               * เก็บคำถามทั้งหมดที่ถูกเลือกหรือกรอกอยู่ใน Group นี้
                */
-              res = await fetch(updateUrl, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
-              });
+              const selectedQuestions = new Set(
+                inputs
+                  .map((input) => normalizeQuestionValue(input.value))
+                  .filter(Boolean),
+              );
 
-              json = await res.json();
-
-              /*
-               * สถานะ 409 หมายถึงแบบประเมินมีผู้ตอบแล้ว
-               * และต้องให้ผู้ใช้ยืนยันก่อน
-               */
-              if (res.status === 409 && json?.code === "FORM_HAS_RESPONSES") {
-                const responseCount = Number(json.response_count || 0);
-
-                const confirmed = await showEditWarningPopup(responseCount);
+              inputs.forEach((input) => {
                 /*
-                 * กดยกเลิก = หยุดการบันทึก
+                 * เก็บ ID ของ datalist ต้นฉบับไว้ครั้งแรก
+                 * เช่น affectOfServiceSuggestions
                  */
-                if (!confirmed) {
+                if (!input.dataset.sourceListId) {
+                  input.dataset.sourceListId =
+                    input.getAttribute("list") || "questionSuggestions";
+                }
+
+                const sourceListId = input.dataset.sourceListId;
+                const sourceDatalist = document.getElementById(sourceListId);
+
+                if (!sourceDatalist) return;
+
+                /*
+                 * แต่ละช่องคำถามจะมี datalist กรองของตัวเอง
+                 * เพื่อไม่ให้กระทบ Group อื่น
+                 */
+                if (!input.dataset.filteredListId) {
+                  questionDatalistCounter += 1;
+
+                  input.dataset.filteredListId = `filteredQuestionSuggestions_${questionDatalistCounter}`;
+                }
+
+                const filteredListId = input.dataset.filteredListId;
+
+                let filteredDatalist = document.getElementById(filteredListId);
+
+                if (!filteredDatalist) {
+                  filteredDatalist = document.createElement("datalist");
+                  filteredDatalist.id = filteredListId;
+                  document.body.appendChild(filteredDatalist);
+                }
+
+                const currentQuestion = normalizeQuestionValue(input.value);
+
+                filteredDatalist.innerHTML = "";
+
+                sourceDatalist.querySelectorAll("option").forEach((sourceOption) => {
+                  const questionText = String(sourceOption.value || "").trim();
+
+                  const normalizedText = normalizeQuestionValue(questionText);
+
+                  if (!normalizedText) return;
+
+                  /*
+                   * ซ่อนคำถามที่ถูกเลือกในช่องอื่น
+                   * แต่ยังคงคำถามปัจจุบันของช่องนี้ไว้
+                   */
+                  const isSelectedByAnotherInput =
+                    selectedQuestions.has(normalizedText) &&
+                    normalizedText !== currentQuestion;
+
+                  if (isSelectedByAnotherInput) return;
+
+                  const option = document.createElement("option");
+                  option.value = questionText;
+
+                  /*
+                   * Copy Question Bank ID ไปยัง Datalist ที่ผ่านการกรองด้วย
+                   */
+                  const lookupKey = createQuestionBankLookupKey(
+                    sourceListId,
+                    questionText,
+                  );
+
+                  const questionBankId =
+                    sourceOption.dataset.questionBankId ||
+                    questionBankByListAndText.get(lookupKey)?.id ||
+                    "";
+
+                  if (questionBankId) {
+                    option.dataset.questionBankId = String(questionBankId);
+                  }
+
+                  filteredDatalist.appendChild(option);
+                });
+
+                input.setAttribute("list", filteredListId);
+              });
+            }
+
+            function refreshAllQuestionSuggestions() {
+              document.querySelectorAll(".questions").forEach((stack) => {
+                refreshQuestionSuggestions(stack);
+              });
+            }
+
+            function bindQuestionRow(row, stack) {
+              const input = row.querySelector(".dim-question");
+              const delBtn = row.querySelector(".remove-question");
+
+              /*
+               * ตรวจข้อความในช่อง แล้วผูก Question Bank ID
+               * โดยใช้ Datalist ต้นฉบับ + ข้อความคำถาม
+               */
+              const updateQuestionBankId = () => {
+                if (!input) return;
+
+                const questionText = String(input.value || "").trim();
+
+                if (!questionText) {
+                  delete row.dataset.questionBankId;
                   return;
                 }
 
                 /*
-                 * กดยืนยัน = ส่งอีกครั้งพร้อมสถานะยืนยัน
+                 * ต้องใช้ ID ของ Datalist ต้นฉบับ
+                 * ไม่ใช่ filteredQuestionSuggestions_x
                  */
-                res = await fetch(updateUrl, {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    ...payload,
-                    confirm_existing_responses: true,
-                  }),
+                const sourceListId = String(
+                  input.dataset.sourceListId ||
+                    input.getAttribute("list") ||
+                    "questionSuggestions",
+                ).trim();
+
+                const lookupKey = createQuestionBankLookupKey(
+                  sourceListId,
+                  questionText,
+                );
+
+                const matched = questionBankByListAndText.get(lookupKey);
+
+                if (matched?.id) {
+                  row.dataset.questionBankId = String(matched.id);
+                } else {
+                  /*
+                   * ไม่ตรงกับ Question Bank จึงถือเป็นคำถาม Custom
+                   */
+                  delete row.dataset.questionBankId;
+                }
+              };
+
+              if (input) {
+                input.addEventListener("input", () => {
+                  updateQuestionBankId();
+                  refreshQuestionSuggestions(stack);
                 });
 
-                json = await res.json();
+                input.addEventListener("change", () => {
+                  updateQuestionBankId();
+                  refreshQuestionSuggestions(stack);
+
+                  setTimeout(() => {
+                    input.blur();
+                  }, 0);
+                });
               }
 
-              if (!res.ok) {
-                throw new Error(
-                  json?.message || json?.error || "อัปเดตฟอร์มไม่สำเร็จ",
-                );
+              if (delBtn) {
+                delBtn.addEventListener("click", () => {
+                  const filteredListId = input?.dataset?.filteredListId;
+
+                  row.remove();
+
+                  if (filteredListId) {
+                    document.getElementById(filteredListId)?.remove();
+                  }
+
+                  renumberStack(stack);
+                  refreshQuestionSuggestions(stack);
+                });
               }
-
-              showSaveSuccessPopup();
-            } else {
-              res = await fetch("/api/forms", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              });
-              json = await res.json();
-
-              if (!res.ok) {
-                throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
-              }
-
-              localStorage.removeItem("surveyDraft");
-              showSaveSuccessPopup();
             }
-          } catch (err) {
-            alert(err.message || "เกิดข้อผิดพลาด");
-          } finally {
-            if (submitBtn) submitBtn.disabled = false;
-          }
-        });
+            function getSuggestionListIdBySubgroupTitle(title = "") {
+              const t = String(title || "")
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, " ");
+
+              if (
+                t.includes("affect of service") ||
+                t.includes("ความรู้สึกที่มีต่อบริการ")
+              ) {
+                return "affectOfServiceSuggestions";
+              }
+
+              if (
+                t.includes("information control") ||
+                t.includes("การควบคุมสารสนเทศ")
+              ) {
+                return "informationControlSuggestions";
+              }
+
+              if (
+                t.includes("library as place") ||
+                t.includes("ลักษณะกายภาพของห้องสมุด")
+              ) {
+                return "libraryAsPlaceSuggestions";
+              }
+
+              if (t.includes("tangibles") || t.includes("สิ่งที่สัมผัสได้")) {
+                return "tangiblesSuggestions";
+              }
+
+              if (t.includes("reliability") || t.includes("ความน่าเชื่อถือ")) {
+                return "reliabilitySuggestions";
+              }
+
+              if (
+                t.includes("responsiveness") ||
+                t.includes("การตอบสนองของพนักงาน")
+              ) {
+                return "responsivenessSuggestions";
+              }
+
+              if (t.includes("empathy") || t.includes("การเอาใจใส่จากพนักงาน")) {
+                return "empathySuggestions";
+              }
+
+              if (t.includes("assurance") || t.includes("ความไว้วางใจ")) {
+                return "assuranceSuggestions";
+              }
+
+              if (t.includes("usability") || t.includes("การใช้งาน")) {
+                return "usabilitySuggestions";
+              }
+
+              if (
+                t.includes("information quality") ||
+                t.includes("infomation quality") ||
+                t.includes("คุณภาพของข้อมูล")
+              ) {
+                return "informationQualitySuggestions";
+              }
+
+              if (
+                t.includes("service interaction") ||
+                t.includes("การตอบสนองต่อการบริการ")
+              ) {
+                return "serviceInteractionSuggestions";
+              }
+
+              if (t.includes("ease of use") || t.includes("การใช้งานง่าย")) {
+                return "easeOfUseSuggestions";
+              }
+
+              if (
+                t.includes("aesthetic design") ||
+                t.includes("การออกแบบที่สวยงาม")
+              ) {
+                return "aestheticDesignSuggestions";
+              }
+
+              if (
+                t.includes("processing speed") ||
+                t.includes("ความเร็วในการประมวลผล")
+              ) {
+                return "processingSpeedSuggestions";
+              }
+
+              if (
+                t.includes("interactive responsiveness") ||
+                t.includes("การตอบสนองของเว็บไซต์")
+              ) {
+                return "interactiveResponsivenessSuggestions";
+              }
+
+              if (t.includes("efficiency") || t.includes("ประสิทธิภาพของระบบ")) {
+                return "efficiencySuggestions";
+              }
+
+              if (
+                t.includes("system availability") ||
+                t.includes("คุณภาพและความถูกต้องของระบบ")
+              ) {
+                return "systemAvailabilitySuggestions";
+              }
+
+              if (
+                t.includes("fulfillment") ||
+                t.includes("ความง่ายและความเป็นมิตรต่อผู้ใช้งาน")
+              ) {
+                return "fulfillmentSuggestions";
+              }
+
+              if (
+                t.includes("privacy") ||
+                t.includes("ความยืดหยุ่นและการปรับตัวของระบบ")
+              ) {
+                return "privacySuggestions";
+              }
+
+              if (
+                t.includes("data integration") ||
+                t.includes("การเชื่อมโยงข้อมูลและการนำส่ง")
+              ) {
+                return "dataIntegrationDeliverySuggestions";
+              }
+
+              return "questionSuggestions";
+            }
+
+            /*
+       * สร้างรหัสประจำคำถามในฟอร์ม
+       * - ใช้สำหรับคำถามใหม่
+       * - ใช้สร้าง ID ใหม่เมื่อคัดลอกฟอร์ม
+       */
+      function createQuestionId() {
+        if (
+          window.crypto &&
+          typeof window.crypto.randomUUID === "function"
+        ) {
+          return `q_${window.crypto.randomUUID()}`;
+        }
+
+        return `q_${Date.now()}_${Math.random()
+          .toString(36)
+          .slice(2, 10)}`;
+      }
+
+
+            function addQuestion(
+              stack,
+              questionData = "",
+              listId = "questionSuggestions",
+              isDefault = false,
+            ) {
+              const tpl = document
+                .getElementById("question-row-template")
+                .content.cloneNode(true);
+
+              const row = tpl.querySelector(".item");
+              const input = row.querySelector(".dim-question");
+              const delBtn = row.querySelector(".remove-question");
+
+              const question = normalizeQuestionItem(questionData);
+
+              /*
+               * กรณีแก้ไขฟอร์ม:
+               * - ถ้ามี questionId เดิม ให้ใช้ ID เดิม
+               *
+               * กรณีคัดลอกฟอร์ม:
+               * - สร้าง Question ID ใหม่ เพราะเป็นฟอร์มคนละชุด
+               *
+               * กรณีสร้างคำถามใหม่:
+               * - สร้าง Question ID ใหม่
+               */
+              const questionId =
+                pageMode === "copy" || !question.questionId
+                  ? createQuestionId()
+                  : question.questionId;
+
+              row.dataset.questionId = questionId;
+
+              if (question.questionBankId) {
+                row.dataset.questionBankId = String(question.questionBankId);
+              } else {
+                delete row.dataset.questionBankId;
+              }
+
+              input.value = question.text || "";
+              input.setAttribute("list", listId);
+
+              if (!isDefault && delBtn) {
+                delBtn.style.display = "";
+              }
+
+              stack.appendChild(row);
+              bindQuestionRow(row, stack);
+              renumberStack(stack);
+
+              refreshQuestionSuggestions(stack);
+            }
+
+            function bindSubgroup(group) {
+              const stack = group.querySelector(".questions");
+              const addBtn = group.querySelector(".add-question");
+              const delBtn = group.querySelector(".remove-subgroup");
+              const toggle = group.querySelector(".subtoggle");
+              const titleInput = group.querySelector(".subgroup-title");
+
+              const subgroupBody = group.querySelector(".subgroup-body");
+              const collapseBtn = group.querySelector(".subgroup-collapse-btn");
+
+              let isCollapsed = false;
+
+              addBtn.addEventListener("click", () => {
+                const titleText = titleInput?.value?.trim() || "";
+                const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
+
+                addQuestion(stack, "", subgroupListId, false);
+              });
+
+              if (delBtn) {
+                delBtn.addEventListener("click", () => {
+                  group.remove();
+                });
+              }
+
+              /*
+               * แสดงหรือซ่อนเนื้อหาตามสถานะยุบ–ขยาย
+               */
+              const updateCollapsedState = () => {
+                const enabled = toggle.checked;
+
+                if (subgroupBody) {
+                  subgroupBody.style.display = enabled && !isCollapsed ? "" : "none";
+                }
+
+                if (collapseBtn) {
+                  collapseBtn.textContent = isCollapsed ? "▸" : "▾";
+
+                  collapseBtn.setAttribute(
+                    "aria-expanded",
+                    isCollapsed ? "false" : "true",
+                  );
+                }
+              };
+
+              /*
+               * เปิดหรือปิดการใช้งาน Subgroup
+               */
+              const updateEnabledState = () => {
+                const enabled = toggle.checked;
+
+                group.classList.toggle("disabled", !enabled);
+
+                group
+                  .querySelectorAll("input,button,textarea,select")
+                  .forEach((el) => {
+                    /*
+                     * สวิตช์ต้องกดเปิดกลับได้
+                     * ปุ่มลบยังต้องใช้งานได้
+                     * ลูกศรควบคุมแยกด้านล่าง
+                     */
+                    if (el === toggle || el === delBtn || el === collapseBtn) return;
+
+                    el.disabled = !enabled;
+                  });
+
+                if (delBtn) {
+                  delBtn.disabled = false;
+                }
+
+                if (collapseBtn) {
+                  collapseBtn.disabled = !enabled;
+                }
+
+                updateCollapsedState();
+              };
+
+              /*
+               * คลิกลูกศรเพื่อยุบหรือขยาย
+               * ไม่เปลี่ยนสถานะของสวิตช์
+               */
+              if (collapseBtn) {
+                collapseBtn.addEventListener("click", () => {
+                  if (!toggle.checked) return;
+
+                  isCollapsed = !isCollapsed;
+                  updateCollapsedState();
+                });
+              }
+
+              toggle.addEventListener("change", updateEnabledState);
+
+              updateEnabledState();
+            }
+            function addSubgroup(
+              subgroupsRoot,
+              data = {},
+              isDefault = false,
+              keepQuestions = false,
+            ) {
+              const tpl = document
+                .getElementById("subgroup-template")
+                .content.cloneNode(true);
+
+              const group = tpl.querySelector("[data-subgroup-item]");
+              const titleInput = group.querySelector(".subgroup-title");
+              const stack = group.querySelector(".questions");
+              const delBtn = group.querySelector(".remove-subgroup");
+              const questions = Array.isArray(data.questions) ? data.questions : [];
+
+              titleInput.value = data.title || "";
+
+              if (!isDefault && delBtn) {
+                delBtn.style.display = "";
+              }
+
+              subgroupsRoot.appendChild(group);
+              bindSubgroup(group);
+
+              const subgroupListId = getSuggestionListIdBySubgroupTitle(
+                data.title || "",
+              );
+
+              if (keepQuestions && questions.length) {
+                questions.forEach((q, i) => {
+                  addQuestion(stack, q, subgroupListId, i < 2);
+                });
+
+                const st = group.querySelector(".subtoggle");
+                if (st) {
+                  st.checked = data.enabled !== false;
+                  st.dispatchEvent(new Event("change"));
+                }
+              } else {
+                addQuestion(stack, "", subgroupListId, true);
+                addQuestion(stack, "", subgroupListId, true);
+              }
+            }
+
+            function bindMainModel(block) {
+              const toggle = block.querySelector(".main-model-toggle");
+              const body = block.querySelector(".main-model-body");
+              const titleEl = block.querySelector(".main-model-title");
+              const collapseBtn = block.querySelector(".main-model-collapse-btn");
+
+              let isCollapsed = false;
+
+              /*
+               * สวิตช์ใช้สำหรับเปิดหรือปิดการใช้งานโมเดล
+               */
+              const updateEnabledState = () => {
+                const enabled = toggle.checked;
+
+                block.classList.toggle("disabled", !enabled);
+
+                /*
+                 * ถ้าปิดโมเดล ให้ซ่อนรายละเอียด
+                 * ถ้าเปิดโมเดล ให้แสดงตามสถานะยุบ–ขยาย
+                 */
+                if (body) {
+                  body.style.display = enabled && !isCollapsed ? "" : "none";
+                }
+
+                if (collapseBtn) {
+                  collapseBtn.disabled = !enabled;
+                  collapseBtn.style.opacity = enabled ? "1" : "0.45";
+                  collapseBtn.style.cursor = enabled ? "pointer" : "not-allowed";
+                }
+              };
+
+              /*
+               * ยุบหรือขยายรายละเอียด โดยไม่เปลี่ยนสถานะสวิตช์
+               */
+              const updateCollapsedState = () => {
+                const enabled = toggle.checked;
+
+                if (body) {
+                  body.style.display = enabled && !isCollapsed ? "" : "none";
+                }
+
+                if (collapseBtn) {
+                  collapseBtn.textContent = isCollapsed ? "▸" : "▾";
+                  collapseBtn.setAttribute(
+                    "aria-expanded",
+                    isCollapsed ? "false" : "true",
+                  );
+                }
+              };
+
+              const toggleCollapse = () => {
+                if (!toggle.checked) return;
+
+                isCollapsed = !isCollapsed;
+                updateCollapsedState();
+              };
+
+              toggle.addEventListener("change", updateEnabledState);
+
+              if (collapseBtn) {
+                collapseBtn.addEventListener("click", toggleCollapse);
+              }
+
+              /*
+               * คลิกชื่อโมเดลเพื่อยุบ–ขยาย
+               * ไม่ใช้ชื่อโมเดลในการเปิด–ปิดสวิตช์แล้ว
+               */
+              if (titleEl) {
+                titleEl.addEventListener("click", toggleCollapse);
+              }
+
+              updateEnabledState();
+              updateCollapsedState();
+            }
+            function addMainModel(data = {}, keepQuestions = false) {
+              const tpl = document
+                .getElementById("main-model-template")
+                .content.cloneNode(true);
+
+              const block = tpl.querySelector("[data-main-model]");
+              const titleEl = block.querySelector(".main-model-title");
+              const toggle = block.querySelector(".main-model-toggle");
+              const subgroupsRoot = block.querySelector(".subgroups");
+
+              titleEl.textContent = data.title || "หัวข้อใหม่";
+
+              document.getElementById("mainModels").appendChild(block);
+
+              if (toggle) {
+                // ให้ LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL แสดงชื่อ
+                // แต่ปิดรายละเอียดไว้ก่อนเสมอ ตอนเปิดฟอร์ม
+                if (keepQuestions) {
+                  toggle.checked = data.enabled !== false;
+                } else {
+                  toggle.checked = false;
+                }
+              }
+
+              bindMainModel(block);
+              if (Array.isArray(data.dimensions) && data.dimensions.length) {
+                data.dimensions.forEach((dim, i) =>
+                  addSubgroup(
+                    subgroupsRoot,
+                    dim,
+                    i < data.dimensions.length,
+                    keepQuestions,
+                  ),
+                );
+              } else {
+                addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 1" }, true);
+                addSubgroup(subgroupsRoot, { title: "หัวข้อย่อย 2" }, true);
+              }
+
+              toggle?.dispatchEvent(new Event("change"));
+            }
+
+            let defaultMainModels = [];
+
+            async function loadSurveyStructureForForm() {
+              const res = await fetch("/api/survey-structure/form");
+              const json = await res.json().catch(() => ({}));
+
+              if (!res.ok) {
+                throw new Error(json.error || "โหลดโครงสร้างแบบประเมินไม่สำเร็จ");
+              }
+
+              defaultMainModels = Array.isArray(json.models) ? json.models : [];
+            }
+
+            let savedDraft = {};
+            try {
+              savedDraft = JSON.parse(localStorage.getItem("surveyDraft") || "{}");
+            } catch (_) {
+              savedDraft = {};
+            }
+
+            const qs = new URLSearchParams(window.location.search);
+            const mode = (qs.get("mode") || "").trim().toLowerCase();
+
+            const pageMode =
+              mode === "edit" ? "edit" : mode === "copy" ? "copy" : "create";
+            const editingFormId = qs.get("id");
+
+            const currentUser = (localStorage.getItem("user") || "").trim();
+            const currentRole = (localStorage.getItem("role") || "staff").trim();
+            const currentDisplayName = (
+              localStorage.getItem("displayName") || currentUser
+            ).trim();
+
+            function setValue(selector, value) {
+              const el = document.querySelector(selector);
+              if (el) el.value = value ?? "";
+            }
+
+            function toDateInputValue(value) {
+              if (!value) return "";
+
+              const text = String(value).trim();
+
+              // กรณีเป็น YYYY-MM-DD อยู่แล้ว
+              if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+                return text;
+              }
+
+              // กรณีมาจาก MySQL/JSON เช่น 2026-06-18T00:00:00.000Z
+              if (/^\d{4}-\d{2}-\d{2}T/.test(text)) {
+                return text.slice(0, 10);
+              }
+
+              const d = new Date(text);
+              if (isNaN(d)) return "";
+
+              const yyyy = d.getFullYear();
+              const mm = String(d.getMonth() + 1).padStart(2, "0");
+              const dd = String(d.getDate()).padStart(2, "0");
+
+              return `${yyyy}-${mm}-${dd}`;
+            }
+
+            function setCheckboxValues(name, values = []) {
+              const set = new Set(Array.isArray(values) ? values : []);
+              document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+                el.checked = set.has(el.value);
+              });
+            }
+
+            function toggleSectionBySec(secNo, enabled) {
+              const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
+              if (!sec) return;
+
+              const cb = sec.querySelector(".toggle");
+              if (!cb) return;
+
+              cb.checked = !!enabled;
+              cb.dispatchEvent(new Event("change"));
+            }
+
+            function addSimpleRows(
+              containerSelector,
+              items = [],
+              inputName = "items[]",
+            ) {
+              const root = document.querySelector(containerSelector);
+              if (!root) return;
+
+              root.innerHTML = "";
+
+              const values = Array.isArray(items) && items.length ? items : ["", ""];
+
+              values.forEach((text, index) => {
+                const row = document.createElement("div");
+                row.className = "item";
+                row.innerHTML = `
+                  <span class="num">${index + 1}.</span>
+                  <input class="input" type="text" name="${inputName}" placeholder="กรอกคำถาม..." />
+                  ${index >= 2 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+                `;
+                row.querySelector("input").value = text || "";
+                root.appendChild(row);
+
+                const delBtn = row.querySelector(".del");
+                if (delBtn) attachDelete(delBtn, root);
+              });
+
+              renumber(root);
+            }
+
+            function getSectionEnabled(secNo) {
+              const sec = document.querySelector(`.section[data-sec="s${secNo}"]`);
+              const cb = sec?.querySelector(".toggle");
+              return !!cb?.checked;
+            }
+
+            function getCheckedValues(name) {
+              return Array.from(
+                document.querySelectorAll(`input[name="${name}"]:checked`),
+              ).map((el) => el.value);
+            }
+
+            function getInputValues(selector) {
+              return Array.from(document.querySelectorAll(selector))
+                .map((el) => String(el.value || "").trim())
+                .filter(Boolean);
+            }
+
+            function collectSection2Models() {
+              return Array.from(document.querySelectorAll("[data-main-model]")).map(
+                (modelEl) => {
+                  const title =
+                    modelEl.querySelector(".main-model-title")?.textContent?.trim() ||
+                    "";
+
+                  const enabled =
+                    !!modelEl.querySelector(".main-model-toggle")?.checked;
+
+                  const dimensions = Array.from(
+                    modelEl.querySelectorAll("[data-subgroup-item]"),
+                  ).map((groupEl) => {
+                    const questions = Array.from(
+                      groupEl.querySelectorAll(".questions .item"),
+                    )
+                      .map((row) => {
+                        const input = row.querySelector(".dim-question");
+                        const text = String(input?.value || "").trim();
+
+                        if (!text) return null;
+
+                        /*
+                         * ป้องกันกรณีแถวเก่าหรือแถวที่ยังไม่มี ID
+                         */
+                        if (!row.dataset.questionId) {
+                          row.dataset.questionId = createQuestionId();
+                        }
+
+                        return {
+                          questionId: row.dataset.questionId,
+
+                          questionBankId:
+                            Number(row.dataset.questionBankId || 0) || null,
+                          text,
+                        };
+                      })
+                      .filter(Boolean);
+
+                    return {
+                      title:
+                        groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
+
+                      enabled: !!groupEl.querySelector(".subtoggle")?.checked,
+
+                      questions,
+                    };
+                  });
+
+                  return {
+                    title,
+                    enabled,
+                    dimensions,
+                  };
+                },
+              );
+            }
+            function addGoalInput(value = "") {
+              const goalList = document.getElementById("goalList");
+              if (!goalList) return;
+
+              const row = document.createElement("div");
+              row.className = "item goal-item";
+
+              row.innerHTML = `
+          <input
+            type="text"
+            class="input goal-input"
+            placeholder="เป้าหมายเพิ่มเติม"
+            value="${String(value || "").replaceAll('"', "&quot;")}"
+          />
+          <button type="button" class="btn soft goal-remove-btn">ลบ</button>
+        `;
+
+              row.querySelector(".goal-remove-btn").addEventListener("click", () => {
+                row.remove();
+              });
+
+              goalList.appendChild(row);
+            }
+
+            function collectGoalText() {
+              return Array.from(document.querySelectorAll(".goal-input"))
+                .map((el) => String(el.value || "").trim())
+                .filter(Boolean)
+                .join("\n");
+            }
+
+            function applyGoalText(value = "") {
+              const goalList = document.getElementById("goalList");
+              const firstInput = document.getElementById("goal_text");
+              if (!goalList || !firstInput) return;
+
+              goalList
+                .querySelectorAll(".goal-item:not(:first-child)")
+                .forEach((el) => {
+                  el.remove();
+                });
+
+              const goals = Array.isArray(value)
+                ? value
+                : String(value || "")
+                    .split(/\n+/)
+                    .map((v) => v.trim())
+                    .filter(Boolean);
+
+              firstInput.value = goals[0] || "";
+
+              goals.slice(1).forEach((goal) => {
+                addGoalInput(goal);
+              });
+            }
+
+            document.getElementById("addGoalBtn")?.addEventListener("click", () => {
+              addGoalInput();
+            });
+
+            function collectExtraSections() {
+              return Array.from(
+                document.querySelectorAll('.custom-dimension[data-role="section"]'),
+              ).map((el) => ({
+                title: el.querySelector(".dim-title")?.value?.trim() || "",
+                questions: Array.from(el.querySelectorAll(".dim-question"))
+                  .map((q) => String(q.value || "").trim())
+                  .filter(Boolean),
+              }));
+            }
+
+            function calculateFiscalYear(startDateValue) {
+              if (!startDateValue) return "";
+
+              const date = new Date(startDateValue);
+              if (isNaN(date)) return "";
+
+              const yearBE = date.getFullYear() + 543;
+              const month = date.getMonth() + 1;
+
+              return month >= 10 ? String(yearBE + 1) : String(yearBE);
+            }
+
+            function clearAllFieldErrors() {
+              document.querySelectorAll(".input-error").forEach((el) => {
+                el.classList.remove("input-error");
+              });
+
+              document.querySelectorAll(".field-error-message").forEach((el) => {
+                el.remove();
+              });
+
+              const summary = document.getElementById("validationSummary");
+              if (summary) {
+                summary.classList.remove("show");
+                summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
+              }
+            }
+
+            function showFieldError(input, message) {
+              if (!input) return;
+
+              input.classList.add("input-error");
+
+              const next = input.nextElementSibling;
+
+              if (next && next.classList.contains("field-error-message")) {
+                next.remove();
+              }
+
+              const error = document.createElement("div");
+              error.className = "field-error-message";
+              error.textContent = message;
+
+              input.insertAdjacentElement("afterend", error);
+            }
+
+            function focusFirstError() {
+              const firstError = document.querySelector(".input-error");
+
+              if (firstError) {
+                firstError.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+
+                setTimeout(() => {
+                  firstError.focus?.();
+                }, 250);
+              }
+            }
+
+            function showValidationSummary() {
+              const summary = document.getElementById("validationSummary");
+              if (!summary) return;
+
+              summary.textContent = "กรุณาตรวจสอบข้อมูลที่ยังไม่ครบถ้วน";
+              summary.classList.add("show");
+
+              summary.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+            }
+
+            function validateBeforeSave(formData) {
+              clearAllFieldErrors();
+
+              let isValid = true;
+
+              const formTitleInput = document.querySelector('[name="form_title"]');
+              const startDateInput = document.getElementById("start_date");
+              const endDateInput = document.getElementById("end_date");
+              const goalInput = document.getElementById("goal_text");
+              const kpiQuantityInput = document.getElementById("kpi_quantity");
+              const kpiQualityInput = document.getElementById("kpi_quality");
+              const budgetInput = document.getElementById("budget_received");
+              const deptInput = document.getElementById("dept_name");
+              const missionInput = document.getElementById("center_mission");
+              const centerStrategyInput = document.getElementById("center_strategy");
+
+              if (!formData.form_title) {
+                showFieldError(formTitleInput, "กรุณากรอกชื่อโครงการ");
+                isValid = false;
+              }
+
+              if (!formData.start_date) {
+                showFieldError(startDateInput, "กรุณาเลือกวันที่เริ่มต้น");
+                isValid = false;
+              }
+
+              if (!formData.end_date) {
+                showFieldError(endDateInput, "กรุณาเลือกวันที่สิ้นสุด");
+                isValid = false;
+              }
+
+              if (formData.start_date && formData.end_date) {
+                if (formData.end_date < formData.start_date) {
+                  showFieldError(
+                    endDateInput,
+                    "วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่มต้น",
+                  );
+                  isValid = false;
+                }
+              }
+
+              if (!formData.goal_text) {
+                showFieldError(goalInput, "กรุณากรอกเป้าหมายโครงการ");
+                isValid = false;
+              }
+
+              if (!formData.kpi_quantity) {
+                showFieldError(kpiQuantityInput, "กรุณากรอกตัวชี้วัดเชิงปริมาณ");
+                isValid = false;
+              }
+
+              if (!formData.kpi_quality) {
+                showFieldError(kpiQualityInput, "กรุณากรอกตัวชี้วัดเชิงคุณภาพ");
+                isValid = false;
+              }
+
+              const budget = Number(formData.budget_received);
+
+              if (formData.budget_received === "") {
+                showFieldError(budgetInput, "กรุณากรอกงบประมาณ");
+                isValid = false;
+              } else if (!Number.isFinite(budget) || budget < 0) {
+                showFieldError(budgetInput, "งบประมาณต้องมากกว่าหรือเท่ากับ 0 บาท");
+                isValid = false;
+              }
+
+              if (!formData.dept_name) {
+                showFieldError(deptInput, "กรุณาเลือกฝ่ายที่สังกัด");
+                isValid = false;
+              }
+
+              if (!formData.center_mission) {
+                showFieldError(missionInput, "กรุณาเลือกพันธกิจของศูนย์บรรณสารฯ");
+                isValid = false;
+              }
+
+              // TODO: เปิดเมื่อเพิ่มข้อมูลยุทธศาสตร์มหาวิทยาลัยแล้ว
+              // const uniStrategyInput = document.getElementById("uni_strategy");
+              // if (!formData.uni_strategy) {
+              //   showFieldError(uniStrategyInput, "กรุณาเลือกยุทธศาสตร์ของมหาวิทยาลัย");
+              //   isValid = false;
+              // }
+
+              if (!formData.center_strategy) {
+                showFieldError(
+                  centerStrategyInput,
+                  "กรุณาเลือกยุทธศาสตร์ของศูนย์บรรณสารฯ",
+                );
+                isValid = false;
+              }
+
+              if (formData.section2_enabled) {
+                const hasQuestion = formData.section2_models.some((model) => {
+                  if (!model.enabled) return false;
+
+                  return model.dimensions.some((dim) => {
+                    if (!dim.enabled) return false;
+                    return dim.questions.length > 0;
+                  });
+                });
+
+                if (!hasQuestion) {
+                  const section2 = document.querySelector('.section[data-sec="s2"]');
+                  showFieldError(section2, "กรุณาเลือกคำถามอย่างน้อย 1 ข้อ");
+                  isValid = false;
+                }
+
+                /*
+                 * Phase 3.2.2
+                 * ป้องกันคำถามซ้ำ แม้ผู้ใช้จะพิมพ์คำถามเอง
+                 */
+                const questionInputs = Array.from(
+                  document.querySelectorAll('.section[data-sec="s2"] .dim-question'),
+                ).filter((input) => {
+                  /*
+                   * ตรวจเฉพาะคำถามใน Model และ Group ที่เปิดใช้งาน
+                   */
+                  const model = input.closest("[data-main-model]");
+                  const group = input.closest("[data-subgroup-item]");
+
+                  const modelToggle = model?.querySelector(".main-model-toggle");
+
+                  const groupToggle = group?.querySelector(".subtoggle");
+
+                  const modelEnabled = !modelToggle || modelToggle.checked;
+
+                  const groupEnabled = !groupToggle || groupToggle.checked;
+
+                  return modelEnabled && groupEnabled;
+                });
+
+                const questionMap = new Map();
+
+                questionInputs.forEach((input) => {
+                  const questionKey = normalizeQuestionValue(input.value);
+
+                  /*
+                   * ไม่ตรวจช่องว่าง
+                   */
+                  if (!questionKey) return;
+
+                  if (!questionMap.has(questionKey)) {
+                    questionMap.set(questionKey, []);
+                  }
+
+                  questionMap.get(questionKey).push(input);
+                });
+
+                questionMap.forEach((duplicateInputs) => {
+                  /*
+                   * มีมากกว่า 1 ช่อง แปลว่าเป็นคำถามซ้ำ
+                   */
+                  if (duplicateInputs.length <= 1) return;
+
+                  duplicateInputs.forEach((input) => {
+                    const currentStack = input.closest(".questions");
+
+                    const inputsInCurrentGroup = currentStack
+                      ? Array.from(currentStack.querySelectorAll(".dim-question"))
+                      : questionInputs;
+
+                    /*
+                     * หาข้ออื่นที่มีคำถามเดียวกัน
+                     */
+                    const duplicateInput = duplicateInputs.find(
+                      (otherInput) => otherInput !== input,
+                    );
+
+                    const duplicateNumber =
+                      inputsInCurrentGroup.indexOf(duplicateInput) + 1;
+
+                    const message =
+                      duplicateNumber > 0
+                        ? `⚠ ซ้ำกับข้อ ${duplicateNumber}`
+                        : "⚠ พบคำถามซ้ำ";
+
+                    showFieldError(input, message);
+                  });
+
+                  isValid = false;
+                });
+              }
+
+              if (!isValid) {
+                showValidationSummary();
+                focusFirstError();
+              }
+
+              return isValid;
+            }
+
+            function buildFormPayload() {
+              return {
+                form_title:
+                  document.querySelector('[name="form_title"]')?.value?.trim() || "",
+                form_desc:
+                  document.querySelector('[name="form_desc"]')?.value?.trim() || "",
+
+                goal_text: collectGoalText(),
+                kpi_quantity:
+                  document.getElementById("kpi_quantity")?.value?.trim() || "",
+                kpi_quality:
+                  document.getElementById("kpi_quality")?.value?.trim() || "",
+                start_date: document.getElementById("start_date").value,
+                end_date: document.getElementById("end_date").value,
+                fiscal_year: calculateFiscalYear(
+                  document.getElementById("start_date").value,
+                ),
+                budget_received:
+                  document.getElementById("budget_received")?.value || "",
+
+                dept_name: document.getElementById("dept_name")?.value || "",
+                uni_strategy: document.getElementById("uni_strategy")?.value || "",
+                center_strategy:
+                  document.getElementById("center_strategy")?.value || "",
+                center_mission:
+                  document.getElementById("center_mission")?.value || "",
+
+                section1_enabled: getSectionEnabled(1),
+                profile: getCheckedValues("profile[]"),
+
+                section2_enabled: getSectionEnabled(2),
+                section2_models: collectSection2Models(),
+
+                section3_enabled: getSectionEnabled(3),
+                dissatisfaction_text:
+                  document
+                    .querySelector('[name="dissatisfaction_text"]')
+                    ?.value?.trim() || "",
+
+                section4_enabled: getSectionEnabled(4),
+                engagement_question:
+                  "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่",
+
+                section5_enabled: getSectionEnabled(5),
+                suggestion_prompt:
+                  document
+                    .querySelector('[name="suggestion_prompt"]')
+                    ?.value?.trim() || "",
+
+                extra_sections: collectExtraSections(),
+              };
+            }
+
+            function applyFormToPage(data) {
+              if (!data) return;
+
+              setValue('[name="form_title"]', data.form_title);
+              setValue('[name="form_desc"]', data.form_desc);
+
+              applyGoalText(data.goal_text);
+              setValue("#kpi_quantity", data.kpi_quantity);
+              setValue("#kpi_quality", data.kpi_quality);
+              setValue("#start_date", toDateInputValue(data.start_date));
+              setValue("#end_date", toDateInputValue(data.end_date));
+              setValue("#budget_received", data.budget_received || "");
+
+              setValue("#dept_name", data.dept_name);
+              setValue("#uni_strategy", data.uni_strategy);
+              setValue("#center_strategy", data.center_strategy);
+              setValue("#center_mission", data.center_mission);
+
+              toggleSectionBySec(1, data.section1_enabled !== false);
+              setCheckboxValues("profile[]", data.profile || []);
+
+              toggleSectionBySec(2, data.section2_enabled !== false);
+              const mainModelsEl = document.getElementById("mainModels");
+              if (mainModelsEl) mainModelsEl.innerHTML = "";
+
+              if (
+                Array.isArray(data.section2_models) &&
+                data.section2_models.length
+              ) {
+                data.section2_models.forEach((m) => addMainModel(m, true));
+              } else {
+                defaultMainModels.forEach((m) => addMainModel(m));
+              }
+
+              toggleSectionBySec(3, data.section3_enabled !== false);
+              setValue(
+                '[name="dissatisfaction_text"]',
+                data.dissatisfaction_text || "",
+              );
+
+              toggleSectionBySec(4, data.section4_enabled !== false);
+
+              toggleSectionBySec(5, data.section5_enabled !== false);
+              setValue('[name="suggestion_prompt"]', data.suggestion_prompt);
+
+              document
+                .querySelectorAll('.custom-dimension[data-role="section"]')
+                .forEach((el) => el.remove());
+
+              if (Array.isArray(data.extra_sections)) {
+                data.extra_sections.forEach((sec) => {
+                  const footer = document.querySelector(".footer");
+                  mountDimension(footer, "section");
+
+                  const blocks = document.querySelectorAll(
+                    '.custom-dimension[data-role="section"]',
+                  );
+                  const block = blocks[blocks.length - 1];
+                  if (!block) return;
+
+                  const titleInput = block.querySelector(".dim-title");
+                  if (titleInput) titleInput.value = sec.title || "";
+
+                  const stack = block.querySelector(".stack");
+                  stack.innerHTML = "";
+
+                  const qs =
+                    Array.isArray(sec.questions) && sec.questions.length
+                      ? sec.questions
+                      : [""];
+
+                  qs.forEach((q, i) => {
+                    const row = document.createElement("div");
+                    row.className = "item";
+                    row.innerHTML = `
+                      <span class="num">${i + 1}.</span>
+                      <input class="input dim-question" type="text" placeholder="กรอกคำถาม..." />
+                      ${i > 0 ? '<button type="button" class="btn soft del">ลบ</button>' : ""}
+                    `;
+                    row.querySelector(".dim-question").value = q || "";
+                    stack.appendChild(row);
+
+                    const delBtn = row.querySelector(".del");
+                    if (delBtn) attachDelete(delBtn, stack);
+                  });
+
+                  renumber(stack);
+                });
+              }
+
+              renumberDimensions();
+            }
+
+            async function loadFormForEdit() {
+              if (pageMode !== "edit" || !editingFormId) return;
+
+              const res = await fetch(
+                `/api/forms/${encodeURIComponent(editingFormId)}`,
+              );
+              const json = await res.json();
+
+              if (!res.ok) {
+                throw new Error(json?.error || "โหลดข้อมูลฟอร์มไม่สำเร็จ");
+              }
+
+              const ownerUsername = String(json.created_by_username || "").trim();
+              const isOwner = ownerUsername === currentUser;
+              const isManager = currentRole === "manager";
+
+              if (!isOwner && !isManager) {
+                throw new Error("คุณไม่มีสิทธิ์แก้ไขฟอร์มนี้");
+              }
+
+              const merged = {
+                ...(json.form || {}),
+                form_title: json.form_title ?? json.form?.form_title ?? "",
+                form_desc: json.form_desc ?? json.form?.form_desc ?? "",
+                dept_name: json.dept_name ?? json.form?.dept_name ?? "",
+                uni_strategy: json.uni_strategy ?? json.form?.uni_strategy ?? "",
+                center_strategy:
+                  json.center_strategy ?? json.form?.center_strategy ?? "",
+                center_mission:
+                  json.center_mission ?? json.form?.center_mission ?? "",
+                goal_text: json.goal_text ?? json.form?.goal_text ?? "",
+                kpi_quantity: json.kpi_quantity ?? json.form?.kpi_quantity ?? "",
+                kpi_quality: json.kpi_quality ?? json.form?.kpi_quality ?? "",
+                start_date: json.start_date ?? json.form?.start_date ?? "",
+                end_date: json.end_date ?? json.form?.end_date ?? "",
+                budget_received:
+                  json.budget_received ?? json.form?.budget_received ?? "",
+              };
+              applyFormToPage(merged);
+
+              const submitBtn = document.querySelector(
+                '#formSurvey button[type="submit"]',
+              );
+              if (submitBtn) submitBtn.textContent = "อัปเดตฟอร์ม";
+            }
+
+            function renderInitialSection2Models() {
+              const mainModelsEl = document.getElementById("mainModels");
+              if (mainModelsEl) mainModelsEl.innerHTML = "";
+
+              if (
+                Array.isArray(savedDraft.section2_models) &&
+                savedDraft.section2_models.length
+              ) {
+                savedDraft.section2_models.forEach((m) => addMainModel(m));
+              } else {
+                defaultMainModels.forEach((m) => addMainModel(m));
+              }
+            }
+
+            function renumberDimensions() {
+              // ไม่ต้องแสดงเลขลำดับ
+            }
+
+            // Toggle section (เปิด/ปิดทั้งส่วน)
+            document.querySelectorAll(".section .toggle").forEach((cb) => {
+              const sec = cb.closest(".section");
+
+              const setDisabled = () => {
+                const enabled = cb.checked;
+
+                sec.classList.toggle("disabled", !enabled);
+
+                sec.querySelectorAll("input,button,textarea,select").forEach((el) => {
+                  if (el === cb) return;
+                  el.disabled = !enabled;
+                });
+
+                // เฉพาะส่วนที่ 2:
+                // ถ้าปิดส่วนของคำถาม ให้ซ่อน LibQUAL+ / SERVQUAL / WEBQUAL / SiteQUAL / ESQUAL ทั้งหมด
+                // if (sec.dataset.sec === "s2") {
+                //   const mainModels = sec.querySelector("#mainModels");
+                //   if (mainModels) {
+                //     mainModels.style.display = enabled ? "" : "none";
+                //   }
+                // }
+
+                // ถ้าเปิด section ให้ toggle ย่อยกดได้
+                // แต่ไม่บังคับเปิดหัวข้อย่อยเอง
+                if (enabled) {
+                  sec.querySelectorAll(".subtoggle").forEach((st) => {
+                    st.disabled = false;
+                    st.dispatchEvent(new Event("change"));
+                  });
+                }
+              };
+
+              cb.addEventListener("change", setDisabled);
+              setDisabled();
+            });
+
+            // Subgroup toggle
+            document.querySelectorAll("[data-subgroup]").forEach((gr) => {
+              const st = gr.querySelector(".subtoggle");
+
+              const update = () => {
+                const enabled = st.checked;
+                gr.classList.toggle("disabled", !enabled);
+                gr.querySelectorAll("input,button,textarea,select").forEach((el) => {
+                  if (el === st) return;
+                  el.disabled = !enabled;
+                });
+              };
+
+              st.checked = false;
+              update();
+              st.addEventListener("change", update);
+            });
+
+            // Add rows
+            function addRow(sel, name) {
+              const list = document.querySelector(sel);
+              const idx = list.querySelectorAll(".item").length + 1;
+
+              let listId = "questionSuggestions";
+
+              if (name === "q21[]") listId = "serviceSuggestions";
+              else if (name === "q22[]") listId = "comfortSuggestions";
+              else if (name === "q23[]") listId = "staffSuggestions";
+              else if (name === "dissatisfied[]") listId = "dissSuggestions";
+              else if (name === "engagement[]") listId = "engagementSuggestions";
+
+              const div = document.createElement("div");
+              div.className = "item";
+              div.innerHTML = `
+                <span class="num">${idx}.</span>
+                <input class="input dim-question" type="text" name="${name}" list="${listId}" placeholder="กรอกคำถาม...">
+                <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+              `;
+              list.appendChild(div);
+              attachDelete(div.querySelector(".del"), list);
+            }
+
+            const nameMap = {
+              "#q21": "q21[]",
+              "#q22": "q22[]",
+              "#q23": "q23[]",
+            };
+
+            document.querySelectorAll("[data-add]").forEach((b) => {
+              b.addEventListener("click", () => {
+                const sel = b.getAttribute("data-add");
+                addRow(sel, nameMap[sel] || "items[]");
+              });
+            });
+
+            function mountDimension(anchorEl, role) {
+              const tpl = document
+                .getElementById("dimension-template")
+                .content.cloneNode(true);
+
+              const block = tpl.querySelector(".custom-dimension");
+              block.dataset.role = role;
+              block.querySelector(".remove-dim")?.addEventListener("click", () => {
+                block.remove();
+                if (role === "section") renumberDimensions();
+              });
+
+              if (role === "rating") {
+                const secNum = block.querySelector(".sec-num");
+                if (secNum) secNum.remove();
+              }
+
+              block.querySelector(".add-inside").addEventListener("click", () => {
+                const stack = block.querySelector(".stack");
+                const idx = stack.querySelectorAll(".item").length + 1;
+
+                let listId = "questionSuggestions";
+                if (role === "section") listId = "serviceSuggestions";
+                else if (role === "diss") listId = "dissSuggestions";
+                else if (role === "engage") listId = "engagementSuggestions";
+
+                const row = document.createElement("div");
+                row.className = "item";
+                row.innerHTML = `
+                <span class="num">${idx}.</span>
+                <input class="input dim-question" type="text" list="${listId}" placeholder="กรอกคำถาม...">
+                <button type="button" class="btn soft del" title="ลบหัวข้อนี้">ลบ</button>
+              `;
+                stack.appendChild(row);
+                attachDelete(row.querySelector(".del"), stack);
+              });
+
+              anchorEl.insertAdjacentElement("beforebegin", block);
+
+              if (role === "section") renumberDimensions();
+            }
+
+            // ส่วนที่ 5+: แทรกก่อน footer
+            document
+              .getElementById("addDimensionBottom")
+              .addEventListener("click", (e) => {
+                const footer = e.target.closest(".footer");
+                mountDimension(footer, "section");
+              });
+
+            // บังคับให้เลือกประเภทได้ทีละ 1 (checkbox -> single select)
+            document.querySelectorAll(".form-type").forEach((cb) => {
+              cb.addEventListener("change", (e) => {
+                if (!e.target.checked) return;
+                document.querySelectorAll(".form-type").forEach((x) => {
+                  if (x !== e.target) x.checked = false;
+                });
+              });
+            });
+
+            async function loadQuestionBankIntoDatalists() {
+              try {
+                const res = await fetch("/api/question-bank/active");
+                const rows = await res.json();
+
+                if (!res.ok || !Array.isArray(rows)) {
+                  console.warn("Question Bank response is invalid:", rows);
+                  return;
+                }
+
+                const grouped = {};
+
+                questionBankByListAndText.clear();
+
+                rows.forEach((row) => {
+                  const listId = String(row.datalist_id || "").trim();
+                  const text = String(row.question_text || "").trim();
+                  const questionBankId = Number(row.id) || null;
+
+                  if (!listId || !text) return;
+
+                  const lookupKey = createQuestionBankLookupKey(listId, text);
+
+                  questionBankByListAndText.set(lookupKey, {
+                    id: questionBankId,
+                    text,
+                    datalistId: listId,
+                  });
+
+                  if (!grouped[listId]) {
+                    grouped[listId] = [];
+                  }
+
+                  grouped[listId].push({
+                    id: questionBankId,
+                    text,
+                  });
+                });
+
+                Object.entries(grouped).forEach(([listId, questions]) => {
+                  let datalist = document.getElementById(listId);
+
+                  if (!datalist) {
+                    datalist = document.createElement("datalist");
+                    datalist.id = listId;
+                    document.body.appendChild(datalist);
+                  }
+
+                  datalist.innerHTML = "";
+
+                  questions.forEach((question) => {
+                    const option = document.createElement("option");
+
+                    option.value = question.text;
+
+                    if (question.id) {
+                      option.dataset.questionBankId = String(question.id);
+                    }
+
+                    datalist.appendChild(option);
+                  });
+                });
+
+                refreshAllQuestionSuggestions();
+              } catch (err) {
+                console.warn("load question bank failed:", err);
+              }
+            }
+
+            async function loadProjectDropdowns() {
+              try {
+                const res = await fetch("/api/question-bank/active");
+                const rows = await res.json();
+
+                if (!res.ok || !Array.isArray(rows)) {
+                  return;
+                }
+
+                const selectMap = {
+                  dept_name: document.getElementById("dept_name"),
+                  uni_strategy: document.getElementById("uni_strategy"),
+                  center_mission: document.getElementById("center_mission"),
+                  center_strategy: document.getElementById("center_strategy"),
+                };
+
+                Object.values(selectMap).forEach((select) => {
+                  if (!select) return;
+
+                  const firstOptionText =
+                    select.querySelector("option")?.textContent || "-- เลือก --";
+
+                  select.innerHTML = "";
+
+                  const firstOption = document.createElement("option");
+                  firstOption.value = "";
+                  firstOption.textContent = firstOptionText;
+                  select.appendChild(firstOption);
+                });
+
+                rows.forEach((row) => {
+                  const datalistId = String(row.datalist_id || "").trim();
+                  const text = String(row.question_text || "").trim();
+
+                  const select = selectMap[datalistId];
+
+                  if (!select || !text) return;
+
+                  const option = document.createElement("option");
+                  option.value = text;
+                  option.textContent = text;
+                  select.appendChild(option);
+                });
+              } catch (err) {
+                console.warn("load project dropdowns failed:", err);
+              }
+            }
+
+            function showValidationPopup(message) {
+              const popup = document.getElementById("validationOverlay");
+              const msg = document.getElementById("validationMessage");
+              const okBtn = document.getElementById("validationOkBtn");
+
+              if (msg) msg.textContent = message || "กรุณาตรวจสอบข้อมูล";
+
+              popup.classList.add("show");
+
+              okBtn.onclick = () => {
+                popup.classList.remove("show");
+              };
+            }
+
+            function clearFieldError(input) {
+              input.classList.remove("input-error");
+
+              const error = input.parentElement.querySelector(".error-message");
+
+              if (error) {
+                error.classList.remove("show");
+              }
+            }
+
+            function showSaveSuccessPopup() {
+              const popup = document.getElementById("saveSuccessOverlay");
+
+              popup.classList.add("show");
+
+              setTimeout(() => {
+                popup.classList.remove("show");
+                window.location.href = "index.html";
+              }, 1500);
+            }
+
+            window.addEventListener("DOMContentLoaded", async () => {
+              document.querySelectorAll("input, select, textarea").forEach((el) => {
+                el.addEventListener("input", () => {
+                  el.classList.remove("input-error");
+
+                  const parent = el.closest(".item") || el.parentElement;
+                  parent?.querySelector(".field-error-message")?.remove();
+                });
+
+                el.addEventListener("change", () => {
+                  el.classList.remove("input-error");
+
+                  const parent = el.closest(".item") || el.parentElement;
+                  parent?.querySelector(".field-error-message")?.remove();
+                });
+              });
+              try {
+                await loadSurveyStructureForForm();
+                renderInitialSection2Models();
+
+                await loadQuestionBankIntoDatalists();
+                await loadProjectDropdowns();
+
+                if (pageMode === "edit") {
+                  await loadFormForEdit();
+                } else if (pageMode === "copy") {
+                  const copied = JSON.parse(localStorage.getItem("copyForm") || "{}");
+                  if (!Object.keys(copied).length) {
+                    throw new Error("ไม่พบข้อมูลสำหรับคัดลอกฟอร์ม");
+                  }
+                  applyFormToPage(copied);
+
+                  const submitBtn = document.querySelector(
+                    '#formSurvey button[type="submit"]',
+                  );
+                  if (submitBtn) submitBtn.textContent = "บันทึกเป็นฟอร์มใหม่";
+                }
+              } catch (err) {
+                alert("เปิดหน้าไม่สำเร็จ: " + err.message);
+                window.location.href = "index.html";
+              }
+            });
+
+            // Save -> DB -> กลับหน้า index.html
+            document
+              .getElementById("formSurvey")
+              .addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+
+                try {
+                  if (submitBtn) submitBtn.disabled = true;
+
+                  const formData = buildFormPayload();
+
+                  if (!validateBeforeSave(formData)) {
+                    return;
+                  }
+
+                  const payload = {
+                    created_by: currentDisplayName || currentUser,
+                    created_by_username: currentUser,
+                    username: currentUser,
+                    role: currentRole,
+
+                    form_title: formData.form_title,
+                    dept_name: formData.dept_name,
+                    uni_strategy: formData.uni_strategy,
+                    center_strategy: formData.center_strategy,
+                    center_mission: formData.center_mission,
+                    goal_text: formData.goal_text,
+                    kpi_quantity: formData.kpi_quantity,
+                    kpi_quality: formData.kpi_quality,
+                    start_date: formData.start_date || null,
+                    end_date: formData.end_date || null,
+                    fiscal_year: formData.fiscal_year || null,
+                    budget_received: formData.budget_received || null,
+
+                    attachment_url:
+                      document.getElementById("attachmentUrl")?.value.trim() || "",
+
+                    form: formData,
+                  };
+
+                  let res;
+                  let json;
+
+                  if (pageMode === "edit" && editingFormId) {
+                    const updateUrl = `/api/forms/${encodeURIComponent(editingFormId)}`;
+
+                    /*
+                     * ส่งคำขออัปเดตครั้งแรก
+                     * Backend จะตรวจเองว่าฟอร์มมีผู้ตอบแล้วหรือไม่
+                     */
+                    res = await fetch(updateUrl, {
+                      method: "PUT",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify(payload),
+                    });
+
+                    json = await res.json();
+
+                    /*
+                     * สถานะ 409 หมายถึงแบบประเมินมีผู้ตอบแล้ว
+                     * และต้องให้ผู้ใช้ยืนยันก่อน
+                     */
+                    if (res.status === 409 && json?.code === "FORM_HAS_RESPONSES") {
+                      const responseCount = Number(json.response_count || 0);
+
+                      const confirmed = await showEditWarningPopup(responseCount);
+                      /*
+                       * กดยกเลิก = หยุดการบันทึก
+                       */
+                      if (!confirmed) {
+                        return;
+                      }
+
+                      /*
+                       * กดยืนยัน = ส่งอีกครั้งพร้อมสถานะยืนยัน
+                       */
+                      res = await fetch(updateUrl, {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          ...payload,
+                          confirm_existing_responses: true,
+                        }),
+                      });
+
+                      json = await res.json();
+                    }
+
+                    if (!res.ok) {
+                      throw new Error(
+                        json?.message || json?.error || "อัปเดตฟอร์มไม่สำเร็จ",
+                      );
+                    }
+
+                    showSaveSuccessPopup();
+                  } else {
+                    res = await fetch("/api/forms", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(payload),
+                    });
+                    json = await res.json();
+
+                    if (!res.ok) {
+                      throw new Error(json?.error || "บันทึกฟอร์มไม่สำเร็จ");
+                    }
+
+                    localStorage.removeItem("surveyDraft");
+                    showSaveSuccessPopup();
+                  }
+                } catch (err) {
+                  alert(err.message || "เกิดข้อผิดพลาด");
+                } finally {
+                  if (submitBtn) submitBtn.disabled = false;
+                }
+              });
     </script>
 
     <!-- ----- LibQUAL ----- -->

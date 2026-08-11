@@ -1,0 +1,1007 @@
+/* ===========================================================
+   Responsive CSS
+   Survey Management System
+   =========================================================== */
+
+/* ===========================================================
+   Form Builder: Desktop Layout
+   =========================================================== */
+
+.page-form-builder .form-builder-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.page-form-builder .form-builder-project-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 1024px) {
+
+}
+
+/* ===========================================================
+   Mobile: Form Builder
+   =========================================================== */
+
+@media (max-width: 768px) {
+  /* ---------- ขนาดพื้นฐานของหน้า ---------- */
+
+  .page-form-builder {
+    padding: 10px;
+    overflow-x: hidden;
+  }
+
+  .page-form-builder .wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* ---------- กล่องด้านบน ---------- */
+
+  .page-form-builder .header {
+    padding: 16px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+  }
+
+  .page-form-builder .title-inp {
+    padding: 12px 14px;
+    font-size: 16px;
+  }
+
+  .page-form-builder .subtitle-inp {
+    padding: 12px 14px;
+    min-height: 90px;
+  }
+
+  /* ---------- Layout สองคอลัมน์ให้เรียงเป็นหนึ่งคอลัมน์ ---------- */
+
+  .page-form-builder .form-builder-main-grid,
+  .page-form-builder .form-builder-project-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ---------- Section และ Group ---------- */
+
+  .page-form-builder .section {
+    padding: 12px;
+    margin: 10px 0 14px;
+    border-radius: 14px;
+  }
+
+  .page-form-builder .group {
+    padding: 12px;
+    margin: 10px 0;
+  }
+
+  .page-form-builder .section > .head,
+  .page-form-builder .group .ghead {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .page-form-builder .section > .head .left,
+  .page-form-builder .ghead .left {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .page-form-builder .head .title,
+  .page-form-builder .main-model-title {
+    overflow-wrap: anywhere;
+  }
+
+  .page-form-builder .hint {
+    display: none;
+  }
+
+  /* ---------- ช่องกรอก ---------- */
+
+  .page-form-builder .input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+  }
+
+  .page-form-builder select.input {
+    white-space: normal;
+  }
+
+  /* ---------- Question Row ---------- */
+
+  .page-form-builder .questions .item {
+    grid-template-columns: 30px minmax(0, 1fr);
+    grid-template-areas:
+      "number question"
+      ". remove"
+      ". error";
+    align-items: center;
+    row-gap: 8px;
+  }
+
+  .page-form-builder .questions .item .num {
+    grid-area: number;
+    width: 30px;
+    text-align: left;
+  }
+
+  .page-form-builder .questions .item .dim-question {
+    grid-area: question;
+  }
+
+  .page-form-builder .questions .item .remove-question {
+    grid-area: remove;
+    width: auto;
+    justify-self: end;
+  }
+
+  .page-form-builder .questions .item .field-error-message {
+    grid-area: error;
+  }
+
+  /* ---------- ปุ่ม ---------- */
+
+  .page-form-builder .center {
+    width: 100%;
+  }
+
+  .page-form-builder .center .btn,
+  .page-form-builder .footer .btn {
+    width: 100%;
+  }
+
+  .page-form-builder .footer {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .page-form-builder .footer > div {
+    width: 100%;
+    margin-top: 0 !important;
+  }
+
+  /* ---------- Popup ---------- */
+
+  .page-form-builder .edit-warning-box,
+  .page-form-builder .save-success-box {
+    width: calc(100% - 20px);
+    max-width: 100%;
+    padding: 22px 18px;
+  }
+
+  .page-form-builder .edit-warning-title {
+    font-size: 23px;
+  }
+
+  .page-form-builder .edit-warning-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .page-form-builder .edit-warning-btn.confirm {
+    grid-row: 1;
+  }
+}
+
+/* ---------- Small Mobile ---------- */
+@media (max-width: 576px) {
+  .page-form-builder {
+    padding: 6px;
+  }
+
+  .page-form-builder .header,
+  .page-form-builder .section,
+  .page-form-builder .group {
+    border-radius: 12px;
+  }
+
+  .page-form-builder .header {
+    padding: 13px;
+  }
+
+  .page-form-builder .section,
+  .page-form-builder .group {
+    padding: 10px;
+  }
+
+  .page-form-builder .chip {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .page-form-builder .main-model .title.main-model-title {
+    font-size: 16px;
+  }
+
+  .page-form-builder .subgroup-title {
+    min-width: 0 !important;
+    width: 100%;
+  }
+}
+
+/* ==========================================
+   INDEX.HTML (Mobile)
+========================================== */
+
+@media (max-width: 768px) {
+  .page-index .page {
+    padding: 10px;
+  }
+
+  .page-index .app {
+    padding: 10px;
+  }
+
+  .page-index .topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "menu title avatar";
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .page-index .topbar > .icon-btn {
+    grid-area: menu;
+  }
+
+  .page-index .topbar .title {
+    grid-area: title;
+    min-width: 0;
+    font-size: 20px;
+    line-height: 1.35;
+    text-align: left;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .page-index .topbar .spacer {
+    display: none;
+  }
+
+  .page-index .topbar .avatar-wrap {
+    grid-area: avatar;
+    margin-left: 0;
+  }
+
+  .page-index .topbar .user-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .page-index .actions-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .page-index .actions-row .spacer {
+    display: none;
+  }
+
+  .page-index .year-combo {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px;
+    align-items: center;
+  }
+
+  .page-index .year-combo select {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .page-index .year-combo .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+
+  /* ==========================================
+   INDEX.HTML: Table เป็น Card บนมือถือ
+========================================== */
+
+.page-index .table-wrap {
+  overflow: visible;
+  border: 0;
+  background: transparent;
+}
+
+.page-index #tbl {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  border: 0;
+}
+
+.page-index #tbl thead {
+  display: none;
+}
+
+.page-index #tbl tbody {
+  display: grid;
+  gap: 18px;
+  width: 100%;
+}
+
+.page-index #tbl tbody tr {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  background: #fffdf9;
+  border: 1px solid #ead8c8;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(155, 28, 28, 0.08);
+}
+
+.page-index #tbl tbody td {
+  display: grid;
+  grid-template-columns: 118px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left !important;
+  overflow-wrap: anywhere;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #f0e0d6;
+}
+
+.page-index #tbl tbody td:last-child {
+  border-bottom: 0;
+}
+
+.page-index #tbl tbody td::before {
+  content: attr(data-label);
+  color: #7a1414;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.page-index #tbl .mobile-action-cell {
+  align-items: center;
+}
+
+.page-index #tbl .action-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.page-index #tbl .action-icons .icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid #ead8c8;
+  background: #fff;
+  transition: all .25s ease;
+  cursor: pointer;
+}
+
+.page-index #tbl .action-icons .icon-btn:hover{
+    transform: translateY(-2px) scale(1.08);
+    background:#fff5f5;
+    border-color:#9b1c1c;
+    box-shadow:0 8px 18px rgba(155,28,28,.18);
+}
+
+.page-index #tbl .mobile-result-cell {
+  align-items: center;
+}
+
+.page-index #tbl .result-badge {
+  width: 100%;
+  min-width: 0;
+  max-width: 180px;
+}
+
+.page-index #tbl .result-badge .score {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.page-index #tbl .result-badge .level {
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* กรณียังไม่มีข้อมูล */
+.page-index #tbl tbody td.empty {
+  display: block;
+  padding: 24px 16px;
+  text-align: center !important;
+}
+
+.page-index #tbl tbody td.empty::before {
+  display: none;
+}
+}
+
+/* ==========================================
+   INDEX.HTML: Small Mobile
+========================================== */
+
+@media (max-width: 576px) {
+  .page-index #tbl tbody td {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .page-index #tbl tbody td::before {
+    font-size: 13px;
+  }
+
+  .page-index #tbl .result-badge {
+    max-width: 100%;
+  }
+
+  .page-index #tbl .action-icons {
+    width: 100%;
+  }
+}
+
+/* ==========================
+   DASHBOARD.HTML (Mobile)
+========================== */
+
+@media (max-width:768px){
+
+  /* ระยะขอบ */
+ .page-dashboard .page {
+  padding: 12px !important;
+}
+
+.page-dashboard .header {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+ .page-dashboard .header h1 {
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.page-dashboard .header > div:last-child {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.page-dashboard .refresh-btn {
+  width: 100%;
+}
+
+.page-dashboard .filters {
+  grid-template-columns: 1fr !important;
+}
+
+.page-dashboard .cards {
+  grid-template-columns: 1fr !important;
+}
+
+.page-dashboard .section-grid {
+  grid-template-columns: 1fr !important;
+}
+
+.page-dashboard .chart-wrap {
+  height: 320px;
+}
+
+.page-dashboard .comment-list {
+  max-height: none;
+}
+
+/* ---------- Dashboard Table เป็น Card บนมือถือ ---------- */
+
+.page-dashboard .table-wrap {
+  overflow: visible !important;
+}
+
+.page-dashboard .table-wrap table {
+  display: block;
+  width: 100%;
+  min-width: 0 !important;
+  border: 0;
+}
+
+.page-dashboard .table-wrap thead {
+  display: none;
+}
+
+.page-dashboard .table-wrap tbody {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
+.page-dashboard .table-wrap tbody tr {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  background: #fffdf9;
+  border: 1px solid #ead8c8;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(155, 28, 28, 0.08);
+  transition: .25s ease;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.page-dashboard .table-wrap tbody tr:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(155,28,28,.15);
+}
+
+.page-dashboard .table-wrap tbody td {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left !important;
+  overflow-wrap: anywhere;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #f0e0d6;
+}
+
+.page-dashboard .table-wrap tbody td:last-child {
+  border-bottom: 0;
+}
+
+.page-dashboard .table-wrap tbody td::before {
+  content: attr(data-label);
+  color: #7a1414;
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  line-height: 1.5;
+}
+
+.page-dashboard .table-wrap tbody td[data-label="ค่าเฉลี่ย"],
+.page-dashboard .table-wrap tbody td[data-label="S.D."] {
+  font-size: 20px;
+  font-weight: 800;
+  color: #9b1c1c;
+}
+
+.page-dashboard .table-wrap tbody td[data-label="จำนวน"] {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* กรณียังไม่มีข้อมูล */
+.page-dashboard .table-wrap tbody td.empty {
+  display: block;
+  padding: 24px 16px;
+  text-align: center !important;
+}
+
+.page-dashboard .table-wrap tbody td.empty::before {
+  display: none;
+}
+
+}
+
+@media (max-width: 576px) {
+  .page-dashboard .table-wrap tbody td {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .page-dashboard .table-wrap tbody td::before {
+    font-size: 13px;
+  }
+}
+
+/* ==========================================
+   PREVIEW.HTML (Mobile)
+========================================== */
+
+@media (max-width: 768px) {
+
+  /* ---------- พื้นฐานของหน้า ---------- */
+
+  .page-preview {
+    overflow-x: hidden;
+  }
+
+  .page-preview .wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 12px auto;
+    padding: 0 10px;
+  }
+
+  /* ---------- Hero ---------- */
+
+  .page-preview .hero {
+    padding: 18px 16px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+  }
+
+  .page-preview .hero h1 {
+    font-size: 22px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .page-preview .hero p {
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- Section ---------- */
+
+  .page-preview .section {
+    width: 100%;
+    margin: 12px 0;
+    padding: 14px;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .page-preview .title {
+    font-size: 18px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
+  .page-preview .hint {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ---------- ข้อมูลผู้ประเมิน ---------- */
+
+  .page-preview .form-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .page-preview .form-label {
+    margin-bottom: 2px;
+  }
+
+  .page-preview .form-row {
+    width: 100%;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .page-preview .form-radio {
+    min-height: 40px;
+    padding: 6px 0;
+  }
+
+  .page-preview .form-radio input[type="radio"] {
+    width: 18px;
+    height: 18px;
+  }
+
+  .page-preview .form-input,
+  .page-preview textarea,
+  .page-preview .reason input {
+    width: 100% !important;
+    max-width: 100%;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  /* ---------- ส่วนบอกต่อกิจกรรม ---------- */
+
+  .page-preview #sec4 > div:first-child {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .page-preview #sec4 .form-row {
+    width: 100%;
+  }
+
+  /* ---------- ปุ่มด้านล่าง ---------- */
+
+  .page-preview .footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .page-preview .footer .btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+    /* ==========================================
+     Rating Scale เป็น Card บนมือถือ
+  ========================================== */
+
+  .page-preview #ratingTables table {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+    border: 0;
+  }
+
+  .page-preview #ratingTables thead,
+  .page-preview #ratingTables .q-head {
+    display: none;
+  }
+
+  .page-preview #ratingTables tbody {
+    display: grid;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-areas:
+      "question question question question question"
+      "score5 score4 score3 score2 score1";
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background: #fffdf9;
+    border: 1px solid #ead8c8;
+    border-radius: 14px;
+    box-shadow: 0 6px 16px rgba(155, 28, 28, 0.06);
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  /* ข้อความคำถาม */
+
+  .page-preview #ratingTables .question-text {
+    grid-area: question;
+    font-weight: 700;
+    line-height: 1.6;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid #f0e0d6 !important;
+    overflow-wrap: anywhere;
+  }
+
+  /* 5 */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(2) {
+    grid-area: score5;
+  }
+
+  /* 4 */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(3) {
+    grid-area: score4;
+  }
+
+  /* 3 */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(4) {
+    grid-area: score3;
+  }
+
+  /* 2 */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(5) {
+    grid-area: score2;
+  }
+
+  /* 1 */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(6) {
+    grid-area: score1;
+  }
+
+  /* จัดคะแนนกับ Radio */
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(n + 2) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 54px;
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(2)::before {
+    content: "5";
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(3)::before {
+    content: "4";
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(4)::before {
+    content: "3";
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(5)::before {
+    content: "2";
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(6)::before {
+    content: "1";
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) td:nth-child(n + 2)::before {
+    color: #7a1414;
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .page-preview #ratingTables input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #9b1c1c;
+  }
+}
+
+/* ==========================================
+   PREVIEW.HTML: Small Mobile
+========================================== */
+
+@media (max-width: 576px) {
+
+  .page-preview .wrap {
+    padding: 0 6px;
+  }
+
+  .page-preview .hero {
+    padding: 15px 13px;
+  }
+
+  .page-preview .section {
+    padding: 12px;
+  }
+
+  .page-preview .hero h1 {
+    font-size: 20px;
+  }
+
+  .page-preview .title {
+    font-size: 17px;
+  }
+
+  .page-preview #ratingTables tbody tr:not(.q-head) {
+    padding: 12px 8px;
+    gap: 5px;
+  }
+
+  .page-preview #ratingTables input[type="radio"] {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* ===================================================
+   RESULT.HTML (Mobile)
+=================================================== */
+
+@media (max-width:768px){
+
+.page-result table.mobile-card-table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+}
+
+.page-result table.mobile-card-table thead{
+    display:none;
+}
+
+.page-result table.mobile-card-table,
+.page-result table.mobile-card-table tbody,
+.page-result table.mobile-card-table tr,
+.page-result table.mobile-card-table td{
+    display:block;
+    width:100%;
+}
+
+.page-result table.mobile-card-table tr{
+
+    background:#fff;
+
+    margin-bottom:18px;
+
+    border:1px solid #ead8c8;
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:0 4px 10px rgba(0,0,0,.05);
+
+}
+
+.page-result table.mobile-card-table td{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    gap:14px;
+
+    padding:14px 18px;
+
+    border-bottom:1px solid #f3e5d7;
+
+}
+
+.page-result table.mobile-card-table td:last-child{
+    border-bottom:none;
+}
+
+.page-result table.mobile-card-table td::before{
+
+    font-weight:700;
+
+    color:#8b1515;
+
+    flex-shrink:0;
+
+}
+
+/* ---------- หัวข้อที่ควรปรับปรุง ---------- */
+
+.page-result #weakTable td:nth-child(1)::before{
+    content:"หัวข้อ";
+}
+
+.page-result #weakTable td:nth-child(2)::before{
+    content:"คะแนน";
+}
+
+.page-result #weakTable td:nth-child(3)::before{
+    content:"ผลประเมิน";
+}
+
+/* ---------- ตารางคะแนนรายข้อ ---------- */
+
+.page-result #questionTable td:nth-child(1)::before{
+    content:"หมวด";
+}
+
+.page-result #questionTable td:nth-child(2)::before{
+    content:"คำถาม";
+}
+
+.page-result #questionTable td:nth-child(3)::before{
+    content:"คะแนนเฉลี่ย";
+}
+
+.page-result #questionTable td:nth-child(4)::before{
+    content:"ผลประเมิน";
+}
+
+}

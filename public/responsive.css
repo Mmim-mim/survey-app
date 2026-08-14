@@ -865,6 +865,16 @@
     cursor: pointer;
     accent-color: #9b1c1c;
   }
+
+  .page-preview #ratingTables .question-text .validation-message {
+  font-size: 13px;
+  line-height: 1.5;
+  width: 100%;
+  max-width: 100%;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
 }
 
 /* ==========================================
@@ -1004,4 +1014,37 @@
     content:"ผลประเมิน";
 }
 
+}
+
+/* ==========================================
+   PREVIEW.HTML: Validation
+========================================== */
+
+.page-preview .field-invalid {
+  border-color: #dc2626 !important;
+  background: #fff7f7 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12) !important;
+}
+
+.page-preview .rating-invalid {
+  border-color: #dc2626 !important;
+  background: #fff7f7 !important;
+}
+
+.page-preview .validation-message {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.page-preview #ratingTables .question-text .validation-message {
+  padding-top: 6px;
+  border-top: 1px dashed rgba(220, 38, 38, 0.25);
 }

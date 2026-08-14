@@ -1135,6 +1135,188 @@
 
       loadData();
 
+      function clearValidationMessage(container) {
+        if (!container) return;
+
+        const oldMessage = container.querySelector(".validation-message");
+
+        if (oldMessage) {
+          oldMessage.remove();
+        }
+      }
+
+      function showValidationMessage(container, message) {
+        if (!container) return;
+
+        clearValidationMessage(container);
+
+        const error = document.createElement("div");
+
+        error.className = "validation-message";
+        error.textContent = message;
+
+        container.appendChild(error);
+      }
+
+      function validateFormBeforeSubmit() {
+        let firstInvalid = null;
+
+        /*
+         * 1. ตรวจช่องข้อมูลผู้ประเมิน
+         * ตรวจเฉพาะ field ที่ถูกสร้างและกำลังแสดงอยู่
+         */
+        document
+          .querySelectorAll("#profileFields .form-input")
+          .forEach((field) => {
+            field.classList.remove("field-invalid");
+
+            const wrapper = field.closest(".form-grid");
+
+            clearValidationMessage(wrapper);
+
+            if (
+              field.offsetParent !== null &&
+              !String(field.value || "").trim()
+            ) {
+              field.classList.add("field-invalid");
+
+              showValidationMessage(
+                wrapper,
+                "กรุณากรอกหรือเลือกข้อมูลในช่องนี้",
+              );
+
+              if (!firstInvalid) {
+                firstInvalid = field;
+              }
+            }
+          });
+
+        /*
+         * 2. ตรวจ Radio ในข้อมูลผู้ประเมิน
+         * เช่น สถานะภาพ และระดับ
+         */
+        const radioGroups = [
+          {
+            name: "pf_role",
+            message: "กรุณาเลือกสถานภาพผู้ประเมิน",
+          },
+          {
+            name: "pf_level",
+            message: "กรุณาเลือกระดับการศึกษา",
+          },
+        ];
+
+        radioGroups.forEach((group) => {
+          const radios = Array.from(
+            document.querySelectorAll(
+              `#profileFields input[name="${group.name}"]`,
+            ),
+          );
+
+          if (!radios.length) return;
+
+          const visibleRadios = radios.filter(
+            (radio) => radio.offsetParent !== null,
+          );
+
+          if (!visibleRadios.length) return;
+
+          const checked = visibleRadios.some((radio) => radio.checked);
+
+          const wrapper = visibleRadios[0]?.closest(".form-grid");
+
+          clearValidationMessage(wrapper);
+
+          if (!checked) {
+            showValidationMessage(wrapper, group.message);
+
+            if (!firstInvalid) {
+              firstInvalid = visibleRadios[0];
+            }
+          }
+        });
+
+        /*
+         * 3. ตรวจ Rating Scale ทุกข้อ
+         */
+        document
+          .querySelectorAll("#ratingTables tbody tr:not(.q-head)")
+          .forEach((row) => {
+            row.classList.remove("rating-invalid");
+
+            clearValidationMessage(row);
+
+            const checked = row.querySelector('input[type="radio"]:checked');
+
+            if (!checked) {
+              row.classList.add("rating-invalid");
+
+              const questionCell = row.querySelector(".question-text");
+
+              showValidationMessage(
+                questionCell || row,
+                "กรุณาเลือกคะแนนในข้อนี้",
+              );
+
+              if (!firstInvalid) {
+                firstInvalid = row;
+              }
+            }
+          });
+
+        /*
+         * 4. ถ้ามีข้อผิดพลาด
+         */
+        if (firstInvalid) {
+          firstInvalid.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+
+          return false;
+        }
+
+        return true;
+      }
+
+      document.addEventListener("input", (e) => {
+        const target = e.target;
+
+        if (target.classList?.contains("form-input")) {
+          target.classList.remove("field-invalid");
+
+          const wrapper = target.closest(".form-grid");
+
+          clearValidationMessage(wrapper);
+        }
+      });
+
+      document.addEventListener("change", (e) => {
+        const target = e.target;
+
+        if (
+          target.matches(
+            '#profileFields input[type="radio"], #ratingTables input[type="radio"]',
+          )
+        ) {
+          const ratingRow = target.closest(
+            "#ratingTables tbody tr:not(.q-head)",
+          );
+
+          if (ratingRow) {
+            ratingRow.classList.remove("rating-invalid");
+
+            clearValidationMessage(ratingRow);
+          }
+
+          const profileWrapper = target.closest(".form-grid");
+
+          if (profileWrapper) {
+            clearValidationMessage(profileWrapper);
+          }
+        }
+      });
+
       /* ---------- ปุ่มควบคุม ---------- */
       document
         .getElementById("backBtn")
@@ -1143,6 +1325,9 @@
       document
         .getElementById("confirmBtn")
         .addEventListener("click", async () => {
+          if (!validateFormBeforeSubmit()) {
+            return;
+          }
           // ===== helper: ปีงบประมาณ (ง่ายๆ) =====
           // ถ้าต้องการ “ปีงบประมาณไทย” แบบจริงจัง (ต.ค.-ก.ย.) ค่อยปรับทีหลังได้
           const fiscalYearTH = new Date().getFullYear() + 543;

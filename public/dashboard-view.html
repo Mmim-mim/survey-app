@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>MFU Library Assessment Dashboard</title>
+    <title>Assessment Results Dashboard</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -101,6 +101,14 @@
         font-size: 18px;
         font-weight: 800;
         text-transform: uppercase;
+      }
+
+      .brand-desc {
+        margin-top: 4px;
+        color: #806b65;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.4;
       }
 
       .status-wrap {
@@ -1161,7 +1169,7 @@
         .simple-chart-grid {
           grid-template-columns: 1fr;
         }
-        
+
         .overview-divider {
           display: none;
         }
@@ -1614,6 +1622,227 @@
           grid-template-columns: 1fr;
         }
       }
+
+      /* =========================================
+   ตารางสรุปผล - Mobile Card
+   แบบหัวข้อเต็มกว้าง + ค่าสรุป 3 ช่อง
+========================================= */
+
+      @media (max-width: 720px) {
+        .result-table-panel .table-wrap {
+          overflow: visible;
+        }
+
+        .result-table-panel .result-table {
+          display: block;
+          width: 100%;
+          min-width: 0 !important;
+        }
+
+        .result-table-panel .result-table thead,
+        .result-table-panel .result-table tfoot {
+          display: none;
+        }
+
+        .result-table-panel .result-table tbody {
+          display: block;
+          width: 100%;
+        }
+
+        /* =========================================
+     หัวข้อใหญ่ เช่น LibQUAL+TM / SERVQUAL
+  ========================================= */
+
+        .result-table-panel .model-header-row {
+          display: block;
+          width: 100%;
+          margin: 14px 0 10px;
+        }
+
+        .result-table-panel .model-header-row td {
+          display: flex;
+          align-items: center;
+          width: 100%;
+          padding: 12px 14px !important;
+
+          border: 1px solid #ead8c8;
+          border-radius: 14px;
+
+          background: #f9e7e1 !important;
+        }
+
+        .result-table-panel .model-number {
+          flex-shrink: 0;
+        }
+
+        .result-table-panel .model-title {
+          min-width: 0;
+          overflow-wrap: anywhere;
+        }
+
+        /* =========================================
+     Card ของหัวข้อย่อย
+  ========================================= */
+
+        .result-table-panel .model-group-row {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-areas:
+            "number number number"
+            "title title title"
+            "score sd count";
+
+          width: 100%;
+          margin-bottom: 14px;
+
+          overflow: hidden;
+
+          border: 1px solid #ead8c8;
+          border-radius: 14px;
+
+          background: #fffdfb;
+
+          box-shadow: 0 5px 14px rgba(120, 70, 60, 0.06);
+        }
+
+        .result-table-panel .model-group-row td {
+          width: 100%;
+          min-width: 0;
+
+          border: 0;
+          background: transparent !important;
+        }
+
+        /* =========================================
+     ลำดับ 1.1 / 1.2
+  ========================================= */
+
+        .result-table-panel .model-group-number {
+          grid-area: number;
+
+          padding: 10px 14px 4px !important;
+
+          text-align: left !important;
+
+          color: #a33434 !important;
+          font-size: 13px;
+          font-weight: 900;
+
+          border-bottom: 0 !important;
+        }
+
+        .result-table-panel .model-group-number::before {
+          content: "ลำดับ ";
+          margin-right: 6px;
+
+          color: #8f2929;
+          font-weight: 800;
+        }
+
+        /* =========================================
+     ชื่อหัวข้อ เต็มความกว้าง
+  ========================================= */
+
+        .result-table-panel .model-group-title {
+          grid-area: title;
+
+          padding: 5px 14px 13px !important;
+
+          color: #332626 !important;
+          font-size: 15px;
+          font-weight: 800;
+          line-height: 1.55;
+
+          text-align: left !important;
+
+          overflow-wrap: anywhere;
+          word-break: break-word;
+
+          border-bottom: 1px solid #f0e2d8 !important;
+        }
+
+        .result-table-panel .model-group-title::before {
+          display: none;
+        }
+
+        /* =========================================
+     ค่าด้านล่าง 3 ช่อง
+  ========================================= */
+
+        .result-table-panel .model-group-score,
+        .result-table-panel .model-group-sd,
+        .result-table-panel .model-group-count {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+
+          min-height: 70px;
+          padding: 10px 6px !important;
+
+          text-align: center !important;
+
+          border-right: 1px solid #f0e2d8 !important;
+        }
+
+        .result-table-panel .model-group-count {
+          border-right: 0 !important;
+        }
+
+        /* label ด้านบน */
+
+        .result-table-panel .model-group-score::before,
+        .result-table-panel .model-group-sd::before,
+        .result-table-panel .model-group-count::before {
+          display: block;
+
+          margin-bottom: 4px;
+
+          color: #8f2929;
+
+          font-size: 12px;
+          font-weight: 800;
+          line-height: 1.3;
+        }
+
+        .result-table-panel .model-group-score::before {
+          content: "ค่าเฉลี่ย";
+        }
+
+        .result-table-panel .model-group-sd::before {
+          content: "S.D.";
+        }
+
+        .result-table-panel .model-group-count::before {
+          content: "จำนวน";
+        }
+
+        /* ค่าตัวเลข */
+
+        .result-table-panel .model-group-score {
+          grid-area: score;
+
+          color: #b52c2c !important;
+          font-size: 17px;
+          font-weight: 900;
+        }
+
+        .result-table-panel .model-group-sd {
+          grid-area: sd;
+
+          color: #66514b !important;
+          font-size: 16px;
+          font-weight: 800;
+        }
+
+        .result-table-panel .model-group-count {
+          grid-area: count;
+
+          color: #4f403c !important;
+          font-size: 16px;
+          font-weight: 900;
+        }
+      }
     </style>
   </head>
 
@@ -1623,8 +1852,9 @@
         <div class="brand">
           <div class="logo">🏛️</div>
           <div>
-            <h1>MFU LIBRARY</h1>
-            <div class="sub">ASSESSMENT DASHBOARD</div>
+            <h1>ASSESSMENT RESULTS</h1>
+            <div class="sub">DASHBOARD</div>
+            <div class="brand-desc">ระบบสรุปผลการประเมินกิจกรรมและโครงการ</div>
           </div>
         </div>
 
@@ -1652,7 +1882,7 @@
         </div>
 
         <div class="field">
-          <label>📋 ฟอร์มประเมิน</label>
+          <label>📋 ชื่อโครงการ</label>
           <div class="multi-select" id="formMulti">
             <button type="button" class="multi-btn" id="formMultiBtn">
               ทั้งหมด
@@ -1668,13 +1898,18 @@
         </div>
 
         <div class="field">
-          <label>🏢 ฝ่าย / หน่วยงาน</label>
+          <label>🏢 หน่วยงาน / สำนักวิชา</label>
           <select id="fDept"></select>
         </div>
 
         <div class="field">
           <label>🗓 ช่วงวันที่เริ่ม</label>
           <input id="fDateFrom" type="date" />
+        </div>
+
+        <div class="field">
+          <label>🗓 ช่วงวันที่สิ้นสุด</label>
+          <input id="fDateTo" type="date" />
         </div>
 
         <button id="btnRefresh" class="refresh-btn" type="button">
@@ -1885,8 +2120,7 @@
     </div>
 
     <div class="footer-bar">
-      MFU Library Assessment Dashboard (Public View) |
-      ข้อมูลอัปเดตจากระบบประเมิน
+      Assessment Results Dashboard | ข้อมูลอัปเดตจากระบบประเมิน
     </div>
 
     <script src="dashboard-view.js"></script>

@@ -540,28 +540,45 @@ function renderTable(rows) {
         : 0;
 
       html.push(`
-        <tr class="model-group-row">
-          <td class="model-group-number">
-            ${modelNumber}.${groupNumber}
-          </td>
+  <tr class="model-group-row">
 
-          <td class="model-group-title">
-            ${esc(standardGroup.title)}
-          </td>
+    <td
+      class="model-group-number"
+      data-label="ลำดับ"
+    >
+      ${modelNumber}.${groupNumber}
+    </td>
 
-          <td class="model-group-score">
-            ${groupAverage.toFixed(2)}
-          </td>
+    <td
+      class="model-group-title"
+      data-label="หัวข้อ"
+    >
+      ${esc(standardGroup.title)}
+    </td>
 
-          <td class="model-group-sd">
-            ${groupSd.toFixed(2)}
-          </td>
+    <td
+      class="model-group-score"
+      data-label="ค่าเฉลี่ย"
+    >
+      ${groupAverage.toFixed(2)}
+    </td>
 
-          <td class="model-group-count">
-            ${totalCount.toLocaleString("th-TH")}
-          </td>
-        </tr>
-      `);
+    <td
+      class="model-group-sd"
+      data-label="S.D."
+    >
+      ${groupSd.toFixed(2)}
+    </td>
+
+    <td
+      class="model-group-count"
+      data-label="จำนวน"
+    >
+      ${totalCount.toLocaleString("th-TH")}
+    </td>
+
+  </tr>
+`);
     }
   }
 

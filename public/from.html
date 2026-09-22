@@ -1390,7 +1390,7 @@
 
         <h2>เลือกบล็อก</h2>
 
-        <div class="section" data-sec="s1">
+        <div class="section" data-sec="s1" data-section-key="respondent_info">
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
@@ -1438,7 +1438,7 @@
         </div>
 
         <!-- ------ ส่วนที่ 2 ----- -->
-        <div class="section" data-sec="s2">
+        <div class="section" data-sec="s2" data-section-key="rating_questions">
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
@@ -1452,7 +1452,7 @@
         </div>
 
         <!-- ------ ส่วนที่ 3 ----- -->
-        <div class="section" data-sec="s3">
+        <div class="section" data-sec="s3" data-section-key="dissatisfaction">
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
@@ -1478,7 +1478,7 @@
         </div>
 
         <!-- ------ ส่วนที่ 4 ----- -->
-        <div class="section" data-sec="s4">
+        <div class="section" data-sec="s4" data-section-key="activity_referral">
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
@@ -1509,7 +1509,7 @@
         </div>
 
         <!-- ส่วนที่ 5 : ข้อเสนอแนะ (แสดงตลอด) -->
-        <div class="section" data-sec="s5">
+        <div class="section" data-sec="s5" data-section-key="suggestions">
           <div class="head">
             <div class="left">
               <input type="checkbox" class="toggle" />
@@ -1761,6 +1761,7 @@
       </div>
     </div>
 
+    <script src="section-snapshot.js"></script>
     <script>
             function showEditWarningPopup(responseCount) {
               return new Promise((resolve) => {
@@ -2555,6 +2556,8 @@
             }
 
             let defaultMainModels = [];
+            let sectionSnapshot = null;
+            let engagementQuestion = SectionSnapshot.definitions[3][1];
 
             async function loadSurveyStructureForForm() {
               const res = await fetch("/api/survey-structure/form");
@@ -2565,6 +2568,7 @@
               }
 
               defaultMainModels = Array.isArray(json.models) ? json.models : [];
+              if (pageMode === "create") sectionSnapshot = SectionSnapshot.fromAdmin(json.sections || []);
             }
 
             let savedDraft = {};
@@ -3077,7 +3081,13 @@
             }
 
             function buildFormPayload() {
+              const sections = SectionSnapshot.normalize({ sections: sectionSnapshot });
+              SectionSnapshot.definitions.forEach(([key], index) => {
+                sections[key].enabled = getSectionEnabled(index + 1);
+              });
               return {
+                section_snapshot_version: 1,
+                sections,
                 form_title:
                   document.querySelector('[name="form_title"]')?.value?.trim() || "",
                 form_desc:
@@ -3116,8 +3126,7 @@
                     ?.value?.trim() || "",
 
                 section4_enabled: getSectionEnabled(4),
-                engagement_question:
-                  "ท่านจะบอกต่อกิจกรรมนี้ให้เพื่อนหรือคนรู้จักหรือไม่",
+                engagement_question: engagementQuestion,
 
                 section5_enabled: getSectionEnabled(5),
                 suggestion_prompt:
@@ -3131,6 +3140,10 @@
 
             function applyFormToPage(data) {
               if (!data) return;
+              sectionSnapshot = SectionSnapshot.normalize(data);
+              engagementQuestion = data.engagement_question || SectionSnapshot.definitions[3][1];
+              data = SectionSnapshot.attach(data, sectionSnapshot);
+              SectionSnapshot.render(document, sectionSnapshot, true);
 
               setValue('[name="form_title"]', data.form_title);
               setValue('[name="form_desc"]', data.form_desc);
@@ -3607,11 +3620,19 @@
                 });
               });
               try {
-                await loadSurveyStructureForForm();
-                renderInitialSection2Models();
+                if (pageMode === "create") {
+                  await loadSurveyStructureForForm();
+                  SectionSnapshot.render(document, sectionSnapshot, true);
+                  renderInitialSection2Models();
+                }
 
-                await loadQuestionBankIntoDatalists();
-                await loadProjectDropdowns();
+                try {
+                  await loadQuestionBankIntoDatalists();
+                  await loadProjectDropdowns();
+                } catch (error) {
+                  if (pageMode === "create") throw error;
+                  console.warn("Optional question bank unavailable", error);
+                }
 
                 if (pageMode === "edit") {
                   await loadFormForEdit();

@@ -351,13 +351,13 @@
       </div>
 
       <!-- ส่วนที่ 1 -->
-      <div class="section" id="sec1">
+      <div class="section" id="sec1" data-section-key="respondent_info">
         <div class="title">ข้อมูลผู้ประเมิน</div>
         <div id="profileFields"></div>
       </div>
 
       <!-- ส่วนที่ 2: Rating Scale -->
-      <div class="section" id="sec2">
+      <div class="section" id="sec2" data-section-key="rating_questions">
         <div class="title">ส่วนของคำถาม (Rating Scale 5 ระดับ)</div>
         <div class="hint">
           5 = มากที่สุด, 4 = มาก, 3 = ปานกลาง, 2 = น้อย, 1 = น้อยที่สุด
@@ -366,7 +366,7 @@
       </div>
 
       <!-- ส่วนที่ 3: ความไม่พึงพอใจแบบข้อความ -->
-      <div class="section" id="sec3">
+      <div class="section" id="sec3" data-section-key="dissatisfaction">
         <div class="title" id="dissTitle">
           ท่านมีความไม่พึงพอใจต่อการจัดกิจกรรม (โปรดระบุ)
         </div>
@@ -386,7 +386,7 @@
       </div>
 
       <!-- ส่วนที่ 4 -->
-      <div class="section" id="sec4">
+      <div class="section" id="sec4" data-section-key="activity_referral">
         <div
           style="
             display: flex;
@@ -415,7 +415,7 @@
       </div>
 
       <!-- ส่วนที่ 5 : ข้อเสนอแนะ -->
-      <div class="section" id="sec5">
+      <div class="section" id="sec5" data-section-key="suggestions">
         <div class="title" id="suggestTitle">ข้อเสนอแนะ</div>
 
         <textarea
@@ -441,6 +441,7 @@
       </div>
     </div>
 
+    <script src="section-snapshot.js"></script>
     <script>
       /* ---------- โหลด/บันทึก ชื่อเรื่อง-คำอธิบาย ---------- */
       const titleEl = document.getElementById("heroTitle");
@@ -455,11 +456,12 @@
       let data = {};
 
       function renderPage() {
-        const sec1El = document.getElementById("sec1");
-        const sec2El = document.getElementById("sec2");
-        const sec3El = document.getElementById("sec3");
-        const sec4El = document.getElementById("sec4");
-        const sec5El = document.getElementById("sec5");
+        data = SectionSnapshot.attach(data);
+        const sec1El = document.querySelector('[data-section-key="respondent_info"]');
+        const sec2El = document.querySelector('[data-section-key="rating_questions"]');
+        const sec3El = document.querySelector('[data-section-key="dissatisfaction"]');
+        const sec4El = document.querySelector('[data-section-key="activity_referral"]');
+        const sec5El = document.querySelector('[data-section-key="suggestions"]');
 
         if (sec1El)
           sec1El.style.display = data.section1_enabled === false ? "none" : "";
@@ -639,7 +641,7 @@
 
         pfRoot.innerHTML = "";
         if (!selected.length) {
-          document.getElementById("sec1").style.display = "none";
+          document.querySelector('[data-section-key="respondent_info"]').style.display = "none";
         } else {
           selected.forEach((label) => {
             const make = renderers[label?.trim()];
@@ -1001,7 +1003,7 @@
           });
 
         if (!ratingRoot.children.length) {
-          document.getElementById("sec2").style.display = "none";
+          document.querySelector('[data-section-key="rating_questions"]').style.display = "none";
         }
 
         /* ---------- ส่วนที่ 3: ความไม่พึงพอใจแบบ Textarea ---------- */
@@ -1119,6 +1121,18 @@
         }
 
         renderPage();
+        SectionSnapshot.render(document, data.sections);
+        // Prompts are content, distinct from the Admin section heading.
+        for (const [key, prompt] of [
+          ["activity_referral", data.engagement_question],
+          ["suggestions", data.suggestion_prompt],
+        ]) {
+          if (prompt && prompt !== data.sections[key].title) {
+            const note = document.createElement("p");
+            note.textContent = prompt;
+            document.querySelector('[data-section-key="' + key + '"] [data-section-description]').after(note);
+          }
+        }
 
         const attachmentBox = document.getElementById("attachmentBox");
         const attachmentLink = document.getElementById("attachmentLink");

@@ -4,6 +4,8 @@ const cors = require("cors");
 const mysql = require("mysql2/promise");
 const path = require("path");
 
+const SectionSnapshot = require("./public/section-snapshot");
+const { randomUUID } = require("crypto");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -1027,7 +1029,27 @@ app.post("/api/forms", async (req, res) => {
       return res.status(400).json({ error: "form is required" });
     }
 
-    const form_json = JSON.stringify(form);
+    let newForm;
+    try {
+      // Old clients creating a new form still receive current Admin metadata.
+      // Copy clients send an explicit snapshot, which must be preserved.
+      if (!form.sections) {
+        const [sections] = await pool.execute(
+          "SELECT section_key, title, description FROM survey_sections",
+        );
+        const snapshot = SectionSnapshot.fromAdmin(sections);
+        const legacy = SectionSnapshot.normalize(form);
+        for (const [key] of SectionSnapshot.definitions) {
+          snapshot[key].enabled = legacy[key].enabled;
+        }
+        newForm = SectionSnapshot.attach(form, snapshot);
+      } else {
+        newForm = SectionSnapshot.attach(form);
+      }
+    } catch (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    const form_json = JSON.stringify(newForm);
 
     const [result] = await pool.execute(
       `INSERT INTO survey_forms
@@ -1229,7 +1251,7 @@ app.put("/api/forms/:id", async (req, res) => {
      * และตรวจสอบเจ้าของฟอร์ม
      */
     const [foundRows] = await pool.execute(
-      `SELECT id, created_by_username
+      `SELECT id, created_by_username, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -1279,7 +1301,13 @@ app.put("/api/forms/:id", async (req, res) => {
       });
     }
 
-    const form_json = JSON.stringify(form);
+    const storedForm = safeJsonParse(existing.form_json) || {};
+    const preservedSections = SectionSnapshot.normalize(storedForm);
+    const incomingSections = SectionSnapshot.normalize(form);
+    for (const [key] of SectionSnapshot.definitions) {
+      preservedSections[key].enabled = incomingSections[key].enabled;
+    }
+    const form_json = JSON.stringify(SectionSnapshot.attach(form, preservedSections));
 
     /*
      * เมื่อไม่มีผู้ตอบ หรือผู้ใช้กดยืนยันแล้ว
@@ -2754,7 +2782,7 @@ FROM survey_forms
 app.get("/api/survey-sections", async (req, res) => {
   try {
     const [rows] = await pool.execute(`
-      SELECT id, title, description, sort_order, is_active, created_at
+      SELECT id, section_key, title, description, sort_order, is_active, created_at
       FROM survey_sections
       ORDER BY sort_order ASC, id ASC
     `);
@@ -2779,10 +2807,10 @@ app.post("/api/survey-sections", async (req, res) => {
     const [result] = await pool.execute(
       `
       INSERT INTO survey_sections
-      (title, description, sort_order, is_active)
-      VALUES (?, ?, ?, ?)
+      (section_key, title, description, sort_order, is_active)
+      VALUES (?, ?, ?, ?, ?)
       `,
-      [title, description || null, sort_order, is_active],
+      [`custom_${randomUUID()}`, title, description || null, sort_order, is_active],
     );
 
     res.json({ ok: true, id: result.insertId });
@@ -2793,6 +2821,7 @@ app.post("/api/survey-sections", async (req, res) => {
 
 app.put("/api/survey-sections/:id", async (req, res) => {
   try {
+    if (Object.prototype.hasOwnProperty.call(req.body, "section_key")) return res.status(400).json({ error: "section_key is immutable" });
     const id = Number(req.params.id);
     const title = String(req.body.title || "").trim();
     const description = String(req.body.description || "").trim();
@@ -2830,6 +2859,10 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
       return res.status(400).json({ error: "id ไม่ถูกต้อง" });
     }
 
+    const [sectionRows] = await pool.execute("SELECT section_key FROM survey_sections WHERE id = ?", [id]);
+    if (SectionSnapshot.definitions.some(([key]) => key === sectionRows[0]?.section_key)) {
+      return res.status(400).json({ error: "Cannot delete a system Section" });
+    }
     const [[childCount]] = await pool.execute(
       `
       SELECT COUNT(*) AS total
@@ -3125,18 +3158,20 @@ app.delete("/api/survey-question-groups/:id", async (req, res) => {
 app.get("/api/survey-structure/form", async (req, res) => {
   try {
     const [sections] = await pool.execute(`
-      SELECT id, title, description, sort_order, is_active
+      SELECT id, section_key, title, description, sort_order, is_active
       FROM survey_sections
-      WHERE is_active = 1
       ORDER BY sort_order ASC, id ASC
     `);
 
     const questionSection = sections.find((s) =>
-      String(s.title || "").includes("คำถาม"),
+      s.section_key === "rating_questions",
     );
 
     if (!questionSection) {
-      return res.json({ section: null, models: [] });
+      return res.status(409).json({ error: "Missing rating_questions Section" });
+    }
+    if (!questionSection.is_active) {
+      return res.json({ section: questionSection, sections, models: [] });
     }
 
     const [categories] = await pool.execute(
@@ -3248,6 +3283,7 @@ app.get("/api/survey-structure/form", async (req, res) => {
 
     res.json({
       section: questionSection,
+      sections,
       models,
     });
   } catch (e) {

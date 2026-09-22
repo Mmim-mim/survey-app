@@ -515,7 +515,7 @@ btnSave.addEventListener("click", saveData);
   try {
     await loadSections();
 
-    const questionSection = sections.find((s) => s.title.includes("คำถาม"));
+    const questionSection = sections.find((s) => s.section_key === "rating_questions");
 
     if (questionSection) {
       openSectionIds.add(questionSection.id);

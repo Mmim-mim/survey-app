@@ -13,6 +13,11 @@ const categoryList = document.getElementById("categoryList");
 const checkAllQuestions = document.getElementById("checkAllQuestions");
 const btnDeleteSelected = document.getElementById("btnDeleteSelected");
 
+const bankYear = document.getElementById("bankYear");
+const newBankYear = document.getElementById("newBankYear");
+let existingFiscalYears = [];
+const yearMessage = document.getElementById("bankYearMessage");
+let editingQuestionId = null;
 let allQuestions = [];
 let questionOptions = [];
 let selectedCategory = "";
@@ -34,6 +39,10 @@ function esc(value) {
 }
 
 async function api(path, options = {}) {
+  const requestYear = bankYear.value || "legacy";
+  if (!path.includes("/question-bank/years")) {
+    path += (path.includes("?") ? "&" : "?") + new URLSearchParams({ fiscal_year: bankYear.value || "legacy" });
+  }
   const res = await fetch(path, {
     headers: {
       "Content-Type": "application/json",
@@ -48,6 +57,7 @@ async function api(path, options = {}) {
     throw new Error(json.error || "เกิดข้อผิดพลาด");
   }
 
+  if (requestYear !== (bankYear.value || "legacy")) throw new Error("ปีงบประมาณเปลี่ยนแล้ว กรุณาลองใหม่");
   return json;
 }
 
@@ -70,7 +80,7 @@ async function loadQuestionOptions() {
       .map(
         (item) => `
           <option
-            value="${esc(item.group_id || item.datalist_id)}"
+            value="${esc(item.option_key || item.group_id || item.datalist_id)}"
             data-group-id="${esc(item.group_id || "")}"
             data-category="${esc(item.category_title || item.category || "")}"
             data-used-in-label="${esc(item.used_in_label || "")}"
@@ -81,6 +91,7 @@ async function loadQuestionOptions() {
         `,
       )
       .join("")}
+    <option value="__custom">+ Dropdown แบบกำหนด key เอง</option>
   `;
 }
 
@@ -93,13 +104,16 @@ async function loadQuestions() {
   applyQuestionFilters();
 }
 
+function categoryIdentity(q) {
+  return q.category_id ? "category:" + q.category_id : "dropdown:" + q.datalist_id;
+}
 function renderCategoryList() {
   if (!categoryList) return;
 
   const countMap = new Map();
 
   allQuestions.forEach((q) => {
-    const category = getDisplayCategory(q);
+    const category = categoryIdentity(q);
     countMap.set(category, (countMap.get(category) || 0) + 1);
   });
 
@@ -127,7 +141,7 @@ function renderCategoryList() {
             class="category-btn ${active}"
             data-category="${esc(cat)}"
           >
-            <span>${esc(cat)}</span>
+            <span>${esc(getDisplayCategory(allQuestions.find(q => categoryIdentity(q) === cat)))}</span>
             <span class="category-count">${countMap.get(cat) || 0}</span>
           </button>
         `;
@@ -154,7 +168,7 @@ function applyQuestionFilters() {
   let rows = allQuestions.filter((q) => {
     const questionText = String(q.question_text || "").toLowerCase();
     const label = getDisplayLabel(q).toLowerCase();
-    const category = getDisplayCategory(q);
+    const category = categoryIdentity(q);
 
     const matchKeyword =
       !keyword || questionText.includes(keyword) || label.includes(keyword);
@@ -165,6 +179,9 @@ function applyQuestionFilters() {
   });
 
   switch (sortType) {
+    case "order":
+      rows.sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0) || Number(a.id) - Number(b.id));
+      break;
     case "oldest":
       rows.sort((a, b) => Number(a.id) - Number(b.id));
       break;
@@ -200,7 +217,7 @@ function renderQuestions(rows) {
   if (!rows.length) {
     questionTableBody.innerHTML = `
       <tr>
-        <td colspan="7" class="empty">ไม่พบคำถามที่ตรงกับเงื่อนไข</td>
+        <td colspan="7" class="empty"><strong>ไม่พบข้อมูลคำถาม</strong><span>หรือยังไม่มีคำถามในปีงบประมาณนี้</span></td>
       </tr>
     `;
     return;
@@ -228,6 +245,7 @@ function renderQuestions(rows) {
           </td>
           <td>${q.status === "active" ? "เปิดใช้งาน" : "ปิดใช้งาน"}</td>
           <td>
+            <button type="button" class="btn" onclick="editQuestion(${q.id})">แก้ไข</button>
             <button
               type="button"
               class="btn danger"
@@ -247,9 +265,9 @@ async function addQuestion() {
 
   const question_text = questionInput.value.trim();
   const group_id = Number(selectedOption?.dataset.groupId || 0);
-  const category = selectedOption?.dataset.category || "";
-  const used_in_label = selectedOption?.dataset.usedInLabel || "";
-  const datalist_id = selectedOption?.dataset.datalistId || "";
+  const category = usedInInput.value === "__custom" ? document.getElementById("dropdownCategory").value.trim() : selectedOption?.dataset.category || "";
+  const used_in_label = usedInInput.value === "__custom" ? document.getElementById("dropdownLabel").value.trim() : selectedOption?.dataset.usedInLabel || "";
+  const datalist_id = usedInInput.value === "__custom" ? document.getElementById("dropdownKey").value.trim() : selectedOption?.dataset.datalistId || "";
   const question_type = typeInput.value;
   const status = statusInput.value;
 
@@ -263,26 +281,29 @@ async function addQuestion() {
     return;
   }
 
-  await api(`/api/admin/questions?role=${encodeURIComponent(role)}`, {
-    method: "POST",
+  await api(`/api/admin/questions${editingQuestionId ? "/" + editingQuestionId : ""}?role=${encodeURIComponent(role)}`, {
+    method: editingQuestionId ? "PUT" : "POST",
     body: JSON.stringify({
       group_id: group_id || null,
       category,
       used_in_label,
       datalist_id,
       question_text,
+      sort_order: Number(document.getElementById("questionOrder").value),
       question_type,
       status,
     }),
   });
 
+  resetQuestionEditor();
   questionInput.value = "";
   usedInInput.value = "";
   typeInput.value = "rating";
   statusInput.value = "active";
 
+  await loadQuestionOptions();
   await loadQuestions();
-  alert("เพิ่มคำถามเรียบร้อย");
+  alert("บันทึกคำถามเรียบร้อย");
 }
 
 async function deleteQuestion(id) {
@@ -340,7 +361,7 @@ async function deleteSelectedQuestions() {
 window.deleteQuestion = deleteQuestion;
 
 if (btnAddQuestion) {
-  btnAddQuestion.addEventListener("click", addQuestion);
+  btnAddQuestion.addEventListener("click", () => addQuestion().catch(err => alert(err.message)));
 }
 
 if (btnClearDemo) {
@@ -369,19 +390,88 @@ if (btnDeleteSelected) {
 
 guardAdmin();
 
-(async function init() {
-  try {
-    await loadQuestionOptions();
-  } catch (err) {
-    console.error("โหลด Dropdown ไม่สำเร็จ:", err);
-    alert("โหลดหัวข้อ Dropdown ไม่สำเร็จ แต่จะโหลดรายการคำถามเดิมให้ก่อน");
-  }
 
+function resetQuestionEditor() {
+  editingQuestionId = null; questionInput.value = ""; usedInInput.value = "";
+  document.getElementById("questionOrder").value = "0";
+  document.getElementById("cancelEditQuestion").hidden = true;
+  document.getElementById("customDropdownFields").hidden = true;
+  btnAddQuestion.textContent = "เพิ่มคำถาม";
+}
+window.editQuestion = function(id) {
+  const q = allQuestions.find(q => Number(q.id) === Number(id));
+  if (!q) return;
+  editingQuestionId = q.id; questionInput.value = q.question_text;
+  usedInInput.value = q.group_id && ["dept_name", "uni_strategy", "center_strategy", "center_mission"].includes(q.datalist_id)
+    ? `project_${q.group_id}_${q.datalist_id}` : q.group_id ? String(q.group_id) : q.datalist_id;
+  typeInput.value = q.question_type; statusInput.value = q.status;
+  document.getElementById("questionOrder").value = q.sort_order || 0;
+  document.getElementById("cancelEditQuestion").hidden = false;
+  document.getElementById("customDropdownFields").hidden = true;
+  btnAddQuestion.textContent = "บันทึกการแก้ไข";
+  questionInput.focus();
+};
+usedInInput.addEventListener("change", () => {
+  document.getElementById("customDropdownFields").hidden = usedInInput.value !== "__custom";
+});
+document.getElementById("cancelEditQuestion").addEventListener("click", resetQuestionEditor);
+document.getElementById("btnClearQuestionForm").addEventListener("click", () => {
+  resetQuestionEditor();
+  typeInput.value = "rating";
+  statusInput.value = "active";
+  ["dropdownCategory", "dropdownLabel", "dropdownKey"].forEach(id => {
+    document.getElementById(id).value = "";
+  });
+  questionInput.focus();
+});
+async function loadSelectedYear() {
+  bankYear.disabled = true; btnAddQuestion.disabled = true;
+  document.getElementById("createBankYear").disabled = true;
+  allQuestions = []; questionOptions = []; selectedCategory = "";
+  searchQuestionInput.value = ""; sortQuestionSelect.value = "order"; resetQuestionEditor(); renderCategoryList(); applyQuestionFilters();
+  usedInInput.innerHTML = "";
+  document.getElementById("yearStructureLink").href = "admin-structure.html?fiscal_year=" + encodeURIComponent(bankYear.value);
+  yearMessage.textContent = "กำลังโหลด...";
   try {
-    await loadQuestions();
-  } catch (err) {
-    console.error("โหลดคำถามไม่สำเร็จ:", err);
-    alert(err.message || "โหลดรายการคำถามไม่สำเร็จ");
+    await loadQuestionOptions(); await loadQuestions();
+    yearMessage.textContent = bankYear.value === "legacy" ? "ชุดข้อมูลเดิม (Legacy) — ปีแรกจะคัดลอกจากชุดนี้" : "Question Bank ปี " + bankYear.value;
+    btnAddQuestion.disabled = false;
+  } catch (error) { yearMessage.textContent = error.message; }
+  finally { bankYear.disabled = false; document.getElementById("createBankYear").disabled = false; }
+}
+async function loadYears(selected) {
+  const rows = await api("/api/question-bank/years");
+  existingFiscalYears = rows.map(row => Number(row.fiscal_year)).filter(Number.isInteger);
+  newBankYear.value = String(Math.max(2569, ...existingFiscalYears) + 1);
+  bankYear.innerHTML = rows.map(row => '<option value="' + row.fiscal_year + '">' + row.fiscal_year + '</option>').join("") + '<option value="legacy">ข้อมูลเดิม (Legacy)</option>';
+  bankYear.value = selected || String(rows[0]?.fiscal_year || "legacy");
+  await loadSelectedYear();
+}
+bankYear.addEventListener("change", loadSelectedYear);
+document.getElementById("createBankYear").addEventListener("click", async event => {
+  const year = Number(newBankYear.value);
+  if (!newBankYear.value.trim() || !Number.isInteger(year) || year < 2570) {
+    alert("ปีงบประมาณต้องเป็น พ.ศ. 2570 ขึ้นไป และเป็นจำนวนเต็ม");
+    newBankYear.focus();
+    return;
   }
-  
-})();
+  if (year > 2999) {
+    alert("ปีงบประมาณต้องไม่เกิน พ.ศ. 2999");
+    newBankYear.focus();
+    return;
+  }
+  if (existingFiscalYears.includes(year)) {
+    alert("ปีงบประมาณนี้มีอยู่แล้ว กรุณาระบุปีใหม่");
+    newBankYear.focus();
+    return;
+  }
+  event.target.disabled = true; bankYear.disabled = true;
+  try {
+    const result = await api("/api/admin/question-bank/years?role=" + encodeURIComponent(role), {
+      method: "POST", body: JSON.stringify({ fiscal_year: document.getElementById("newBankYear").value }),
+    });
+    await loadYears(String(result.fiscal_year));
+  } catch (error) { alert(error.message); }
+  finally { event.target.disabled = false; bankYear.disabled = false; }
+});
+loadYears().catch(error => { yearMessage.textContent = error.message; btnAddQuestion.disabled = true; });

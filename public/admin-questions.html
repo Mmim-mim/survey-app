@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="th">
   <head>
+    <script src="auth-client.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>จัดการคำถาม</title>
@@ -479,9 +480,10 @@
     </style>
     <link rel="stylesheet" href="global.css" />
     <link rel="stylesheet" href="responsive.css" />
+    <link rel="stylesheet" href="admin-questions.css" />
   </head>
 
-  <body>
+  <body class="page-admin-questions">
     <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -505,13 +507,22 @@
       </div>
 
       <section class="panel">
+        <div class="year-toolbar">
+          <div><label for="bankYear">ปีงบประมาณ</label><select id="bankYear"></select></div>
+          <div><label for="newBankYear">ปีใหม่ (พ.ศ.)</label><input id="newBankYear" type="number" min="2570" max="2999" step="1" placeholder="2570"></div>
+          <div><button type="button" class="btn primary" id="createBankYear">+ สร้างปีงบประมาณใหม่</button></div>
+          <div><a class="btn" id="yearStructureLink" href="admin-structure.html">จัดการ Category / Group ของปีนี้</a></div>
+        </div>
+        <p id="bankYearMessage" role="status"></p>
+      </section>
+      <section class="panel">
         <div class="panel-head">
           <h2>เพิ่มคำถามกลาง</h2>
         </div>
 
-        <div class="form-grid">
+        <div class="question-editor-grid">
           <div>
-            <label>คำถาม</label>
+            <label for="questionInput">คำถาม</label>
             <textarea
               id="questionInput"
               placeholder="พิมพ์คำถามกลาง..."
@@ -519,14 +530,14 @@
           </div>
 
           <div>
-            <label>ใช้ใน Dropdown / หัวข้อ</label>
+            <label for="usedInInput">ใช้ใน Dropdown / หัวข้อ</label>
             <select id="usedInInput">
               <option value="">-- เลือกหัวข้อ --</option>
             </select>
           </div>
 
           <div>
-            <label>ประเภทคำถาม</label>
+            <label for="typeInput">ประเภทคำถาม</label>
             <select id="typeInput">
               <option value="rating">rating</option>
               <option value="textarea">
@@ -537,47 +548,54 @@
           </div>
 
           <div>
-            <label>สถานะ</label>
+            <label for="statusInput">สถานะ</label>
             <select id="statusInput">
               <option value="active">เปิดใช้งาน</option>
               <option value="inactive">ปิดใช้งาน</option>
             </select>
           </div>
 
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn primary" id="btnAddQuestion" style="width: 100%">
+          <div><label for="questionOrder">ลำดับ</label><input id="questionOrder" type="number" value="0"></div>
+        </div>
+          <div id="customDropdownFields" hidden>
+            <div><label for="dropdownCategory">Category ของ Dropdown</label><input id="dropdownCategory"></div>
+            <div><label for="dropdownLabel">ชื่อหัวข้อ Dropdown</label><input id="dropdownLabel"></div>
+            <div><label for="dropdownKey">Dropdown key (เช่น dept_name)</label><input id="dropdownKey"></div>
+          </div>
+          <div class="editor-actions">
+            <button type="button" class="btn primary" id="btnAddQuestion">
               เพิ่มคำถาม
             </button>
+            <button type="button" class="btn" id="btnClearQuestionForm">เคลียร์ฟอร์ม</button>
+            <button type="button" class="btn" id="cancelEditQuestion" hidden>ยกเลิกแก้ไข</button>
           </div>
-        </div>
       </section>
 
       <section class="panel">
-        <div class="panel-head">
+        <div class="panel-head question-list-header">
           <h2>รายการคำถามกลาง</h2>
           <button class="btn" id="btnClearDemo">ล้างข้อมูลตัวอย่าง</button>
         </div>
-
         <div class="question-filter-bar">
-          <div>
-            <label>ค้นหาคำถาม</label>
+          <div class="question-search">
+            <label for="searchQuestionInput">ค้นหาคำถาม</label>
             <input
               type="text"
               id="searchQuestionInput"
               placeholder="🔍 ค้นหาคำถาม..."
             />
           </div>
-
           <div>
-            <label>เรียงลำดับ</label>
+            <label for="sortQuestionSelect">เรียงลำดับ</label>
             <select id="sortQuestionSelect">
+              <option value="order">ตามลำดับที่กำหนด</option>
               <option value="newest">ล่าสุดก่อน</option>
               <option value="oldest">เก่าสุดก่อน</option>
               <option value="az">คำถาม A-Z</option>
               <option value="za">คำถาม Z-A</option>
             </select>
           </div>
+          <button class="btn danger" id="btnDeleteSelected" type="button">ลบที่เลือก</button>
         </div>
 
         <div class="question-layout">
@@ -587,12 +605,6 @@
           </aside>
 
           <div class="question-content">
-            <div class="bulk-actions">
-              <button class="btn danger" id="btnDeleteSelected" type="button">
-                ลบที่เลือก
-              </button>
-            </div>
-
             <div class="table-wrap">
               <table>
                 <thead>
@@ -615,7 +627,7 @@
 
                 <tbody id="questionTableBody">
                   <tr>
-                    <td colspan="7" class="empty">ยังไม่มีคำถามกลาง</td>
+                    <td colspan="7" class="empty"><strong>ไม่พบข้อมูลคำถาม</strong><span>หรือยังไม่มีคำถามในปีงบประมาณนี้</span></td>
                   </tr>
                 </tbody>
               </table>

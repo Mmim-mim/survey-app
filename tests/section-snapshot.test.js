@@ -20,8 +20,15 @@ function server(database) {
       if (name === "express") return express;
       if (name === "cors") return () => {};
       if (name === "dotenv") return { config() {} };
-      if (name === "mysql2/promise") return { createPool: () => ({ execute: database }) };
+      if (name === "mysql2/promise") return { createPool: () => ({ execute: database, async getConnection() {
+        return { execute: async (sql, args) => sql.includes('question_bank_write_lock') ? [[{ id: 1 }]] : database(sql, args),
+          async beginTransaction() {}, async commit() {}, async rollback() {}, release() {} };
+      } }) };
+      if (name === "./test-data-quarantine") return require("../test-data-quarantine");
       if (name === "./public/section-snapshot") return snapshot;
+      if (name === "./public/fiscal-year") return require("../public/fiscal-year");
+      if (name === "./question-bank-years") return require("../question-bank-years");
+      if (name === "./auth-session") return require("../auth-session");
       return require(name);
     }, __dirname: base, process: { env: {} }, console: { log() {}, error() {} },
   });
@@ -64,10 +71,10 @@ test("Create API snapshots current Admin for legacy request; Copy preserves expl
     if (sql.includes("INSERT INTO survey_forms")) { written = JSON.parse(values.at(-1)); return [{ insertId: 10 }]; }
     throw Error(sql);
   });
-  assert.equal((await call("post /api/forms", { form: { section1_enabled: false } })).code, 200);
+  assert.equal((await call("post /api/forms", { form: { section1_enabled: false, start_date: "2026-10-01", fiscal_year: 2570 } })).code, 200);
   assert.equal(written.sections.respondent_info.title, "Renamed 0");
   assert.equal(written.sections.respondent_info.enabled, false);
-  const copy = snapshot.attach({}, snapshot.fromAdmin(admin));
+  const copy = snapshot.attach({ start_date: "2026-10-01", fiscal_year: 2570 }, snapshot.fromAdmin(admin));
   copy.sections.rating_questions.title = "Original snapshot";
   await call("post /api/forms", { form: copy });
   assert.equal(written.sections.rating_questions.title, "Original snapshot");
@@ -81,7 +88,7 @@ test("Edit API preserves stored metadata and question IDs, including old client"
     if (sql.includes("UPDATE survey_forms")) { written = JSON.parse(values.at(-2)); return [{}]; }
     throw Error(sql);
   });
-  const form = { section2_enabled: false, section2_models: [{ questions: [{ questionId: "q_original", questionBankId: 42 }] }] };
+  const form = { start_date: "2026-10-01", fiscal_year: 2570, section2_enabled: false, section2_models: [{ questions: [{ questionId: "q_original", questionBankId: 42 }] }] };
   const body = { username: "staff", form };
   assert.equal((await call("put /api/forms/:id", body)).code, 409);
   assert.equal((await call("put /api/forms/:id", { ...body, confirm_existing_responses: true })).code, 200);
@@ -101,15 +108,15 @@ test("Admin rename leaves identity untouched; immutable key requests and system 
   assert.equal((await call("delete /api/survey-sections/:id")).code, 400);
 });
 test("structure API finds rating by key even after complete rename", async () => {
-  let selected;
   const call = server(async (sql, values) => {
     if (sql.includes("FROM survey_sections")) return [admin];
-    if (sql.includes("FROM survey_question_categories")) { selected = values[0]; return [[]]; }
+    if (sql.includes("FROM survey_question_categories")) { return [[]]; }
+    if (sql.includes("FROM survey_question_groups")) return [[]];
     if (sql.includes("FROM question_bank")) return [[]];
     throw Error(sql);
   });
   const result = await call("get /api/survey-structure/form");
-  assert.equal(selected, 2);
+  assert.equal(result.value.section.id, 2);
   assert.equal(result.value.sections.length, 5);
 });
 
@@ -153,7 +160,7 @@ test("Preview/Builder renderer uses keys and treats title/description as plain t
   assert.equal(rendered.rating_questions.title.innerHTML, undefined);
 });
 
-test("Submission payload remains unchanged; Result and dashboards aggregate legacy/new answers", async () => {
+test("Submission preserves answers with verified year metadata; Result and dashboards aggregate legacy/new answers", async () => {
   const payload = { fiscal_year: 2569, profile: { fullname: "Tester" }, ratings: [
     { questionId: "q_same", questionBankId: 42, questionText: "Question", modelTitle: "Model", groupTitle: "Group", value: 4 },
   ], suggestion: "Feedback" };
@@ -165,12 +172,12 @@ test("Submission payload remains unchanged; Result and dashboards aggregate lega
   const call = server(async (sql, values) => {
     if (sql.includes("INSERT INTO submissions")) { inserted = JSON.parse(values[3]); return [{ insertId: 1 }]; }
     if (sql.includes("FROM submissions")) return [submissions];
-    if (sql.includes("FROM survey_forms")) return [[{ id: 1, form_title: "Form" }]];
+    if (sql.includes("FROM survey_forms")) return [[{ id: 1, form_title: "Form", start_date: "2026-09-01", fiscal_year: 2569, form_json: JSON.stringify({ start_date: "2026-09-01", fiscal_year: 2569 }) }]];
     if (sql.includes("FROM question_bank")) return [[]];
     throw Error(sql);
   });
   assert.equal((await call("post /api/submissions", { form_id: 1, payload })).code, 200);
-  assert.deepEqual(inserted, payload);
+  assert.deepEqual(inserted, { ...payload, fiscal_year_source: "form_start_date" });
   const result = await call("get /api/forms/:id/results");
   assert.equal(result.code, 200);
   assert.equal(result.value.question_scores[0].question_id, "q_same");

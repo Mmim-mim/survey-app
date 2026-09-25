@@ -6,6 +6,9 @@ const path = require("path");
 
 const SectionSnapshot = require("./public/section-snapshot");
 const { randomUUID } = require("crypto");
+const QuestionBankYears = require("./question-bank-years");
+const Quarantine = require("./test-data-quarantine");
+const FiscalYear = require("./public/fiscal-year");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -28,6 +31,13 @@ const pool = mysql.createPool({
   },
 });
 
+const auth = require("./auth-session").createAuth(pool, {
+  production: process.env.NODE_ENV === "production" || process.env.RENDER === "true",
+});
+app.use("/api", auth.middleware);
+auth.install(app);
+QuestionBankYears.install(app, pool, requireAdmin);
+
 function safeJsonParse(s) {
   try {
     return JSON.parse(s);
@@ -38,6 +48,7 @@ function safeJsonParse(s) {
 
 function parseSubmissionPayload(payloadJson) {
   const p = safeJsonParse(payloadJson) || {};
+  const snapshotYear = FiscalYear.submissionYear(p);
 
   const profile = p.profile || {};
   const ratings = Array.isArray(p.ratings) ? p.ratings : [];
@@ -72,7 +83,7 @@ function parseSubmissionPayload(payloadJson) {
   }
 
   return {
-    fiscal_year: Number(p.fiscal_year) || null,
+    fiscal_year: snapshotYear !== undefined ? snapshotYear : Number(p.fiscal_year) || null,
     dept: String(profile.dept || "").trim(),
     fullname: String(profile.fullname || "").trim(),
     ratings,
@@ -147,6 +158,8 @@ app.post("/api/login", async (req, res) => {
       });
     }
 
+    auth.start(req, res, user);
+    res.set("Cache-Control", "no-store");
     return res.json({
       ok: true,
       user: {
@@ -170,6 +183,7 @@ app.post("/api/login", async (req, res) => {
 app.post("/api/submissions", async (req, res) => {
   try {
     const { form_id, created_by, form_title, payload } = req.body;
+    Quarantine.assertFormId(form_id);
 
     if (!form_id) {
       return res.status(400).json({ error: "form_id is required" });
@@ -178,8 +192,20 @@ app.post("/api/submissions", async (req, res) => {
     if (!payload) {
       return res.status(400).json({ error: "payload is required" });
     }
+    Quarantine.assertReferences(payload);
 
-    const payload_json = JSON.stringify(payload);
+    const [forms] = await pool.execute(
+      "SELECT fiscal_year, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, form_json FROM survey_forms WHERE id = ? LIMIT 1",
+      [form_id],
+    );
+    if (!forms.length) return res.status(404).json({ error: "ไม่พบฟอร์ม" });
+    const savedForm = safeJsonParse(forms[0].form_json);
+    if (!savedForm || typeof savedForm !== "object") {
+      return res.status(409).json({ error: "ข้อมูลฟอร์มไม่สมบูรณ์ กรุณาให้ผู้ดูแลตรวจสอบก่อนส่งคำตอบ" });
+    }
+    Quarantine.assertReferences(savedForm);
+    const verifiedYear = FiscalYear.resolveSubmission(savedForm, forms[0]);
+    const payload_json = JSON.stringify({ ...payload, ...verifiedYear });
 
     const [result] = await pool.execute(
       `INSERT INTO submissions
@@ -190,7 +216,7 @@ app.post("/api/submissions", async (req, res) => {
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message, code: e.code });
   }
 });
 
@@ -621,7 +647,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
       LEFT JOIN survey_question_categories c
         ON g.category_id = c.id
 
-      WHERE q.status = 'active'
+      WHERE q.status = 'active' AND q.fiscal_year IS NULL
     `);
 
     const questionStructureMap = new Map();
@@ -1004,7 +1030,7 @@ const PORT = process.env.PORT || 3000;
  * ----------------------------- */
 
 // 1) บันทึกฟอร์ม
-app.post("/api/forms", async (req, res) => {
+app.post("/api/forms", Quarantine.formWriter(pool, async (req, res, pool) => {
   try {
     const {
       created_by,
@@ -1049,6 +1075,10 @@ app.post("/api/forms", async (req, res) => {
     } catch (error) {
       return res.status(400).json({ error: error.message });
     }
+    const verifiedFormYear = FiscalYear.resolve(newForm, { start_date, fiscal_year }, true);
+    newForm.fiscal_year = verifiedFormYear.fiscal_year;
+    newForm.start_date = newForm.start_date || start_date;
+    await QuestionBankYears.validateForm(pool, newForm);
     const form_json = JSON.stringify(newForm);
 
     const [result] = await pool.execute(
@@ -1067,9 +1097,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         goal_text || null,
         kpi_quantity || null,
         kpi_quality || null,
-        start_date || null,
+        newForm.start_date,
         end_date || null,
-        fiscal_year || null,
+        newForm.fiscal_year,
         budget_received || null,
 
         attachment_url || null,
@@ -1079,9 +1109,9 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message });
   }
-});
+}));
 
 // 2) รายการฟอร์ม (ล่าสุดก่อน)
 app.get("/api/forms", async (req, res) => {
@@ -1152,7 +1182,7 @@ app.get("/api/forms/:id", async (req, res) => {
       `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
               goal_text, kpi_quantity, kpi_quality,
-              start_date, end_date, fiscal_year, budget_received, budget_spent, attachment_url, form_json
+              DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, end_date, fiscal_year, budget_received, budget_spent, attachment_url, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -1172,8 +1202,13 @@ app.get("/api/forms/:id", async (req, res) => {
       form = null;
     }
 
+    let fiscal_year_error = null;
+    try { FiscalYear.resolveSubmission(form || {}, r); }
+    catch (error) { fiscal_year_error = error.message; }
     res.json({
       id: r.id,
+      fiscal_year: r.fiscal_year,
+      fiscal_year_error,
       created_at: r.created_at,
       created_by: r.created_by,
       attachment_url: r.attachment_url,
@@ -1199,7 +1234,7 @@ app.get("/api/forms/:id", async (req, res) => {
 
 const ALLOW_MANAGER_EDIT = false;
 
-app.put("/api/forms/:id", async (req, res) => {
+app.put("/api/forms/:id", Quarantine.formWriter(pool, async (req, res, pool) => {
   try {
     const id = Number(req.params.id);
 
@@ -1302,6 +1337,13 @@ app.put("/api/forms/:id", async (req, res) => {
     }
 
     const storedForm = safeJsonParse(existing.form_json) || {};
+    const verifiedFormYear = FiscalYear.resolve(form, { start_date, fiscal_year }, true);
+    form.fiscal_year = verifiedFormYear.fiscal_year;
+    form.start_date = form.start_date || start_date;
+    if (Object.prototype.hasOwnProperty.call(storedForm, "question_bank_fiscal_year")) {
+      form.question_bank_fiscal_year = storedForm.question_bank_fiscal_year;
+    }
+    await QuestionBankYears.validateForm(pool, form);
     const preservedSections = SectionSnapshot.normalize(storedForm);
     const incomingSections = SectionSnapshot.normalize(form);
     for (const [key] of SectionSnapshot.definitions) {
@@ -1339,9 +1381,9 @@ app.put("/api/forms/:id", async (req, res) => {
         goal_text || null,
         kpi_quantity || null,
         kpi_quality || null,
-        start_date || null,
+        form.start_date,
         end_date || null,
-        fiscal_year || null,
+        form.fiscal_year,
         budget_received || null,
         attachment_url || null,
         form_json,
@@ -1357,17 +1399,18 @@ app.put("/api/forms/:id", async (req, res) => {
   } catch (e) {
     console.error("PUT /api/forms/:id error:", e);
 
-    return res.status(500).json({
+    return res.status(e.status || 500).json({
       error: e.message || "อัปเดตฟอร์มไม่สำเร็จ",
     });
   }
-});
+}));
 
 // 4) ลบฟอร์ม
 // staff / manager ลบได้เฉพาะฟอร์มตัวเอง
 // admin ลบได้ทุกฟอร์ม
 app.delete("/api/forms/:id", async (req, res) => {
   try {
+    Quarantine.assertFormId(req.params.id);
     const id = Number(req.params.id);
     const username = String(req.query.username || "").trim();
     const role = String(req.query.role || "staff").trim();
@@ -1420,7 +1463,7 @@ app.delete("/api/forms/:id", async (req, res) => {
       conn.release();
     }
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message, code: e.code });
   }
 });
 
@@ -1522,6 +1565,11 @@ app.get("/api/strategy-dashboard/options", async (req, res) => {
 
     for (const submission of submissionRows) {
       const payload = safeJsonParse(submission.payload_json) || {};
+      const snapshotYear = FiscalYear.submissionYear(payload);
+      if (snapshotYear !== undefined) {
+        if (snapshotYear !== null) yearSet.add(snapshotYear);
+        continue;
+      }
 
       let year = Number(payload.fiscal_year);
 
@@ -1574,6 +1622,8 @@ app.get("/api/strategy-dashboard/summary", async (req, res) => {
 
     const getFiscalYear = (payloadJson, createdAt) => {
       const p = safeJsonParse(payloadJson) || {};
+      const snapshotYear = FiscalYear.submissionYear(p);
+      if (snapshotYear !== undefined) return snapshotYear;
 
       let rawYear = p.fiscal_year;
 
@@ -1858,14 +1908,7 @@ WHERE 1=1
  * ----------------------------- */
 
 function requireAdmin(req, res) {
-  const role = String(req.query.role || req.body?.role || "").trim();
-
-  if (role !== "admin") {
-    res.status(403).json({ error: "สำหรับ admin เท่านั้น" });
-    return false;
-  }
-
-  return true;
+  return auth.requireAdmin(req, res);
 }
 
 // ภาพรวม Admin
@@ -2056,6 +2099,7 @@ app.get("/api/admin/forms", async (req, res) => {
 // ลบฟอร์ม
 app.delete("/api/admin/forms/:id", async (req, res) => {
   try {
+    Quarantine.assertFormId(req.params.id);
     if (!requireAdmin(req, res)) return;
 
     const id = Number(req.params.id);
@@ -2083,300 +2127,15 @@ app.delete("/api/admin/forms/:id", async (req, res) => {
       conn.release();
     }
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message, code: e.code });
   }
 });
-/** -----------------------------
- *  QUESTION BANK API
- *  Hybrid Mode:
- *  - ข้อมูลเก่าใช้ category / used_in_label / datalist_id
- *  - ข้อมูลใหม่รองรับ group_id
- * ----------------------------- */
-
-function makeLegacyDatalistId(text = "") {
-  const t = String(text || "").toLowerCase();
-
-  if (t.includes("affect of service")) return "affectOfServiceSuggestions";
-  if (t.includes("information control")) return "informationControlSuggestions";
-  if (t.includes("library as place")) return "libraryAsPlaceSuggestions";
-
-  if (t.includes("tangibles")) return "tangiblesSuggestions";
-  if (t.includes("reliability")) return "reliabilitySuggestions";
-  if (t.includes("responsiveness")) return "responsivenessSuggestions";
-  if (t.includes("empathy")) return "empathySuggestions";
-  if (t.includes("assurance")) return "assuranceSuggestions";
-
-  if (t.includes("usability")) return "usabilitySuggestions";
-  if (t.includes("information quality")) return "informationQualitySuggestions";
-  if (t.includes("service interaction")) return "serviceInteractionSuggestions";
-
-  if (t.includes("ease of use")) return "easeOfUseSuggestions";
-  if (t.includes("aesthetic design")) return "aestheticDesignSuggestions";
-  if (t.includes("processing speed")) return "processingSpeedSuggestions";
-
-  return "";
-}
-
-// ดึงหัวข้อจาก Admin Structure ไปใช้ใน Dropdown ของหน้าจัดการคำถาม
-app.get("/api/admin/question-options", async (req, res) => {
-  try {
-    if (!requireAdmin(req, res)) return;
-
-    const [rows] = await pool.execute(`
-      SELECT
-        s.id AS section_id,
-        s.title AS section_title,
-
-        c.id AS category_id,
-        c.title AS category_title,
-
-        g.id AS group_id,
-        g.title AS group_title,
-        g.sort_order AS group_sort_order
-      FROM survey_question_groups g
-      JOIN survey_question_categories c
-        ON g.category_id = c.id
-      JOIN survey_sections s
-        ON c.section_id = s.id
-      WHERE s.is_active = 1
-        AND c.is_active = 1
-        AND g.is_active = 1
-      ORDER BY
-        s.sort_order ASC,
-        c.sort_order ASC,
-        g.sort_order ASC,
-        g.id ASC
-    `);
-
-    res.json(
-      rows.map((r) => {
-        const legacyId = makeLegacyDatalistId(r.group_title);
-        const fallbackId = `group_${r.group_id}_suggestions`;
-
-        return {
-          section_id: r.section_id,
-          section_title: r.section_title,
-          category_id: r.category_id,
-          category: r.category_title,
-          category_title: r.category_title,
-          group_id: r.group_id,
-          group_title: r.group_title,
-          used_in_label: `${r.category_title} > ${r.group_title}`,
-          datalist_id: legacyId || fallbackId,
-        };
-      }),
-    );
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ดึงคำถามทั้งหมด สำหรับหน้า Admin Questions
-app.get("/api/admin/questions", async (req, res) => {
-  try {
-    if (!requireAdmin(req, res)) return;
-
-    const [rows] = await pool.execute(`
-      SELECT
-        q.id,
-        q.group_id,
-        q.category,
-        q.question_text,
-        q.used_in_label,
-        q.datalist_id,
-        q.question_type,
-        q.status,
-        q.sort_order,
-        q.created_at,
-
-        g.title AS group_title,
-        c.title AS category_title,
-        s.title AS section_title
-      FROM question_bank q
-      LEFT JOIN survey_question_groups g
-        ON q.group_id = g.id
-      LEFT JOIN survey_question_categories c
-        ON g.category_id = c.id
-      LEFT JOIN survey_sections s
-        ON c.section_id = s.id
-      ORDER BY q.id DESC
-    `);
-
-    const mapped = rows.map((q) => ({
-      ...q,
-      display_category: q.category_title || q.category || "",
-      display_used_in_label:
-        q.category_title && q.group_title
-          ? `${q.category_title} > ${q.group_title}`
-          : q.used_in_label || "",
-    }));
-
-    res.json(mapped);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// เพิ่มคำถาม
-app.post("/api/admin/questions", async (req, res) => {
-  try {
-    if (!requireAdmin(req, res)) return;
-
-    const group_id = req.body.group_id ? Number(req.body.group_id) : null;
-
-    const oldCategory = String(req.body.category || "").trim();
-    const oldUsedInLabel = String(req.body.used_in_label || "").trim();
-    const oldDatalistId = String(req.body.datalist_id || "").trim();
-
-    const question_text = String(req.body.question_text || "").trim();
-    const question_type = String(req.body.question_type || "rating").trim();
-    const status = String(req.body.status || "active").trim();
-    const sort_order = Number(req.body.sort_order || 0);
-
-    if (!question_text) {
-      return res.status(400).json({ error: "กรุณากรอกคำถาม" });
-    }
-
-    let finalGroupId = null;
-    let finalCategory = oldCategory;
-    let finalUsedInLabel = oldUsedInLabel;
-    let finalDatalistId = oldDatalistId;
-
-    // กรณีใหม่: ส่ง group_id มา
-    if (Number.isFinite(group_id)) {
-      const [groupRows] = await pool.execute(
-        `
-        SELECT
-          g.id AS group_id,
-          g.title AS group_title,
-          c.title AS category_title
-        FROM survey_question_groups g
-        JOIN survey_question_categories c
-          ON g.category_id = c.id
-        WHERE g.id = ?
-        LIMIT 1
-        `,
-        [group_id],
-      );
-
-      if (!groupRows.length) {
-        return res.status(404).json({ error: "ไม่พบ Group นี้" });
-      }
-
-      const group = groupRows[0];
-
-      finalGroupId = group.group_id;
-      finalCategory = group.category_title || "";
-      finalUsedInLabel = `${group.category_title} > ${group.group_title}`;
-      finalDatalistId =
-        makeLegacyDatalistId(group.group_title) ||
-        `group_${group.group_id}_suggestions`;
-    }
-
-    // กรณีเก่า: ยังใช้ category / used_in_label / datalist_id
-    if (!finalCategory || !finalUsedInLabel || !finalDatalistId) {
-      return res.status(400).json({
-        error: "กรุณาเลือกหัวข้อคำถามให้ครบ",
-      });
-    }
-
-    const [result] = await pool.execute(
-      `
-      INSERT INTO question_bank
-      (group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        finalGroupId,
-        finalCategory,
-        question_text,
-        finalUsedInLabel,
-        finalDatalistId,
-        question_type,
-        status,
-        sort_order,
-      ],
-    );
-
-    res.json({ ok: true, id: result.insertId });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ลบคำถาม
-app.delete("/api/admin/questions/:id", async (req, res) => {
-  try {
-    if (!requireAdmin(req, res)) return;
-
-    const id = Number(req.params.id);
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    await pool.execute(`DELETE FROM question_bank WHERE id = ?`, [id]);
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// ดึงคำถาม active ไปใช้ใน from.html
-// รองรับทั้งข้อมูลเก่าและข้อมูลใหม่
-app.get("/api/question-bank/active", async (req, res) => {
-  try {
-    const [rows] = await pool.execute(`
-      SELECT
-        q.id,
-        q.group_id,
-        q.category,
-        q.used_in_label,
-        q.datalist_id,
-        q.question_text,
-        q.question_type,
-        q.sort_order,
-
-        g.title AS group_title,
-        c.title AS category_title,
-        s.title AS section_title
-      FROM question_bank q
-      LEFT JOIN survey_question_groups g
-        ON q.group_id = g.id
-      LEFT JOIN survey_question_categories c
-        ON g.category_id = c.id
-      LEFT JOIN survey_sections s
-        ON c.section_id = s.id
-      WHERE q.status = 'active'
-      ORDER BY q.sort_order ASC, q.id ASC
-    `);
-
-    res.json(
-      rows.map((q) => ({
-        ...q,
-
-        // ใช้ตอนระบบใหม่
-        effective_group_id: q.group_id || null,
-        effective_group_title: q.group_title || "",
-        effective_category_title: q.category_title || q.category || "",
-
-        // ใช้รองรับระบบเก่า
-        effective_used_in_label:
-          q.category_title && q.group_title
-            ? `${q.category_title} > ${q.group_title}`
-            : q.used_in_label || "",
-
-        effective_datalist_id: q.datalist_id || "",
-      })),
-    );
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+// Annual Question Bank and Category/Group routes are registered in question-bank-years.js.
 
 app.put("/api/forms/:id/budget", async (req, res) => {
   try {
+    Quarantine.assertFormId(req.params.id);
+    if (!req.authUser) return res.status(401).json({ error: "กรุณาเข้าสู่ระบบใหม่" });
     const id = Number(req.params.id);
     const budget_spent = Number(req.body.budget_spent);
 
@@ -2384,6 +2143,16 @@ app.put("/api/forms/:id/budget", async (req, res) => {
       return res.status(400).json({
         error: "invalid id",
       });
+    }
+
+    const [forms] = await pool.execute(
+      "SELECT id, created_by_username FROM survey_forms WHERE id = ? LIMIT 1",
+      [id],
+    );
+    if (!forms.length) return res.status(404).json({ error: "ไม่พบฟอร์ม" });
+    const ownerUsername = String(forms[0].created_by_username || "").trim();
+    if (req.authUser.role !== "admin" && ownerUsername !== req.authUser.username) {
+      return res.status(403).json({ error: "สามารถแก้ไขงบประมาณได้เฉพาะฟอร์มของตนเอง" });
     }
 
     await pool.execute(
@@ -2399,9 +2168,7 @@ app.put("/api/forms/:id/budget", async (req, res) => {
       ok: true,
     });
   } catch (e) {
-    res.status(500).json({
-      error: e.message,
-    });
+    res.status(e.status || 500).json({ error: e.message, code: e.code });
   }
 });
 
@@ -2882,410 +2649,6 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
     await pool.execute(`DELETE FROM survey_sections WHERE id = ?`, [id]);
 
     res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// =========================
-// CATEGORY
-// =========================
-
-app.get("/api/survey-question-categories/:sectionId", async (req, res) => {
-  try {
-    const sectionId = Number(req.params.sectionId);
-
-    if (!Number.isFinite(sectionId)) {
-      return res.status(400).json({ error: "sectionId ไม่ถูกต้อง" });
-    }
-
-    const [rows] = await pool.execute(
-      `
-      SELECT id, section_id, title, description, sort_order, is_active, created_at
-      FROM survey_question_categories
-      WHERE section_id = ?
-      ORDER BY sort_order ASC, id ASC
-      `,
-      [sectionId],
-    );
-
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post("/api/survey-question-categories", async (req, res) => {
-  try {
-    const section_id = Number(req.body.section_id);
-    const title = String(req.body.title || "").trim();
-    const description = String(req.body.description || "").trim();
-    const sort_order = Number(req.body.sort_order || 0);
-    const is_active = req.body.is_active === false ? 0 : 1;
-
-    if (!Number.isFinite(section_id)) {
-      return res.status(400).json({ error: "section_id ไม่ถูกต้อง" });
-    }
-
-    if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อ Category" });
-    }
-
-    const [result] = await pool.execute(
-      `
-      INSERT INTO survey_question_categories
-      (section_id, title, description, sort_order, is_active)
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      [section_id, title, description || null, sort_order, is_active],
-    );
-
-    res.json({ ok: true, id: result.insertId });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.put("/api/survey-question-categories/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const title = String(req.body.title || "").trim();
-    const description = String(req.body.description || "").trim();
-    const sort_order = Number(req.body.sort_order || 0);
-    const is_active = req.body.is_active ? 1 : 0;
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อ Category" });
-    }
-
-    await pool.execute(
-      `
-      UPDATE survey_question_categories
-      SET title = ?, description = ?, sort_order = ?, is_active = ?
-      WHERE id = ?
-      `,
-      [title, description || null, sort_order, is_active, id],
-    );
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete("/api/survey-question-categories/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    const [[childCount]] = await pool.execute(
-      `
-      SELECT COUNT(*) AS total
-      FROM survey_question_groups
-      WHERE category_id = ?
-      `,
-      [id],
-    );
-
-    if (childCount.total > 0) {
-      return res.status(400).json({
-        error:
-          "ไม่สามารถลบ Category นี้ได้ เพราะยังมี Group อยู่ กรุณาลบ Group ก่อน",
-      });
-    }
-
-    await pool.execute(`DELETE FROM survey_question_categories WHERE id = ?`, [
-      id,
-    ]);
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete("/api/survey-question-categories/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    const [[childCount]] = await pool.execute(
-      `
-      SELECT COUNT(*) AS total
-      FROM survey_question_groups
-      WHERE category_id = ?
-      `,
-      [id],
-    );
-
-    if (childCount.total > 0) {
-      return res.status(400).json({
-        error:
-          "ไม่สามารถลบ Category นี้ได้ เพราะยังมี Group อยู่ กรุณาลบ Group ก่อน",
-      });
-    }
-
-    await pool.execute(
-      `
-      DELETE FROM survey_question_categories
-      WHERE id = ?
-      `,
-      [id],
-    );
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// =========================
-// GROUP
-// =========================
-
-app.get("/api/survey-question-groups/:categoryId", async (req, res) => {
-  try {
-    const categoryId = Number(req.params.categoryId);
-
-    if (!Number.isFinite(categoryId)) {
-      return res.status(400).json({ error: "categoryId ไม่ถูกต้อง" });
-    }
-
-    const [rows] = await pool.execute(
-      `
-      SELECT id, category_id, title, description, sort_order, is_active, created_at
-      FROM survey_question_groups
-      WHERE category_id = ?
-      ORDER BY sort_order ASC, id ASC
-      `,
-      [categoryId],
-    );
-
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post("/api/survey-question-groups", async (req, res) => {
-  try {
-    const category_id = Number(req.body.category_id);
-    const title = String(req.body.title || "").trim();
-    const description = String(req.body.description || "").trim();
-    const sort_order = Number(req.body.sort_order || 0);
-    const is_active = req.body.is_active === false ? 0 : 1;
-
-    if (!Number.isFinite(category_id)) {
-      return res.status(400).json({ error: "category_id ไม่ถูกต้อง" });
-    }
-
-    if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อ Group" });
-    }
-
-    const [result] = await pool.execute(
-      `
-      INSERT INTO survey_question_groups
-      (category_id, title, description, sort_order, is_active)
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      [category_id, title, description || null, sort_order, is_active],
-    );
-
-    res.json({ ok: true, id: result.insertId });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.put("/api/survey-question-groups/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-    const title = String(req.body.title || "").trim();
-    const description = String(req.body.description || "").trim();
-    const sort_order = Number(req.body.sort_order || 0);
-    const is_active = req.body.is_active ? 1 : 0;
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    if (!title) {
-      return res.status(400).json({ error: "กรุณากรอกชื่อ Group" });
-    }
-
-    await pool.execute(
-      `
-      UPDATE survey_question_groups
-      SET title = ?, description = ?, sort_order = ?, is_active = ?
-      WHERE id = ?
-      `,
-      [title, description || null, sort_order, is_active, id],
-    );
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.delete("/api/survey-question-groups/:id", async (req, res) => {
-  try {
-    const id = Number(req.params.id);
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    await pool.execute(`DELETE FROM survey_question_groups WHERE id = ?`, [id]);
-
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.get("/api/survey-structure/form", async (req, res) => {
-  try {
-    const [sections] = await pool.execute(`
-      SELECT id, section_key, title, description, sort_order, is_active
-      FROM survey_sections
-      ORDER BY sort_order ASC, id ASC
-    `);
-
-    const questionSection = sections.find((s) =>
-      s.section_key === "rating_questions",
-    );
-
-    if (!questionSection) {
-      return res.status(409).json({ error: "Missing rating_questions Section" });
-    }
-    if (!questionSection.is_active) {
-      return res.json({ section: questionSection, sections, models: [] });
-    }
-
-    const [categories] = await pool.execute(
-      `
-      SELECT id, section_id, title, description, sort_order, is_active
-      FROM survey_question_categories
-      WHERE section_id = ?
-        AND is_active = 1
-      ORDER BY sort_order ASC, id ASC
-      `,
-      [questionSection.id],
-    );
-
-    const categoryIds = categories.map((c) => c.id);
-
-    let groups = [];
-    if (categoryIds.length > 0) {
-      const [groupRows] = await pool.execute(
-        `
-        SELECT id, category_id, title, description, sort_order, is_active
-        FROM survey_question_groups
-        WHERE category_id IN (${categoryIds.map(() => "?").join(",")})
-          AND is_active = 1
-        ORDER BY sort_order ASC, id ASC
-        `,
-        categoryIds,
-      );
-
-      groups = groupRows;
-    }
-
-    const [questionRows] = await pool.execute(`
-      SELECT
-        id,
-        group_id,
-        datalist_id,
-        question_text,
-        question_type,
-        sort_order
-      FROM question_bank
-      WHERE status = 'active'
-      ORDER BY sort_order ASC, id ASC
-    `);
-
-    const questionsByGroupId = {};
-    const questionsByDatalistId = {};
-
-    questionRows.forEach((q) => {
-      const text = String(q.question_text || "").trim();
-      if (!text) return;
-
-      /*
-       * questionBankId ใช้บอกว่าคำถามต้นฉบับมาจากข้อใดใน Question Bank
-       * questionId ยังไม่สร้างตรงนี้ เพราะแต่ละฟอร์มต้องมี ID ของตัวเอง
-       */
-      const questionItem = {
-        questionBankId: Number(q.id) || null,
-        text,
-      };
-
-      if (q.group_id) {
-        if (!questionsByGroupId[q.group_id]) {
-          questionsByGroupId[q.group_id] = [];
-        }
-
-        questionsByGroupId[q.group_id].push(questionItem);
-      }
-
-      const datalistId = String(q.datalist_id || "").trim();
-
-      if (datalistId) {
-        if (!questionsByDatalistId[datalistId]) {
-          questionsByDatalistId[datalistId] = [];
-        }
-
-        questionsByDatalistId[datalistId].push(questionItem);
-      }
-    });
-
-    const groupMap = {};
-    groups.forEach((g) => {
-      if (!groupMap[g.category_id]) groupMap[g.category_id] = [];
-      groupMap[g.category_id].push(g);
-    });
-
-    const models = categories.map((cat) => ({
-      id: cat.id,
-      title: cat.title,
-      enabled: false,
-      dimensions: (groupMap[cat.id] || []).map((g) => {
-        const legacyDatalistId =
-          typeof makeLegacyDatalistId === "function"
-            ? makeLegacyDatalistId(g.title)
-            : "";
-
-        const questions =
-          questionsByGroupId[g.id] ||
-          questionsByDatalistId[legacyDatalistId] ||
-          [];
-
-        return {
-          id: g.id,
-          title: g.title,
-          enabled: true,
-          questions,
-        };
-      }),
-    }));
-
-    res.json({
-      section: questionSection,
-      sections,
-      models,
-    });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }

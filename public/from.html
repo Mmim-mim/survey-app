@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="th">
   <head>
+    <script src="auth-client.js"></script>
     <meta charset="utf-8" />
     <title>ฟอร์มประเมิน</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -893,6 +894,28 @@
         min-width: 0;
       }
 
+      .question-picker { position: relative; grid-column: 2; grid-row: 1; min-width: 0; flex: 1; }
+      .question-picker .dim-question { padding-right: 42px; }
+      .question-picker-arrow {
+        position: absolute; right: 1px; top: 1px; width: 38px; height: 40px;
+        border: 0; border-radius: 0 10px 10px 0; background: transparent;
+        color: #800020; cursor: pointer;
+      }
+      .question-picker-menu {
+        position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+        max-height: 240px; overflow-y: auto; background: #fff;
+        border: 1px solid #d6c39a; border-radius: 10px; padding: 4px;
+        box-shadow: 0 6px 18px #0002;
+      }
+      .question-picker-option, .question-picker-empty {
+        display: block; width: 100%; padding: 10px; text-align: left;
+        white-space: normal; overflow-wrap: anywhere; font: inherit;
+        border: 0; background: transparent; color: inherit;
+      }
+      .question-picker-option { cursor: pointer; }
+      .question-picker-option:hover, .question-picker-option[aria-selected="true"] { background: #fff3d9; }
+      .question-picker-empty { color: #666; }
+
       .questions .item .remove-question {
         grid-column: 3;
         grid-row: 1;
@@ -1334,6 +1357,8 @@
                 วันที่เริ่มต้น:
               </div>
               <input type="date" id="start_date" class="input" />
+              <input id="formFiscalYear" type="hidden" />
+              <p id="bankLoadStatus" role="status"></p>
 
               <div style="font-size: 16px; margin: 16px 0 10px">
                 วันที่สิ้นสุด:
@@ -1762,6 +1787,8 @@
     </div>
 
     <script src="section-snapshot.js"></script>
+    <script src="fiscal-year.js"></script>
+    <script src="bank-year-loader.js"></script>
     <script>
             function showEditWarningPopup(responseCount) {
               return new Promise((resolve) => {
@@ -1971,7 +1998,7 @@
 
                 const currentQuestion = normalizeQuestionValue(input.value);
 
-                filteredDatalist.innerHTML = "";
+                const filteredOptions = [];
 
                 sourceDatalist.querySelectorAll("option").forEach((sourceOption) => {
                   const questionText = String(sourceOption.value || "").trim();
@@ -2010,10 +2037,17 @@
                     option.dataset.questionBankId = String(questionBankId);
                   }
 
-                  filteredDatalist.appendChild(option);
+                  filteredOptions.push(option);
                 });
 
-                input.setAttribute("list", filteredListId);
+                // Rebuilding an unchanged native datalist while typing can dismiss its popup.
+                const signature = JSON.stringify(filteredOptions.map(option => [option.value, option.dataset.questionBankId || ""]));
+                if (filteredDatalist.dataset.signature !== signature) {
+                  filteredDatalist.replaceChildren(...filteredOptions);
+                  filteredDatalist.dataset.signature = signature;
+                }
+
+                if (!input.closest(".question-picker") && input.getAttribute("list") !== filteredListId) input.setAttribute("list", filteredListId);
               });
             }
 
@@ -2023,9 +2057,110 @@
               });
             }
 
+            function bindQuestionPicker(input, stack) {
+              // Retain datalists as the scoped option store, but own the visible popup.
+              input.dataset.sourceListId ||= input.getAttribute("list") || "questionSuggestions";
+              input.removeAttribute("list");
+              const wrapper = document.createElement("div");
+              wrapper.className = "question-picker";
+              input.before(wrapper);
+              wrapper.append(input);
+              const arrow = document.createElement("button");
+              arrow.type = "button";
+              arrow.className = "question-picker-arrow";
+              arrow.textContent = "▼";
+              arrow.setAttribute("aria-label", "เลือกคำถามจาก Question Bank");
+              const menu = document.createElement("div");
+              menu.className = "question-picker-menu";
+              menu.id = "questionPicker_" + (++questionDatalistCounter);
+              menu.setAttribute("role", "listbox");
+              menu.hidden = true;
+              input.setAttribute("role", "combobox");
+              input.setAttribute("aria-autocomplete", "list");
+              input.setAttribute("aria-controls", menu.id);
+              input.setAttribute("aria-expanded", "false");
+              input.setAttribute("autocomplete", "off");
+              arrow.setAttribute("aria-controls", menu.id);
+              arrow.setAttribute("aria-expanded", "false");
+              wrapper.append(arrow, menu);
+              let active = -1;
+              const close = () => {
+                menu.hidden = true;
+                input.setAttribute("aria-expanded", "false");
+                arrow.setAttribute("aria-expanded", "false");
+                input.removeAttribute("aria-activedescendant");
+                active = -1;
+              };
+              const open = (all = false) => {
+                if (input.disabled) return;
+                refreshQuestionSuggestions(stack);
+                const options = document.getElementById(input.dataset.filteredListId)?.options || [];
+                const query = all ? "" : normalizeQuestionValue(input.value);
+                menu.replaceChildren();
+                active = -1;
+                input.removeAttribute("aria-activedescendant");
+                for (const option of options) {
+                  if (!normalizeQuestionValue(option.value).includes(query)) continue;
+                  const item = document.createElement("button");
+                  item.type = "button";
+                  item.className = "question-picker-option";
+                  item.id = menu.id + "_" + menu.children.length;
+                  item.setAttribute("role", "option");
+                  item.setAttribute("aria-selected", "false");
+                  item.tabIndex = -1;
+                  item.textContent = option.value;
+                  item.addEventListener("mousedown", event => event.preventDefault());
+                  item.addEventListener("click", () => {
+                    if (input.disabled) { close(); return; }
+                    input.value = option.value;
+                    input.dispatchEvent(new Event("input", { bubbles: true }));
+                    input.dispatchEvent(new Event("change", { bubbles: true }));
+                    close();
+                    input.focus();
+                  });
+                  menu.append(item);
+                }
+                if (!menu.children.length) {
+                  const empty = document.createElement("div");
+                  empty.className = "question-picker-empty";
+                  empty.textContent = "ไม่พบคำถามที่ตรงกัน สามารถพิมพ์คำถามใหม่ได้";
+                  menu.append(empty);
+                }
+                menu.hidden = false;
+                input.setAttribute("aria-expanded", "true");
+                arrow.setAttribute("aria-expanded", "true");
+              };
+              arrow.addEventListener("click", () => {
+                if (menu.hidden) { input.focus(); open(true); } else close();
+              });
+              input.addEventListener("input", () => open());
+              input.addEventListener("keydown", event => {
+                if (event.key === "Escape") { event.preventDefault(); close(); return; }
+                if (event.key === "Tab") { close(); return; }
+                if (event.key === "Enter" && !menu.hidden) {
+                  event.preventDefault();
+                  menu.querySelectorAll(".question-picker-option")[active]?.click();
+                  return;
+                }
+                if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+                event.preventDefault();
+                if (menu.hidden) open();
+                const items = [...menu.querySelectorAll(".question-picker-option")];
+                if (!items.length) return;
+                active = (active + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+                items.forEach((item, index) => item.setAttribute("aria-selected", String(index === active)));
+                input.setAttribute("aria-activedescendant", items[active].id);
+                items[active].scrollIntoView({ block: "nearest" });
+              });
+              wrapper.addEventListener("focusout", event => { if (!wrapper.contains(event.relatedTarget)) close(); });
+              // Close stale options when bank data is cleared or refreshed.
+              input.addEventListener("bank-options-cleared", close);
+            }
+
             function bindQuestionRow(row, stack) {
               const input = row.querySelector(".dim-question");
               const delBtn = row.querySelector(".remove-question");
+              let boundText = input?.value || "";
 
               /*
                * ตรวจข้อความในช่อง แล้วผูก Question Bank ID
@@ -2033,11 +2168,13 @@
                */
               const updateQuestionBankId = () => {
                 if (!input) return;
+                if (input.value === boundText) return;
 
                 const questionText = String(input.value || "").trim();
 
                 if (!questionText) {
                   delete row.dataset.questionBankId;
+                  boundText = "";
                   return;
                 }
 
@@ -2060,12 +2197,14 @@
 
                 if (matched?.id) {
                   row.dataset.questionBankId = String(matched.id);
+                  input.value = matched.text;
                 } else {
                   /*
                    * ไม่ตรงกับ Question Bank จึงถือเป็นคำถาม Custom
                    */
                   delete row.dataset.questionBankId;
                 }
+                boundText = input.value;
               };
 
               if (input) {
@@ -2078,10 +2217,8 @@
                   updateQuestionBankId();
                   refreshQuestionSuggestions(stack);
 
-                  setTimeout(() => {
-                    input.blur();
-                  }, 0);
                 });
+                bindQuestionPicker(input, stack);
               }
 
               if (delBtn) {
@@ -2314,7 +2451,7 @@
 
               addBtn.addEventListener("click", () => {
                 const titleText = titleInput?.value?.trim() || "";
-                const subgroupListId = getSuggestionListIdBySubgroupTitle(titleText);
+                const subgroupListId = group.dataset.datalistId || getSuggestionListIdBySubgroupTitle(titleText);
 
                 addQuestion(stack, "", subgroupListId, false);
               });
@@ -2411,6 +2548,8 @@
               const questions = Array.isArray(data.questions) ? data.questions : [];
 
               titleInput.value = data.title || "";
+              group.dataset.bankGroupId = data.bankGroupId || data.id || "";
+              group.dataset.datalistId = data.datalist_id || (group.dataset.bankGroupId ? "group_" + group.dataset.bankGroupId + "_suggestions" : "");
 
               if (!isDefault && delBtn) {
                 delBtn.style.display = "";
@@ -2419,9 +2558,7 @@
               subgroupsRoot.appendChild(group);
               bindSubgroup(group);
 
-              const subgroupListId = getSuggestionListIdBySubgroupTitle(
-                data.title || "",
-              );
+              const subgroupListId = group.dataset.datalistId || getSuggestionListIdBySubgroupTitle(data.title || "");
 
               if (keepQuestions && questions.length) {
                 questions.forEach((q, i) => {
@@ -2556,20 +2693,87 @@
             }
 
             let defaultMainModels = [];
+            let bankRows = [], bankFiscalYear = null, bankReady = false;
+            let savedFiscalYear = "";
+            const fiscalYearSelect = document.getElementById("formFiscalYear");
+            const bankLoader = BankYearLoader.create((...args) => fetch(...args));
             let sectionSnapshot = null;
             let engagementQuestion = SectionSnapshot.definitions[3][1];
 
-            async function loadSurveyStructureForForm() {
-              const res = await fetch("/api/survey-structure/form");
-              const json = await res.json().catch(() => ({}));
-
-              if (!res.ok) {
-                throw new Error(json.error || "โหลดโครงสร้างแบบประเมินไม่สำเร็จ");
-              }
-
+            function loadSurveyStructureForForm(json) {
               defaultMainModels = Array.isArray(json.models) ? json.models : [];
-              if (pageMode === "create") sectionSnapshot = SectionSnapshot.fromAdmin(json.sections || []);
+              if (pageMode === "create" && !sectionSnapshot) sectionSnapshot = SectionSnapshot.fromAdmin(json.sections || []);
             }
+
+            async function reloadBankForCreate() {
+              bankReady = false;
+              fiscalYearSelect.disabled = true;
+              document.getElementById("bankLoadStatus").textContent = "กำลังโหลด Question Bank...";
+              // Clear every previous-year suggestion, not only keys returned by the new year.
+              clearBankOptions();
+              document.getElementById("mainModels").innerHTML = "";
+              try {
+                const loaded = await bankLoader.load(fiscalYearSelect.value);
+                if (!loaded) return;
+                bankFiscalYear = Number(loaded.year);
+                bankRows = loaded.questions;
+                loadSurveyStructureForForm(loaded.form);
+                SectionSnapshot.render(document, sectionSnapshot, true);
+                defaultMainModels.forEach(model => addMainModel(model));
+                await loadQuestionBankIntoDatalists();
+                await loadProjectDropdowns();
+                bankReady = true;
+                document.getElementById("bankLoadStatus").textContent = "";
+              } catch (error) {
+                document.getElementById("bankLoadStatus").textContent = error.message;
+              } finally { fiscalYearSelect.disabled = false; }
+            }
+            function clearBankOptions() {
+              bankRows = [];
+              questionBankByListAndText.clear();
+              document.querySelectorAll("datalist").forEach(list => { list.innerHTML = ""; delete list.dataset.signature; });
+              document.querySelectorAll(".question-picker .dim-question").forEach(input => input.dispatchEvent(new Event("bank-options-cleared")));
+              for (const id of ["dept_name", "uni_strategy", "center_strategy", "center_mission"]) {
+                const select = document.getElementById(id);
+                if (select) select.replaceChildren(new Option("-- เลือก --", ""));
+              }
+            }
+            let acceptedStartDate = "";
+            document.getElementById("start_date").addEventListener("change", async event => {
+              const date = event.target.value;
+              const year = calculateFiscalYear(date);
+              if (pageMode !== "create") {
+                if (year && Number(year) !== Number(savedFiscalYear)) {
+                  bankReady = false; bankLoader.invalidate(); clearBankOptions();
+                  document.getElementById("bankLoadStatus").textContent = "วันที่เริ่มกิจกรรมไม่ตรงกับ Snapshot เดิม กรุณาแก้วันที่ให้ตรงก่อนบันทึก";
+                } else if (year) {
+                  acceptedStartDate = date;
+                  bankReady = true;
+                  try {
+                    const loaded = await bankLoader.load(year, false);
+                    if (loaded) { bankRows = loaded.questions; await loadQuestionBankIntoDatalists(); await loadProjectDropdowns(); }
+                    document.getElementById("bankLoadStatus").textContent = "";
+                  } catch (error) { document.getElementById("bankLoadStatus").textContent = "ใช้ Snapshot เดิม; โหลดตัวเลือกเพิ่มไม่ได้: " + error.message; }
+                } else {
+                  bankReady = false; bankLoader.invalidate(); clearBankOptions();
+                }
+                return;
+              }
+              if (year && Number(year) === bankFiscalYear && bankReady) { acceptedStartDate = date; return; }
+              if (bankReady && document.querySelector('#mainModels .dim-question') && !confirm("วันที่ใหม่ใช้ชุดคำถามต่างจากเดิม ต้องการล้างคำถามและโหลดชุดใหม่หรือไม่?")) {
+                event.target.value = acceptedStartDate; return;
+              }
+              acceptedStartDate = date;
+              bankLoader.invalidate();
+              fiscalYearSelect.value = year;
+              if (!year) {
+                bankReady = false; clearBankOptions();
+                document.getElementById("mainModels").innerHTML = "";
+                document.getElementById("bankLoadStatus").textContent = "กรุณาระบุวันที่เริ่มกิจกรรมเพื่อโหลดคำถาม";
+                return;
+              }
+              await reloadBankForCreate();
+            });
 
             let savedDraft = {};
             try {
@@ -2593,7 +2797,10 @@
 
             function setValue(selector, value) {
               const el = document.querySelector(selector);
-              if (el) el.value = value ?? "";
+              if (el) {
+                if (el.tagName === "SELECT" && value && ![...el.options].some(option => option.value === String(value))) el.add(new Option(String(value), String(value)));
+                el.value = value ?? "";
+              }
             }
 
             function toDateInputValue(value) {
@@ -2727,6 +2934,8 @@
                       .filter(Boolean);
 
                     return {
+                      bankGroupId: Number(groupEl.dataset.bankGroupId) || null,
+                      datalist_id: groupEl.dataset.datalistId || "",
                       title:
                         groupEl.querySelector(".subgroup-title")?.value?.trim() || "",
 
@@ -2816,15 +3025,8 @@
             }
 
             function calculateFiscalYear(startDateValue) {
-              if (!startDateValue) return "";
-
-              const date = new Date(startDateValue);
-              if (isNaN(date)) return "";
-
-              const yearBE = date.getFullYear() + 543;
-              const month = date.getMonth() + 1;
-
-              return month >= 10 ? String(yearBE + 1) : String(yearBE);
+              try { return String(FiscalYear.fromStartDate(startDateValue)); }
+              catch { return ""; }
             }
 
             function clearAllFieldErrors() {
@@ -2913,6 +3115,12 @@
               if (!formData.start_date) {
                 showFieldError(startDateInput, "กรุณาเลือกวันที่เริ่มต้น");
                 isValid = false;
+              } else {
+                try { FiscalYear.resolve(formData, {}, true); }
+                catch (error) {
+                  showFieldError(startDateInput, error.message);
+                  isValid = false;
+                }
               }
 
               if (!formData.end_date) {
@@ -3100,9 +3308,8 @@
                   document.getElementById("kpi_quality")?.value?.trim() || "",
                 start_date: document.getElementById("start_date").value,
                 end_date: document.getElementById("end_date").value,
-                fiscal_year: calculateFiscalYear(
-                  document.getElementById("start_date").value,
-                ),
+                fiscal_year: pageMode === "create" ? Number(fiscalYearSelect.value) : savedFiscalYear,
+                question_bank_fiscal_year: bankFiscalYear,
                 budget_received:
                   document.getElementById("budget_received")?.value || "",
 
@@ -3140,6 +3347,13 @@
 
             function applyFormToPage(data) {
               if (!data) return;
+              savedFiscalYear = data.fiscal_year || calculateFiscalYear(data.start_date);
+              if (data.fiscal_year_error) alert("พบข้อมูลปีงบประมาณขัดแย้ง: " + data.fiscal_year_error);
+              else if (!data.fiscal_year && savedFiscalYear) alert("ฟอร์มเดิมไม่มีปีงบประมาณ ใช้ปีจากวันที่เริ่มกิจกรรม: " + savedFiscalYear + " กรุณาตรวจสอบก่อนบันทึก");
+              bankFiscalYear = data.question_bank_fiscal_year ?? null;
+              fiscalYearSelect.value = String(savedFiscalYear);
+              acceptedStartDate = toDateInputValue(data.start_date);
+              fiscalYearSelect.disabled = true;
               sectionSnapshot = SectionSnapshot.normalize(data);
               engagementQuestion = data.engagement_question || SectionSnapshot.definitions[3][1];
               data = SectionSnapshot.attach(data, sectionSnapshot);
@@ -3257,6 +3471,8 @@
 
               const merged = {
                 ...(json.form || {}),
+                fiscal_year: json.form?.fiscal_year ?? json.fiscal_year,
+                fiscal_year_error: json.fiscal_year_error,
                 form_title: json.form_title ?? json.form?.form_title ?? "",
                 form_desc: json.form_desc ?? json.form?.form_desc ?? "",
                 dept_name: json.dept_name ?? json.form?.dept_name ?? "",
@@ -3453,28 +3669,35 @@
 
             async function loadQuestionBankIntoDatalists() {
               try {
-                const res = await fetch("/api/question-bank/active");
-                const rows = await res.json();
+                const rows = bankRows;
 
-                if (!res.ok || !Array.isArray(rows)) {
+                if (!Array.isArray(rows)) {
                   console.warn("Question Bank response is invalid:", rows);
                   return;
                 }
 
-                const grouped = {};
+                const grouped = Object.create(null);
 
                 questionBankByListAndText.clear();
 
                 rows.forEach((row) => {
-                  const listId = String(row.datalist_id || "").trim();
+                  const legacyListId = String(row.datalist_id || "").trim();
                   const text = String(row.question_text || "").trim();
                   const questionBankId = Number(row.id) || null;
 
-                  if (!listId || !text) return;
+                  if (!legacyListId || !text) return;
+                  // Structure uses stable Group IDs; Legacy APIs may still return named lists.
+                  // Keep both aliases for saved forms, using only the currently loaded bank year.
+                  const listIds = new Set([legacyListId]);
+                  if (row.group_id && !["dept_name", "uni_strategy", "center_strategy", "center_mission"].includes(legacyListId)) {
+                    listIds.add(`group_${row.group_id}_suggestions`);
+                  }
+                  for (const listId of listIds) {
 
                   const lookupKey = createQuestionBankLookupKey(listId, text);
 
-                  questionBankByListAndText.set(lookupKey, {
+                  const existingMatch = questionBankByListAndText.get(lookupKey);
+                  questionBankByListAndText.set(lookupKey, questionBankByListAndText.has(lookupKey) && existingMatch?.id !== questionBankId ? null : {
                     id: questionBankId,
                     text,
                     datalistId: listId,
@@ -3488,6 +3711,7 @@
                     id: questionBankId,
                     text,
                   });
+                  }
                 });
 
                 Object.entries(grouped).forEach(([listId, questions]) => {
@@ -3504,7 +3728,11 @@
                   questions.forEach((question) => {
                     const option = document.createElement("option");
 
-                    option.value = question.text;
+                    const ambiguous = questionBankByListAndText.get(createQuestionBankLookupKey(listId, question.text)) === null;
+                    option.value = ambiguous ? `${question.text} [Question Bank #${question.id}]` : question.text;
+                    if (ambiguous) questionBankByListAndText.set(createQuestionBankLookupKey(listId, option.value), {
+                      id: question.id, text: question.text, datalistId: listId,
+                    });
 
                     if (question.id) {
                       option.dataset.questionBankId = String(question.id);
@@ -3517,15 +3745,15 @@
                 refreshAllQuestionSuggestions();
               } catch (err) {
                 console.warn("load question bank failed:", err);
+                if (pageMode === "create") throw err;
               }
             }
 
             async function loadProjectDropdowns() {
               try {
-                const res = await fetch("/api/question-bank/active");
-                const rows = await res.json();
+                const rows = bankRows;
 
-                if (!res.ok || !Array.isArray(rows)) {
+                if (!Array.isArray(rows)) {
                   return;
                 }
 
@@ -3542,6 +3770,7 @@
                   const firstOptionText =
                     select.querySelector("option")?.textContent || "-- เลือก --";
 
+                  select.dataset.snapshotValue = select.value;
                   select.innerHTML = "";
 
                   const firstOption = document.createElement("option");
@@ -3563,8 +3792,15 @@
                   option.textContent = text;
                   select.appendChild(option);
                 });
+                if (pageMode !== "create") Object.values(selectMap).forEach(select => {
+                  const value = select?.dataset.snapshotValue;
+                  if (!value) return;
+                  if (![...select.options].some(option => option.value === value)) select.add(new Option(value, value));
+                  select.value = value;
+                });
               } catch (err) {
                 console.warn("load project dropdowns failed:", err);
+                if (pageMode === "create") throw err;
               }
             }
 
@@ -3620,18 +3856,9 @@
                 });
               });
               try {
+                clearBankOptions();
                 if (pageMode === "create") {
-                  await loadSurveyStructureForForm();
-                  SectionSnapshot.render(document, sectionSnapshot, true);
-                  renderInitialSection2Models();
-                }
-
-                try {
-                  await loadQuestionBankIntoDatalists();
-                  await loadProjectDropdowns();
-                } catch (error) {
-                  if (pageMode === "create") throw error;
-                  console.warn("Optional question bank unavailable", error);
+                  document.getElementById("bankLoadStatus").textContent = "กรุณาระบุวันที่เริ่มกิจกรรมเพื่อโหลดคำถาม";
                 }
 
                 if (pageMode === "edit") {
@@ -3647,6 +3874,15 @@
                     '#formSurvey button[type="submit"]',
                   );
                   if (submitBtn) submitBtn.textContent = "บันทึกเป็นฟอร์มใหม่";
+                }
+                if (pageMode !== "create") {
+                  bankReady = true; // Saved snapshots can open/save even when their template set is unavailable.
+                  try {
+                    const sourceYear = calculateFiscalYear(document.getElementById("start_date").value);
+                    if (!sourceYear) throw new Error("กรุณาตรวจสอบวันที่เริ่มกิจกรรม");
+                    const loaded = await bankLoader.load(sourceYear, false);
+                    if (loaded) { bankRows = loaded.questions; await loadQuestionBankIntoDatalists(); await loadProjectDropdowns(); }
+                  } catch (error) { document.getElementById("bankLoadStatus").textContent = "ใช้ Snapshot เดิม; โหลดตัวเลือกเพิ่มไม่ได้: " + error.message; }
                 }
               } catch (err) {
                 alert("เปิดหน้าไม่สำเร็จ: " + err.message);
@@ -3668,6 +3904,12 @@
                   const formData = buildFormPayload();
 
                   if (!validateBeforeSave(formData)) {
+                    return;
+                  }
+                  if (!bankReady) {
+                    showFieldError(document.getElementById("start_date"), document.getElementById("bankLoadStatus").textContent || "กรุณารอโหลด Question Bank ให้สำเร็จก่อนบันทึก");
+                    showValidationSummary();
+                    focusFirstError();
                     return;
                   }
 

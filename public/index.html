@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="th">
   <head>
+    <script src="auth-client.js"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>แบบฟอร์มการประเมินทั้งหมด</title>
@@ -1148,6 +1149,8 @@
 
           const copied = {
             ...(data.form || {}),
+            fiscal_year: data.form?.fiscal_year ?? data.fiscal_year,
+            fiscal_year_error: data.fiscal_year_error,
             form_title: data.form_title ?? data.form?.form_title ?? "",
             form_desc: data.form_desc ?? data.form?.form_desc ?? "",
             dept_name: data.dept_name ?? data.form?.dept_name ?? "",

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="th">
   <head>
+    <script src="auth-client.js"></script>
     <meta charset="utf-8" />
     <title>ตัวอย่างก่อนส่งแบบประเมิน</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -442,6 +443,7 @@
     </div>
 
     <script src="section-snapshot.js"></script>
+    <script src="fiscal-year.js"></script>
     <script>
       /* ---------- โหลด/บันทึก ชื่อเรื่อง-คำอธิบาย ---------- */
       const titleEl = document.getElementById("heroTitle");
@@ -1090,6 +1092,8 @@
 
             data = {
               ...(json.form || {}),
+              fiscal_year: json.form?.fiscal_year ?? json.fiscal_year,
+              fiscal_year_error: json.fiscal_year_error,
               form_title: json.form_title ?? json.form?.form_title ?? "",
               form_desc: json.form_desc ?? json.form?.form_desc ?? "",
               dept_name: json.dept_name ?? json.form?.dept_name ?? "",
@@ -1342,9 +1346,14 @@
           if (!validateFormBeforeSubmit()) {
             return;
           }
-          // ===== helper: ปีงบประมาณ (ง่ายๆ) =====
-          // ถ้าต้องการ “ปีงบประมาณไทย” แบบจริงจัง (ต.ค.-ก.ย.) ค่อยปรับทีหลังได้
-          const fiscalYearTH = new Date().getFullYear() + 543;
+          let verifiedYear;
+          try {
+            if (data.fiscal_year_error) throw new Error(data.fiscal_year_error);
+            verifiedYear = FiscalYear.resolveSubmission(data);
+          } catch (error) {
+            alert(error.message + " กรุณาติดต่อผู้ดูแลฟอร์ม");
+            return;
+          }
 
           // ===== 1) เก็บคำตอบ Rating ทั้งหมด + เก็บ "ข้อความคำถาม" ไปด้วย =====
           // ratings: [{ groupKey, groupTitle, questionIndex, questionText, value }]
@@ -1428,7 +1437,7 @@
 
           // ===== 5) สร้าง payload สำหรับเก็บลง DB =====
           const payload = {
-            fiscal_year: fiscalYearTH,
+            ...verifiedYear,
             profile: {
               fullname: pf_fullname,
               status: pf_role,

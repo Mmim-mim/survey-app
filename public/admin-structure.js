@@ -16,6 +16,23 @@ const btnCancel = document.getElementById("btnCancel");
 const btnDelete = document.getElementById("btnDelete");
 const btnSave = document.getElementById("btnSave");
 
+const structureYear = document.getElementById("structureYear");
+const structureYearError = document.getElementById("structureYearError");
+let availableYears = new Set();
+let structureReady = false;
+
+function setStructureReady(ready) {
+  structureReady = ready;
+  [btnNew, btnNewCategory, btnNewGroup, btnSave, btnDelete,
+    titleInput, descInput, sortInput, activeInput].forEach(el => { el.disabled = !ready; });
+}
+
+function requireStructureYear() {
+  if (!availableYears.has(structureYear.value)) {
+    throw new Error(structureYearError.textContent || "กรุณาเลือกปีงบประมาณที่มีอยู่");
+  }
+  return structureYear.value;
+}
 let sections = [];
 let categoryMap = {};
 let groupMap = {};
@@ -35,6 +52,14 @@ function esc(text) {
 }
 
 async function api(path, options = {}) {
+  const listingYears = path === "/api/question-bank/years" && (!options.method || options.method === "GET");
+  const requestYear = listingYears ? null : requireStructureYear();
+  if (!listingYears && options.method && options.method !== "GET" && !structureReady) {
+    throw new Error("กรุณารอโหลดโครงสร้างปีงบประมาณให้สำเร็จก่อน");
+  }
+  path += (path.includes("?") ? "&" : "?") + new URLSearchParams({
+    role: localStorage.getItem("role") || "", ...(listingYears ? {} : { fiscal_year: requestYear }),
+  });
   const res = await fetch(path, {
     headers: {
       "Content-Type": "application/json",
@@ -49,6 +74,7 @@ async function api(path, options = {}) {
     throw new Error(json.error || "เกิดข้อผิดพลาด");
   }
 
+  if (!listingYears && requestYear !== structureYear.value) throw new Error("ปีงบประมาณเปลี่ยนแล้ว กรุณาลองใหม่");
   return json;
 }
 
@@ -380,6 +406,7 @@ function bindStructureEvents() {
 }
 
 async function saveData() {
+  if (!structureReady) return;
   const title = titleInput.value.trim();
 
   if (!title) {
@@ -437,6 +464,7 @@ async function saveData() {
 }
 
 async function deleteData() {
+  if (!structureReady) return;
   if (!selectedId) {
     alert("กรุณาเลือกรายการที่ต้องการลบก่อน");
     return;
@@ -449,7 +477,7 @@ async function deleteData() {
         ? "Category"
         : "Group";
 
-  const ok = confirm(`ยืนยันลบ ${typeText} นี้หรือไม่?`);
+  const ok = confirm(selectedType === "section" ? `ยืนยันลบ ${typeText} นี้หรือไม่?` : `ปิดใช้งาน ${typeText} ในปีนี้หรือไม่? ข้อมูลเดิมจะยังคงอยู่`);
   if (!ok) return;
 
   const url =
@@ -462,7 +490,7 @@ async function deleteData() {
   try {
     await api(url, { method: "DELETE" });
 
-    alert("ลบข้อมูลเรียบร้อย");
+    alert(selectedType === "section" ? "ลบข้อมูลเรียบร้อย" : "ปิดใช้งานในปีนี้เรียบร้อย ข้อมูลเดิมยังคงอยู่");
 
     if (selectedType === "section") {
       openSectionIds.delete(selectedId);
@@ -512,7 +540,22 @@ btnDelete.addEventListener("click", deleteData);
 btnSave.addEventListener("click", saveData);
 
 (async function init() {
+  setStructureReady(false);
+  structureYear.disabled = true;
   try {
+    const years = await api("/api/question-bank/years");
+    availableYears = new Set([...years.map(row => String(row.fiscal_year)), "legacy"]);
+    structureYear.innerHTML = `<option value="" disabled>-- เลือกปีงบประมาณ --</option>` + years.map(row => `<option value="${row.fiscal_year}">${row.fiscal_year}</option>`).join("") + `<option value="legacy">Legacy</option>`;
+    const requestedYear = new URLSearchParams(location.search).get("fiscal_year");
+    const initialYear = requestedYear ?? String(years[0]?.fiscal_year ?? "");
+    if (!availableYears.has(initialYear)) {
+      structureYear.value = "";
+      structureYearError.textContent = requestedYear !== null
+        ? `ไม่พบปีงบประมาณ ${requestedYear} กรุณาเลือกปีงบประมาณที่มีอยู่`
+        : "กรุณาเลือกปีงบประมาณที่มีอยู่ หรือเลือก Legacy";
+      return;
+    }
+    structureYear.value = initialYear;
     await loadSections();
 
     const questionSection = sections.find((s) => s.section_key === "rating_questions");
@@ -524,8 +567,21 @@ btnSave.addEventListener("click", saveData);
 
     renderStructure();
     resetForm();
+    setStructureReady(true);
   } catch (err) {
+    structureYearError.textContent = err.message || "โหลดข้อมูลไม่สำเร็จ";
     console.error(err);
     alert(err.message || "โหลดข้อมูลไม่สำเร็จ");
-  }
+  } finally { structureYear.disabled = false; }
 })();
+
+structureYear.addEventListener("change", async () => {
+  structureYear.disabled = true;
+  setStructureReady(false);
+  structureYearError.textContent = "";
+  sections = []; structureList.innerHTML = "";
+  categoryMap = {}; groupMap = {}; openCategoryIds.clear(); resetForm();
+  try { requireStructureYear(); await refreshTree(); setStructureReady(true); }
+  catch (error) { document.getElementById("structureYearError").textContent = error.message; }
+  finally { structureYear.disabled = false; }
+});

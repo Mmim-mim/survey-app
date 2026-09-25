@@ -69,10 +69,30 @@ function getDisplayCategory(q) {
   return String(q.display_category || q.category_title || q.category || "อื่น ๆ").trim();
 }
 
+function sortQuestionOptions(options) {
+  const types = ["LibQUAL+", "SERVQUAL", "WEBQUAL", "SiteQUAL", "ESQUAL"];
+  const category = item => String(item.category_title || item.category || "").trim();
+  const rank = item => {
+    const index = types.findIndex(type => type.toLowerCase() === category(item).toLowerCase());
+    return index < 0 ? types.length : index;
+  };
+  const order = value => value === null || value === undefined || value === "" || !Number.isFinite(Number(value))
+    ? Number.MAX_SAFE_INTEGER : Number(value);
+  return [...options].sort((a, b) => rank(a) - rank(b)
+    || order(a.category_sort_order) - order(b.category_sort_order)
+    || order(a.category_sort_id ?? a.category_id) - order(b.category_sort_id ?? b.category_id)
+    || category(a).localeCompare(category(b), "th")
+    || order(a.group_sort_order) - order(b.group_sort_order)
+    || order(a.group_sort_id ?? a.group_id) - order(b.group_sort_id ?? b.group_id)
+    || order(a.question_sort_order) - order(b.question_sort_order)
+    || order(a.question_id) - order(b.question_id)
+    || String(a.used_in_label || "").localeCompare(String(b.used_in_label || ""), "th"));
+}
+
 async function loadQuestionOptions() {
-  questionOptions = await api(
+  questionOptions = sortQuestionOptions(await api(
     `/api/admin/question-options?role=${encodeURIComponent(role)}`,
-  );
+  ));
 
   usedInInput.innerHTML = `
     <option value="">-- เลือกหัวข้อ --</option>

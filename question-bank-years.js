@@ -232,19 +232,32 @@ function install(app, pool, requireAdmin) {
     const options = set.groups.map(g => {
       const c = set.categories.find(c => Number(c.id) === Number(g.category_id));
       return c && { section_id: c.section_id, category_id: c.id, category_title: c.title,
+        category_sort_order: c.sort_order, group_sort_order: g.sort_order,
         group_id: g.id, group_title: g.title, used_in_label: `${c.title} > ${g.title}`, datalist_id: `group_${g.id}_suggestions` };
     }).filter(Boolean);
     // Preserve legacy project dropdowns without inventing Category/Group identities.
     const seen = new Set();
+    const displayQuestions = withLegacyGroups(set).questions;
     for (const q of set.questions.filter(q => !q.group_id)) {
       const key = `legacy:${q.datalist_id}`;
       if (seen.has(key)) continue; seen.add(key);
-      options.push({ category: q.category, used_in_label: q.used_in_label, datalist_id: q.datalist_id });
+      const mapped = displayQuestions.find(item => item.id === q.id);
+      const g = set.groups.find(item => item.id === mapped?.group_id);
+      const c = g ? set.categories.find(item => item.id === g.category_id)
+        : set.categories.find(item => item.title === q.category);
+      options.push({ category: q.category, used_in_label: q.used_in_label, datalist_id: q.datalist_id,
+        category_sort_order: c?.sort_order, category_sort_id: c?.id,
+        group_sort_order: g?.sort_order, group_sort_id: g?.id,
+        question_sort_order: q.sort_order, question_id: q.id });
     }
     for (const q of set.questions.filter(q => q.group_id && PROJECT_LISTS.has(q.datalist_id))) {
       const option_key = `project_${q.group_id}_${q.datalist_id}`;
       if (seen.has(option_key)) continue; seen.add(option_key);
+      const g = set.groups.find(g => Number(g.id) === Number(q.group_id));
+      const c = g && set.categories.find(c => Number(c.id) === Number(g.category_id));
       options.push({ option_key, group_id: q.group_id, category: q.category,
+        category_sort_id: c?.id, category_sort_order: c?.sort_order,
+        group_sort_order: g?.sort_order, question_sort_order: q.sort_order, question_id: q.id,
         used_in_label: q.used_in_label, datalist_id: q.datalist_id });
     }
     return options;

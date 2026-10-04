@@ -44,73 +44,28 @@ async function api(path, options = {}) {
 }
 
 async function loadUsers() {
-  const users = await api(`/api/admin/users?role=${encodeURIComponent(role)}`);
+  const [users, departments] = await Promise.all([api('/api/admin/users'), api('/api/departments')]);
+  const selected = newDeptName.value;
+  newDeptName.innerHTML = '<option value="">-- เลือกฝ่าย --</option>' + departments.map(d => `<option value="${d.id}">${esc(d.dept_name)}</option>`).join('');
+  newDeptName.value = selected;
 
   if (!users.length) {
     userGroups.innerHTML = `<div class="empty">ยังไม่มีผู้ใช้</div>`;
     return;
   }
 
-  const deptOptions = [
-    "ฝ่ายเลขานุการ",
-    "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
-    "ฝ่ายบริการทรัพยากรสารนิเทศ",
-    "ฝ่ายเทคโนโลยีสารสนเทศ",
-  ];
-
-  const groups = [
-    {
-      title: "👑 ผู้ดูแลระบบ",
-      users: users.filter((u) => u.role === "admin"),
-      isAdminGroup: true,
-    },
-    {
-      title: "🏛️ ฝ่ายเลขานุการ",
-      users: users.filter(
-        (u) => u.role !== "admin" && u.dept_name === "ฝ่ายเลขานุการ"
-      ),
-    },
-    {
-      title: "📚 ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
-      users: users.filter(
-        (u) =>
-          u.role !== "admin" &&
-          u.dept_name === "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ"
-      ),
-    },
-    {
-      title: "🤝 ฝ่ายบริการทรัพยากรสารนิเทศ",
-      users: users.filter(
-        (u) =>
-          u.role !== "admin" &&
-          u.dept_name === "ฝ่ายบริการทรัพยากรสารนิเทศ"
-      ),
-    },
-    {
-      title: "💻 ฝ่ายเทคโนโลยีสารสนเทศ",
-      users: users.filter(
-        (u) => u.role !== "admin" && u.dept_name === "ฝ่ายเทคโนโลยีสารสนเทศ"
-      ),
-    },
-  ];
+  const groups = [{title: '👑 ผู้ดูแลระบบ', users: users.filter(u => u.role === 'admin'), isAdminGroup: true}];
+  const names = [...new Set(users.filter(u => u.role !== 'admin').map(u => u.dept_name || ''))];
+  for (const name of names) groups.push({title: '🏛️ ' + esc(name || 'ยังไม่ระบุฝ่าย'), users: users.filter(u => u.role !== 'admin' && (u.dept_name || '') === name)});
 
   function deptSelect(u) {
-    if (u.role === "admin") return "-";
-
-    return `
-      <select onchange="updateUserDept(${u.id}, this.value)">
-        <option value="">-- เลือกฝ่าย --</option>
-        ${deptOptions
-          .map(
-            (dept) => `
-              <option value="${esc(dept)}" ${u.dept_name === dept ? "selected" : ""}>
-                ${esc(dept)}
-              </option>
-            `
-          )
-          .join("")}
-      </select>
-    `;
+    if (u.role === 'admin') return '-';
+    // Keep the exact current snapshot, including unknown/inactive/renamed departments.
+    return `<select onchange="updateUserDept(${u.id}, this.value)">
+      <option value="current" selected>${esc(u.dept_name || '-- ยังไม่ระบุฝ่าย --')} (ปัจจุบัน)</option>
+      <option value="">-- ไม่ระบุฝ่าย --</option>
+      ${departments.map(d => `<option value="${d.id}">${esc(d.dept_name)}</option>`).join('')}
+    </select>`;
   }
 
   function roleSelect(u) {
@@ -193,11 +148,14 @@ async function loadUsers() {
 }
 
 async function updateUserDept(id, nextDept) {
+  if (nextDept === "current") return;
+  try {
   await api(`/api/admin/users/${id}/dept?role=${encodeURIComponent(role)}`, {
     method: "PUT",
-    body: JSON.stringify({ dept_name: nextDept }),
+    body: JSON.stringify({ department_id: nextDept ? Number(nextDept) : null }),
   });
 
+  } catch (error) { alert(error.message); }
   await loadUsers();
 }
 
@@ -206,7 +164,7 @@ async function addUser() {
   username: newUsername.value.trim(),
   display_name: newDisplayName.value.trim(),
   password: newPassword.value.trim(),
-  dept_name: newDeptName.value.trim(),
+  department_id: newDeptName.value ? Number(newDeptName.value) : null,
   role: newRole.value,
 };
 
@@ -252,8 +210,8 @@ window.updateUserRole = updateUserRole;
 window.updateUserDept = updateUserDept;
 window.deleteUser = deleteUser;
 
-btnAddUser.addEventListener("click", addUser);
-btnRefresh.addEventListener("click", loadUsers);
+btnAddUser.addEventListener("click", () => addUser().catch(error => alert(error.message)));
+btnRefresh.addEventListener("click", () => loadUsers().catch(error => alert(error.message)));
 
 guardAdmin();
-loadUsers();
+loadUsers().catch(error => { userGroups.textContent = error.message; });

@@ -79,7 +79,7 @@ function createAuth(pool, { production = false, now = Date.now, ttl = 8 * 60 * 6
       const admin = path.startsWith("/admin/") || (write && /^\/survey-(sections|question-categories|question-groups)(\/|$)/.test(path));
       const scopedRead = path === "/forms" || /^\/(dashboard|strategy-dashboard)\//.test(path);
       const publicReport = !write && /^\/(dashboard|strategy-dashboard)\//.test(path) && req.query.role === "public";
-      if (!(admin || write || path === "/session" || (scopedRead && !publicReport))) return next();
+      if (!(admin || write || path === "/session" || path === "/departments" || (scopedRead && !publicReport))) return next();
       if (!await identify(req, res)) return;
       if (admin && !requireAdmin(req, res)) return;
       if (write && !csrf(req, res)) return;

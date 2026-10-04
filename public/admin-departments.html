@@ -1,17 +1,7 @@
 <!doctype html>
-<html lang="th">
-  <head>
-    <script src="auth-client.js"></script>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>จัดการผู้ใช้</title>
-
-    <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
-    <style>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>จัดการฝ่าย — Prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
       :root {
         --red: #8b1515;
         --gold: #c9a34e;
@@ -371,94 +361,41 @@
       }
       .header-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
       @media(max-width:600px) { .header { flex-wrap:wrap; } }
-    </style>
-    <!-- <link rel="stylesheet" href="global.css" /> -->
-  </head>
 
-  <body>
-    <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+.page { padding-top:84px; }
+.header-actions { flex-shrink:0; }
+.prototype-note { padding:12px 16px; border:1px solid #e7d39f; background:#fff8e6; border-radius:12px; margin:0 0 20px; color:#705222; font-size:14px; }
+.department-table { min-width:560px; }
+.department-table td:nth-child(2) { overflow-wrap:anywhere; }
+.department-table th:first-child { width:70px; }
+.department-table th:nth-child(3) { width:130px; }
+.department-table th:last-child { width:100px; }
+.badge.on { background:#e5f3e9; color:#22613c; }
+.badge.off { background:#eee8e4; color:#6d6059; }
+.department-table tr:last-child td { border-bottom:0; }
+dialog { width:min(520px,calc(100% - 32px)); max-height:calc(100dvh - 32px); overflow:auto; padding:24px; border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); color:var(--text); }
+dialog::backdrop { background:rgba(36,20,20,.45); }
+dialog h2 { color:var(--red); margin:0; }
+.dialog-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+.dialog-heading .btn { flex-shrink:0; padding:7px 10px; font-size:13px; }
+.field-label { display:block; margin-bottom:8px; font-weight:600; }
+#departmentName { width:100%; }
+fieldset { border:0; padding:0; margin:20px 0; }
+legend { font-weight:600; margin-bottom:8px; }
+.radio-row { display:flex; gap:20px; flex-wrap:wrap; }
+.radio-row label { display:flex; align-items:center; gap:8px; }
+.radio-row input { width:18px; height:18px; margin:0; accent-color:var(--red); }
+.dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; }
+.btn:focus-visible, a:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
+#notice { color:#22613c; min-height:24px; margin:12px 0 0; }
+@media(max-width:600px) { h1 { font-size:27px; } .header { flex-direction:column; } .header-actions { width:100%; } .header-actions .btn { flex:1; text-align:center; } .panel { padding:12px; } body.sidebar-open .page { margin-left:0; width:100%; } .sidebar { max-width:85vw; } }
+</style></head><body>
+<button class="hamburger" id="hamburgerBtn" type="button" aria-label="เปิดเมนู" aria-expanded="false">☰</button><div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar"><div class="brand">👑 Admin</div><nav class="nav"><a href="admin.html">🏠 Dashboard</a><a href="admin-users.html">👥 จัดการผู้ใช้</a><a href="admin-departments.html" class="active" aria-current="page">🏢 จัดการฝ่าย</a><a href="admin-forms.html">📄 จัดการฟอร์ม</a><a href="admin-questions.html">📝 จัดการคำถาม</a></nav></aside>
+<main class="page"><div class="header"><div><h1>🏢 จัดการฝ่าย</h1><div class="sub">เพิ่ม แก้ไข และกำหนดสถานะฝ่ายภายในศูนย์บรรณสารและสื่อการศึกษา</div></div><div class="header-actions"><button class="btn primary" id="addDepartment" type="button">+ เพิ่มฝ่าย</button><a class="btn" href="admin-users.html">ย้อนกลับ</a></div></div>
 
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">👑 Admin</div>
-      <nav class="nav">
-        <a href="admin.html">🏠 Dashboard</a>
-        <a href="admin-users.html" class="active">👥 จัดการผู้ใช้</a>
-        <a href="admin-forms.html">📄 จัดการฟอร์ม</a>
-        <a href="admin-questions.html">📝 จัดการคำถาม</a>
-        <a href="login.html">🚪 ออกจากระบบ</a>
-      </nav>
-    </aside>
-
-    <main class="page">
-      <div class="header">
-        <div>
-          <h1>👥 จัดการผู้ใช้</h1>
-          <div class="sub">เพิ่มผู้ใช้ ลบผู้ใช้ และเปลี่ยน Role ของผู้ใช้</div>
-        </div>
-
-        <div class="header-actions">
-          <a class="btn" href="/admin-departments.html">จัดการฝ่าย</a>
-          <button class="btn primary" id="btnRefresh">รีเฟรชข้อมูล</button>
-        </div>
-      </div>
-
-      <section class="panel">
-        <div class="panel-head">
-          <h2>เพิ่มผู้ใช้ใหม่</h2>
-        </div>
-
-        <div class="form-row">
-          <input id="newDisplayName" placeholder="ชื่อที่ต้องการให้แสดง" />
-          <input id="newUsername" placeholder="username" />
-          <input id="newPassword" placeholder="password" type="password" />
-
-          <select id="newDeptName">
-            <option value="">-- เลือกฝ่าย --</option>
-          </select>
-
-          <select id="newRole">
-            <option value="staff">staff</option>
-            <option value="manager">manager</option>
-            <option value="admin">admin</option>
-          </select>
-
-          <button class="btn primary" id="btnAddUser">เพิ่มผู้ใช้</button>
-        </div>
-
-        <div id="userGroups">
-          <div class="empty">กำลังโหลด...</div>
-        </div>
-      </section>
-    </main>
-
-    <script>
-      document.body.classList.remove("sidebar-open");
-
-      const hamburgerBtn = document.getElementById("hamburgerBtn");
-      const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-      hamburgerBtn.addEventListener("click", () => {
-        document.body.classList.toggle("sidebar-open");
-      });
-
-      sidebarOverlay.addEventListener("click", () => {
-        document.body.classList.remove("sidebar-open");
-      });
-
-      document.querySelectorAll(".sidebar a").forEach((link) => {
-        link.addEventListener("click", () => {
-          document.body.classList.remove("sidebar-open");
-        });
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          document.body.classList.remove("sidebar-open");
-        }
-      });
-    </script>
-
-    <script src="admin-users.js"></script>
-  </body>
-</html>
+<section class="panel" aria-labelledby="listHeading"><div class="panel-head"><h2 id="listHeading">รายการฝ่าย</h2><span class="group-count" id="departmentCount"></span></div><div class="table-wrap" tabindex="0" aria-label="ตารางฝ่าย เลื่อนแนวนอนได้"><table class="department-table"><thead><tr><th scope="col">ลำดับ</th><th scope="col">ชื่อฝ่าย</th><th scope="col">สถานะ</th><th scope="col">จัดการ</th></tr></thead><tbody id="departmentRows"></tbody></table></div><p id="notice" role="status" aria-live="polite"></p></section></main>
+<dialog id="departmentDialog" aria-labelledby="dialogTitle"><form id="departmentForm"><div class="dialog-heading"><h2 id="dialogTitle">เพิ่มฝ่าย</h2><button class="btn danger" id="deleteDepartment" type="button" hidden>ลบฝ่าย</button></div><label class="field-label" for="departmentName">ชื่อฝ่าย</label><input id="departmentName" name="name" required maxlength="255" autocomplete="off" placeholder="กรอกชื่อฝ่าย"><fieldset><legend>สถานะ</legend><div class="radio-row"><label><input type="radio" name="status" value="active" checked>ใช้งาน</label><label><input type="radio" name="status" value="inactive">ปิดใช้งาน</label></div></fieldset><div class="dialog-actions"><button class="btn" type="button" id="cancelDepartment">ยกเลิก</button><button class="btn primary" type="submit">บันทึก</button></div></form></dialog>
+<script src="auth-client.js"></script>
+<script src="admin-departments.js"></script>
+</body></html>

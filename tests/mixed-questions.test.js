@@ -6,6 +6,20 @@ function form(){return {custom_sections:[{section_key:'custom_12345678-1234-1234
  {questionId:'t',questionBankId:3002,questionText:'Text',question_type:'textarea',required:false,choices:[]}
 ]}]}]}]};}
 const answers=()=>[{questionId:'r',value:5},{questionId:'c',value:['a','other'],other:{other:'Detail'}},{questionId:'t',value:'5'}];
+test('Section off preserves selection/identity but excludes answers and report rows',()=>{
+ const old=form(),off=M.copy(old);off.custom_sections[0].enabled=false;
+ assert.equal(M.flatten(off).length,3);assert.equal(M.activeQuestions(off).length,0);
+ assert.deepEqual(M.validateAnswers(off,[]),[]);assert.throws(()=>M.validateAnswers(off,answers()));
+ assert.deepEqual(M.aggregate([{mixed_questions:{version:1,sections:off.custom_sections,answers:[]}}],true),[]);
+ M.assertUnchanged(old,off,true);M.assertUnchanged(off,old,true);
+ assert.throws(()=>M.assertPreview(off,M.snapshotToken(old)),{code:'FORM_SNAPSHOT_CHANGED'});
+ assert.equal(M.aggregate([{mixed_questions:{version:1,sections:old.custom_sections,answers:answers()}}],true).length,3);
+});
+test('Disabled sections still enforce snapshot and bank identity shape',()=>{
+ const old=form(),next=form();next.custom_sections[0].enabled=false;M.flatten(next)[0].q.questionText='Changed';
+ assert.throws(()=>M.assertUnchanged(old,next,true));
+ next.custom_sections[0].enabled='false';assert.throws(()=>M.sections(next));
+});
 test('Mixed types coexist; checkbox uses stable IDs and text remains a string',()=>{
  const out=M.validateAnswers(form(),answers());assert.equal(out[0].value,5);assert.deepEqual(out[1].value,['a','other']);assert.equal(out[2].value,'5');
 });

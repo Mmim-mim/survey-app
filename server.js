@@ -47,6 +47,8 @@ const auth = require("./auth-session").createAuth(pool, {
 app.use("/api", auth.middleware);
 auth.install(app);
 QuestionBankYears.install(app, pool, requireAdmin);
+const Departments = require("./departments");
+Departments.install(app, pool, requireAdmin);
 
 function safeJsonParse(s) {
   try {
@@ -1969,7 +1971,7 @@ app.get("/api/admin/users", async (req, res) => {
     if (!requireAdmin(req, res)) return;
 
     const [rows] = await pool.execute(`
-      SELECT id, username, display_name, role, dept_name
+      SELECT id, username, display_name, role, dept_name, department_id
       FROM users
       ORDER BY id DESC
     `);
@@ -1988,7 +1990,6 @@ app.post("/api/admin/users", async (req, res) => {
     const username = String(req.body.username || "").trim();
     const display_name = String(req.body.display_name || "").trim();
     const password = String(req.body.password || "").trim();
-    const dept_name = String(req.body.dept_name || "").trim();
     const role = String(req.body.role || "staff").trim();
 
     if (!username || !password) {
@@ -2009,15 +2010,18 @@ app.post("/api/admin/users", async (req, res) => {
       return res.status(409).json({ error: "username นี้มีอยู่แล้ว" });
     }
 
-    const [result] = await pool.execute(
-      `INSERT INTO users (username, password, display_name, role, dept_name)
-   VALUES (?, ?, ?, ?, ?)`,
-      [username, password, display_name || username, role, dept_name || null],
-    );
-
+    const result = await Departments.transaction(pool, async db => {
+      const department = await Departments.assign(db, req.body);
+      const [result] = await db.execute(
+        `INSERT INTO users (username, password, display_name, role, dept_name, department_id)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [username, password, display_name || username, role, department?.dept_name || null, department?.id || null]);
+      return result;
+    });
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    if (e.code === "ER_DUP_ENTRY") return res.status(409).json({ error: "username นี้มีอยู่แล้ว" });
+    Departments.respondError(res, e);
   }
 });
 
@@ -2050,33 +2054,19 @@ app.put("/api/admin/users/:id/role", async (req, res) => {
 app.put("/api/admin/users/:id/dept", async (req, res) => {
   try {
     if (!requireAdmin(req, res)) return;
-
-    const id = Number(req.params.id);
-    const dept_name = String(req.body.dept_name || "").trim();
-
-    const allowedDepts = [
-      "ฝ่ายเลขานุการ",
-      "ฝ่ายพัฒนาและจัดระบบทรัพยากรสารนิเทศ",
-      "ฝ่ายบริการทรัพยากรสารนิเทศ",
-      "ฝ่ายเทคโนโลยีสารสนเทศ",
-    ];
-
-    if (!Number.isFinite(id)) {
-      return res.status(400).json({ error: "id ไม่ถูกต้อง" });
-    }
-
-    if (dept_name && !allowedDepts.includes(dept_name)) {
-      return res.status(400).json({ error: "ฝ่ายไม่ถูกต้อง" });
-    }
-
-    await pool.execute(`UPDATE users SET dept_name = ? WHERE id = ?`, [
-      dept_name || null,
-      id,
-    ]);
-
+    const id = Departments.id(req.params.id);
+    await Departments.transaction(pool, async db => {
+      const [[user]] = await db.execute("SELECT id, dept_name, department_id FROM users WHERE id = ? FOR UPDATE", [id]);
+      if (!user) throw Departments.error(404, "ไม่พบผู้ใช้");
+      // An unchanged legacy/inactive value remains valid; no automatic relinking/rename.
+      if (Departments.unchanged(user, req.body)) return;
+      const department = await Departments.assign(db, req.body);
+      await db.execute("UPDATE users SET dept_name = ?, department_id = ? WHERE id = ?",
+        [department?.dept_name || null, department?.id || null, id]);
+    });
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    Departments.respondError(res, e);
   }
 });
 

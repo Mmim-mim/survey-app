@@ -115,3 +115,19 @@ Migration/docs: new `migrations/002-mixed-questions.sql` and this document.
 Tests/safety: new `test-db-safety.js`, `tests/test-db-safety.test.js`, `tests/mixed-questions.test.js`, `tests/mysql-mixed.cjs`, `tests/browser-mixed.cjs`, `tests/init-mixed-db.cjs`, `tests/start-mixed-local.cjs`; updated `tests/mysql-quarantine.cjs`, `tests/browser-question-bank.cjs`, `tests/section-snapshot.test.js`, and the two pre-existing test files above.
 
 Pre-commit support also includes `tests/disposable-server.cjs`; test-only target values belong in test support, never production configuration.
+# Custom Builder section controls
+
+Custom Sections use the existing Builder section/group cards, switches and collapse
+buttons. Question selection checkboxes select questions into the form; they do not
+change respondent question types. Categories/groups are collapsible containers;
+the current custom-structure API does not define dropdown presentation metadata.
+
+`custom_sections[].enabled` is optional (missing means enabled for older forms).
+Disabling retains selected question snapshots/IDs for Edit/Copy, but excludes that
+section from respondent controls, required-answer checks and new report rows.
+Snapshot/Question Bank validation still checks disabled selections. Changing this
+state changes the preview token, so stale previews remain rejected. Historical
+submissions use their own enabled state/snapshot; their payloads are not rewritten.
+
+Regression: `tests/browser-custom-builder.cjs` uses intercepted requests only;
+`tests/mixed-questions.test.js` covers inactive sections and snapshot protection.

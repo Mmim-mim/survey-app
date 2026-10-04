@@ -28,6 +28,7 @@
     for (const c of form.section2_models || []) for (const g of c.dimensions || []) for (const q of g.questions || []) if (q?.questionId) ids.add(q.questionId);
     for (const s of rows) {
       if (!custom(s.section_key) || keys.has(s.section_key) || typeof s.title !== 'string' || !Array.isArray(s.categories)) fail('Custom Section identity ไม่ถูกต้อง');
+      if (s.enabled !== undefined && typeof s.enabled !== "boolean") fail("สถานะ Custom Section ไม่ถูกต้อง");
       keys.add(s.section_key);
       for (const c of s.categories) {
         if (!Number.isSafeInteger(c.category_id) || !Array.isArray(c.groups)) fail('Category ไม่ถูกต้อง');
@@ -49,8 +50,9 @@
     for(const s of sections(form)) for(const c of s.categories) for(const g of c.groups) for(const q of g.questions) out.push({s,c,g,q});
     return out;
   }
+  function activeQuestions(form) { return flatten(form).filter(x => x.s.enabled !== false); }
   function validateAnswers(form, input) {
-    const list = flatten(form), answers = input ?? [];
+    const list = activeQuestions(form), answers = input ?? [];
     if (!Array.isArray(answers) || answers.length > list.length) fail('คำตอบ Custom ไม่ถูกต้อง');
     const map = new Map();
     for(const a of answers) {
@@ -106,7 +108,7 @@
     const rows=new Map();
     for(const p of payloads) {
       if(!p?.mixed_questions || p.mixed_questions.version!==1) continue;
-      let list, answers; try { list=flatten({custom_sections:p.mixed_questions.sections}); answers=validateAnswers({custom_sections:p.mixed_questions.sections},p.mixed_questions.answers); } catch { continue; }
+      let list, answers; try { list=activeQuestions({custom_sections:p.mixed_questions.sections}); answers=validateAnswers({custom_sections:p.mixed_questions.sections},p.mixed_questions.answers); } catch { continue; }
       const map=new Map(answers.map(a=>[a.questionId,a]));
       for(const {s,c,g,q} of list) {
         if(q.question_type==='textarea'&&!includeText) continue;
@@ -126,6 +128,6 @@
       delete r.scores;if(!includeText)delete r.comments;return r;
     });
   }
-  const api={custom,type,choices,sections,flatten,validateAnswers,assertUnchanged,assertPreview,snapshotToken,aggregate,copy};
+  const api={custom,type,choices,sections,flatten,activeQuestions,validateAnswers,assertUnchanged,assertPreview,snapshotToken,aggregate,copy};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.MixedQuestions=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

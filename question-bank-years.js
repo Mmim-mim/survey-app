@@ -1,5 +1,7 @@
 "use strict";
 const quarantine = require("./test-data-quarantine");
+const Mixed = require("./public/mixed-questions");
+const MixedBank = require("./mixed-bank");
 
 const TABLES = {
   categories: "survey_question_categories",
@@ -54,7 +56,7 @@ async function insert(db, table, row) {
   return result.insertId;
 }
 function fields(row, names) {
-  return Object.fromEntries(names.split(" ").map(name => [name, row[name] ?? null]));
+  return Object.fromEntries(names.split(" ").map(name => [name, name === "choices_json" && row[name] != null && typeof row[name] !== "string" ? JSON.stringify(row[name]) : row[name] ?? null]));
 }
 async function cloneYear(pool, rawYear) {
   const year = parseYear(rawYear);
@@ -78,14 +80,14 @@ async function cloneYear(pool, rawYear) {
     const categoryIds = new Map(), groupIds = new Map();
     for (const row of set.categories) {
       categoryIds.set(Number(row.id), await insert(db, TABLES.categories, {
-        ...fields(row, "section_id title description sort_order is_active"), fiscal_year: year,
+        ...fields(row, "section_id title description sort_order is_active default_question_type"), fiscal_year: year,
       }));
     }
     for (const row of set.groups) {
       const category_id = categoryIds.get(Number(row.category_id));
       if (!category_id) fail("Group อ้าง Category นอกชุดต้นฉบับ ต้องตรวจข้อมูลก่อน Clone", 409);
       groupIds.set(Number(row.id), await insert(db, TABLES.groups, {
-        ...fields(row, "title description sort_order is_active"), category_id, fiscal_year: year,
+        ...fields(row, "title description sort_order is_active default_question_type"), category_id, fiscal_year: year,
       }));
     }
     for (const row of set.questions) {
@@ -94,7 +96,7 @@ async function cloneYear(pool, rawYear) {
       let datalist_id = row.datalist_id;
       if (group_id && datalist_id === `group_${row.group_id}_suggestions`) datalist_id = `group_${group_id}_suggestions`;
       await insert(db, TABLES.questions, {
-        ...fields(row, "category question_text used_in_label question_type status sort_order"),
+        ...fields(row, "category question_text used_in_label question_type status sort_order question_type_source is_required choices_json"),
         group_id, datalist_id, fiscal_year: year,
       });
     }
@@ -151,7 +153,8 @@ async function scopedRecord(db, table, id, year) {
 async function saveQuestion(db, year, body, id = null) {
   quarantine.assertReferences(body);
   await ensureYear(db, year);
-  if (id !== null) await scopedRecord(db, TABLES.questions, id, year);
+  const old = id !== null ? await scopedRecord(db, TABLES.questions, id, year) : null;
+  let mixedFields = {};
   const question_text = String(body.question_text || "").trim();
   if (!question_text) fail("กรุณากรอกคำถาม");
   const group_id = body.group_id ? Number(body.group_id) : null;
@@ -161,21 +164,23 @@ async function saveQuestion(db, year, body, id = null) {
   if (group_id) {
     const g = await scopedRecord(db, TABLES.groups, group_id, year);
     const c = await scopedRecord(db, TABLES.categories, g.category_id, year);
+    mixedFields = await MixedBank.questionFields(db, g, body, old);
     category = c.title; used_in_label = `${c.title} > ${g.title}`;
     if (!PROJECT_LISTS.has(datalist_id)) datalist_id = `group_${g.id}_suggestions`;
   }
   if (!category || !used_in_label || !datalist_id) fail("กรุณาเลือกหัวข้อหรือ Dropdown");
-  const status = body.status || "active", question_type = body.question_type || "rating";
-  if (!["active", "inactive"].includes(status) || !["rating", "text", "textarea"].includes(question_type)) fail("ประเภทหรือสถานะไม่ถูกต้อง");
+  const status = body.status || "active", question_type = mixedFields.question_type || body.question_type || "rating";
+  if (!["active", "inactive"].includes(status) || !["rating", "text", "textarea", ...(mixedFields.question_type ? ["checkbox"] : [])].includes(question_type)) fail("ประเภทหรือสถานะไม่ถูกต้อง");
   const sort_order = Number(body.sort_order || 0);
   if (!Number.isSafeInteger(sort_order)) fail("ลำดับไม่ถูกต้อง");
-  const row = { group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order };
+  const row = { group_id, category, question_text, used_in_label, datalist_id, question_type, status, sort_order, ...mixedFields };
   if (id === null) return insert(db, TABLES.questions, { ...row, fiscal_year: year });
   await db.execute(`UPDATE question_bank SET ${Object.keys(row).map(k => `${k} = ?`).join(", ")} WHERE id = ? AND fiscal_year <=> ?`, [...Object.values(row), Number(id), year]);
   return Number(id);
 }
 
-async function validateForm(db, form) {
+async function validateForm(db, form, oldForm = {}) {
+  await MixedBank.validateForm(db, form, oldForm);
   quarantine.assertReferences(form);
   // Forms predating annual sets have no marker. Never reinterpret their historical references.
   if (!Object.prototype.hasOwnProperty.call(form, "question_bank_fiscal_year")) return;
@@ -220,6 +225,7 @@ function install(app, pool, requireAdmin) {
     return visible;
   });
   route("post", "/api/admin/question-bank/years", true, req => cloneYear(pool, req.body.fiscal_year));
+  route("get", "/api/question-bank/custom-structure", false, async (_, year) => MixedBank.structure(pool, await readSet(pool, year)));
   route("get", "/api/admin/questions", true, async (_, year) => decorate(await readSet(pool, year)));
   route("get", "/api/question-bank/active", false, async (_, year) => {
     const set = withLegacyGroups(await readSet(pool, year));
@@ -229,10 +235,14 @@ function install(app, pool, requireAdmin) {
   });
   route("get", "/api/admin/question-options", true, async (_, year) => {
     const set = await readSet(pool, year);
+    const [sections] = await pool.execute("SELECT * FROM survey_sections ORDER BY sort_order, id");
+    const activeSection = c => Number(sections.find(s => Number(s.id) === Number(c.section_id))?.is_active) === 1;
     const options = set.groups.map(g => {
       const c = set.categories.find(c => Number(c.id) === Number(g.category_id));
-      return c && { section_id: c.section_id, category_id: c.id, category_title: c.title,
+      return c && activeSection(c) && Number(c.is_active) === 1 && Number(g.is_active) === 1 && { section_id: c.section_id, category_id: c.id, category_title: c.title,
         category_sort_order: c.sort_order, group_sort_order: g.sort_order,
+        is_custom: Mixed.custom(sections.find(s => Number(s.id) === Number(c.section_id))?.section_key),
+        default_question_type: g.default_question_type || c.default_question_type || sections.find(s => Number(s.id) === Number(c.section_id))?.default_question_type || "rating",
         group_id: g.id, group_title: g.title, used_in_label: `${c.title} > ${g.title}`, datalist_id: `group_${g.id}_suggestions` };
     }).filter(Boolean);
     // Preserve legacy project dropdowns without inventing Category/Group identities.
@@ -245,6 +255,7 @@ function install(app, pool, requireAdmin) {
       const g = set.groups.find(item => item.id === mapped?.group_id);
       const c = g ? set.categories.find(item => item.id === g.category_id)
         : set.categories.find(item => item.title === q.category);
+      if ((g && Number(g.is_active) !== 1) || (c && (Number(c.is_active) !== 1 || !activeSection(c)))) continue;
       options.push({ category: q.category, used_in_label: q.used_in_label, datalist_id: q.datalist_id,
         category_sort_order: c?.sort_order, category_sort_id: c?.id,
         group_sort_order: g?.sort_order, group_sort_id: g?.id,
@@ -255,6 +266,7 @@ function install(app, pool, requireAdmin) {
       if (seen.has(option_key)) continue; seen.add(option_key);
       const g = set.groups.find(g => Number(g.id) === Number(q.group_id));
       const c = g && set.categories.find(c => Number(c.id) === Number(g.category_id));
+      if (!g || !c || !activeSection(c) || Number(g.is_active) !== 1 || Number(c.is_active) !== 1) continue;
       options.push({ option_key, group_id: q.group_id, category: q.category,
         category_sort_id: c?.id, category_sort_order: c?.sort_order,
         group_sort_order: g?.sort_order, question_sort_order: q.sort_order, question_id: q.id,
@@ -291,8 +303,9 @@ function install(app, pool, requireAdmin) {
       const sort_order = Number(req.body.sort_order || 0);
       if (!title || !Number.isSafeInteger(sort_order)) fail("ชื่อหรือลำดับไม่ถูกต้อง");
       const row = { title, description: String(req.body.description || ""), sort_order, is_active: req.body.is_active === false ? 0 : 1 };
+      if (Object.hasOwn(req.body, "default_question_type")) row.default_question_type = Mixed.type(req.body.default_question_type, true);
       if (!old) return { ok: true, id: await insert(db, table, { ...row, [parent]: parentId, fiscal_year: year }) };
-      await db.execute(`UPDATE ${table} SET title = ?, description = ?, sort_order = ?, is_active = ? WHERE id = ? AND fiscal_year <=> ?`, [...Object.values(row), old.id, year]);
+      await db.execute(`UPDATE ${table} SET ${Object.keys(row).map(k => `${k} = ?`).join(", ")} WHERE id = ? AND fiscal_year <=> ?`, [...Object.values(row), old.id, year]);
       return { ok: true, id: old.id };
     }));
     route("delete", `${url}/:id`, true, (req, year) => transaction(pool, async db => {

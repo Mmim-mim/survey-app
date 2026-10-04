@@ -1217,7 +1217,10 @@
     </style>
     <link rel="stylesheet" href="global.css" />
     <link rel="stylesheet" href="responsive.css" />
-  </head>
+  <link rel="stylesheet" href="mixed-questions.css">
+<script src="mixed-questions.js"></script>
+<script src="mixed-ui.js"></script>
+</head>
 
   <body class="page-form-builder">
     <div class="wrap">
@@ -2698,6 +2701,7 @@
             const fiscalYearSelect = document.getElementById("formFiscalYear");
             const bankLoader = BankYearLoader.create((...args) => fetch(...args));
             let sectionSnapshot = null;
+            let mixedCopySourceId = null;
             let engagementQuestion = SectionSnapshot.definitions[3][1];
 
             function loadSurveyStructureForForm(json) {
@@ -2716,6 +2720,7 @@
                 const loaded = await bankLoader.load(fiscalYearSelect.value);
                 if (!loaded) return;
                 bankFiscalYear = Number(loaded.year);
+                await globalThis.MixedUI?.load(loaded.year, true);
                 bankRows = loaded.questions;
                 loadSurveyStructureForForm(loaded.form);
                 SectionSnapshot.render(document, sectionSnapshot, true);
@@ -2768,6 +2773,7 @@
               fiscalYearSelect.value = year;
               if (!year) {
                 bankReady = false; clearBankOptions();
+                globalThis.MixedUI?.load(null, true);
                 document.getElementById("mainModels").innerHTML = "";
                 document.getElementById("bankLoadStatus").textContent = "กรุณาระบุวันที่เริ่มกิจกรรมเพื่อโหลดคำถาม";
                 return;
@@ -3295,6 +3301,8 @@
               });
               return {
                 section_snapshot_version: 1,
+                custom_sections: globalThis.MixedUI?.collect() || [],
+                mixed_copy_source_form_id: mixedCopySourceId,
                 sections,
                 form_title:
                   document.querySelector('[name="form_title"]')?.value?.trim() || "",
@@ -3347,6 +3355,8 @@
 
             function applyFormToPage(data) {
               if (!data) return;
+              globalThis.MixedUI?.apply(data, pageMode === "copy");
+              mixedCopySourceId = pageMode === "copy" ? (data.id || data.form_id || data.mixed_copy_source_form_id) : null;
               savedFiscalYear = data.fiscal_year || calculateFiscalYear(data.start_date);
               if (data.fiscal_year_error) alert("พบข้อมูลปีงบประมาณขัดแย้ง: " + data.fiscal_year_error);
               else if (!data.fiscal_year && savedFiscalYear) alert("ฟอร์มเดิมไม่มีปีงบประมาณ ใช้ปีจากวันที่เริ่มกิจกรรม: " + savedFiscalYear + " กรุณาตรวจสอบก่อนบันทึก");
@@ -3881,6 +3891,7 @@
                     const sourceYear = calculateFiscalYear(document.getElementById("start_date").value);
                     if (!sourceYear) throw new Error("กรุณาตรวจสอบวันที่เริ่มกิจกรรม");
                     const loaded = await bankLoader.load(sourceYear, false);
+                    await globalThis.MixedUI?.load(sourceYear);
                     if (loaded) { bankRows = loaded.questions; await loadQuestionBankIntoDatalists(); await loadProjectDropdowns(); }
                   } catch (error) { document.getElementById("bankLoadStatus").textContent = "ใช้ Snapshot เดิม; โหลดตัวเลือกเพิ่มไม่ได้: " + error.message; }
                 }

@@ -87,6 +87,66 @@ function api(pool) {
   };
 }
 
+test("New Structure Category/Group appears in Admin options without questions and stays year-scoped", async () => {
+  const db = database(), call = api(db.pool);
+  await bank.cloneYear(db.pool, 2570);
+  await bank.cloneYear(db.pool, 2571);
+  const created = await call("post /api/survey-question-categories", 2570,
+    { section_id: 2, title: "New administrator category", sort_order: 1, is_active: true });
+  assert.equal(created.code, 200);
+  const categoryId = created.data.id;
+  let options = await call("get /api/admin/question-options", 2570);
+  assert(!options.data.some(o => o.category_id === categoryId), "an empty Category is not a Group");
+  const group = await call("post /api/survey-question-groups", 2570,
+    { category_id: categoryId, title: "New administrator group", sort_order: 4, is_active: true });
+  assert.equal(group.code, 200);
+  const groupId = group.data.id;
+  assert(!db.state.question_bank.some(q => q.group_id === groupId));
+  const structure = await call("get /api/survey-question-groups/:categoryId", 2570, {}, { categoryId });
+  assert(structure.data.some(g => g.id === groupId));
+  options = await call("get /api/admin/question-options", 2570);
+  const option = options.data.find(o => o.group_id === groupId);
+  assert.equal(option.category_id, categoryId);
+  assert.equal(option.category_sort_order, 1);
+  assert.equal(option.group_sort_order, 4);
+  assert.equal(option.datalist_id, `group_${groupId}_suggestions`);
+  for (const year of ["legacy", 2571]) {
+    const other = await call("get /api/admin/question-options", year);
+    assert.equal(other.code, 200);
+    assert(!other.data.some(o => o.group_id === groupId));
+  }
+  const source = fs.readFileSync(path.join(__dirname, "../public/admin-questions.js"), "utf8");
+  const element = { innerHTML: "" };
+  const context = vm.createContext({ usedInInput: element, role: "admin", esc: String,
+    api: async () => options.data });
+  vm.runInContext(source.slice(source.indexOf("function sortQuestionOptions("), source.indexOf("async function loadQuestions(")), context);
+  await context.loadQuestionOptions();
+  assert(element.innerHTML.includes(`data-group-id="${groupId}"`));
+  assert(element.innerHTML.includes("New administrator category > New administrator group"));
+  await call("put /api/survey-question-groups/:id", 2570,
+    { title: "New administrator group", is_active: false }, { id: groupId });
+  options = await call("get /api/admin/question-options", 2570);
+  assert(!options.data.some(o => o.group_id === groupId));
+  await call("put /api/survey-question-groups/:id", 2570,
+    { title: "New administrator group", is_active: true }, { id: groupId });
+  await call("put /api/survey-question-categories/:id", 2570,
+    { title: "New administrator category", is_active: false }, { id: categoryId });
+  options = await call("get /api/admin/question-options", 2570);
+  assert(!options.data.some(o => o.group_id === groupId));
+});
+
+test("Inactive groups cannot reappear through Legacy aliases or project dropdown options", async () => {
+  const db = database(), call = api(db.pool);
+  db.state.survey_question_categories[0].title = "LibQUAL+";
+  db.state.survey_question_groups[0].title = "ความรู้สึกที่มีต่อบริการ (Affect of Service)";
+  Object.assign(db.state.question_bank[0], { group_id: null, category: "LibQUAL+", datalist_id: "affectOfServiceSuggestions" });
+  db.state.question_bank.push({ ...db.state.question_bank[2], id: 33, group_id: 2000 });
+  db.state.survey_question_groups[0].is_active = 0;
+  const options = (await call("get /api/admin/question-options", "legacy")).data;
+  assert(!options.some(o => o.group_id === 2000 || o.datalist_id === "affectOfServiceSuggestions"));
+  assert(options.some(o => o.datalist_id === "dept_name" && !o.group_id), "independent Legacy dropdown remains available");
+});
+
 test("Legacy null-group aliases resolve on reads across cloned years without changing stored rows", async () => {
   const db = database();
   db.state.survey_question_categories[0].title = "LibQUAL+";
@@ -259,7 +319,7 @@ test("Builder payload uses selected year and preserves Edit/Copy snapshot fiscal
   for (const pageMode of ["create", "edit", "copy"]) {
     const context = {
       SectionSnapshot: snapshot, sectionSnapshot: snapshot.fromAdmin(snapshot.definitions.map(([section_key,title]) => ({ section_key,title }))),
-      pageMode, fiscalYearSelect: { value: "2571" }, bankFiscalYear: pageMode === "create" ? 2571 : 2570, savedFiscalYear: 2570,
+      mixedCopySourceId: null, pageMode, fiscalYearSelect: { value: "2571" }, bankFiscalYear: pageMode === "create" ? 2571 : 2570, savedFiscalYear: 2570,
       getSectionEnabled: () => true, collectGoalText: () => "", collectSection2Models: () => [], getCheckedValues: () => [], collectExtraSections: () => [], engagementQuestion: "Referral",
       document: { querySelector: () => ({ value: "" }), getElementById: () => ({ value: "2026-10-01" }) },
     };

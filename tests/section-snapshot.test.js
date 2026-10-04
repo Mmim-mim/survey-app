@@ -29,7 +29,7 @@ function server(database) {
       if (name === "./public/fiscal-year") return require("../public/fiscal-year");
       if (name === "./question-bank-years") return require("../question-bank-years");
       if (name === "./auth-session") return require("../auth-session");
-      return require(name);
+      return name.startsWith("./") ? require(path.join(base, name)) : require(name);
     }, __dirname: base, process: { env: {} }, console: { log() {}, error() {} },
   });
   return async (route, body = {}, params = { id: "1" }, query = {}) => {
@@ -85,6 +85,7 @@ test("Edit API preserves stored metadata and question IDs, including old client"
   const call = server(async (sql, values) => {
     if (sql.includes("FROM survey_forms")) return [[{ id: 1, created_by_username: "staff", form_json: JSON.stringify(original) }]];
     if (sql.includes("COUNT(*)")) return [[{ total: 2 }]];
+    if (sql.includes("SELECT payload_json FROM submissions")) return [[]];
     if (sql.includes("UPDATE survey_forms")) { written = JSON.parse(values.at(-2)); return [{}]; }
     throw Error(sql);
   });

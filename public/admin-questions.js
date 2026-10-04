@@ -78,9 +78,9 @@ function sortQuestionOptions(options) {
   };
   const order = value => value === null || value === undefined || value === "" || !Number.isFinite(Number(value))
     ? Number.MAX_SAFE_INTEGER : Number(value);
-  return [...options].sort((a, b) => rank(a) - rank(b)
-    || order(a.category_sort_order) - order(b.category_sort_order)
+  return [...options].sort((a, b) => order(a.category_sort_order) - order(b.category_sort_order)
     || order(a.category_sort_id ?? a.category_id) - order(b.category_sort_id ?? b.category_id)
+    || rank(a) - rank(b)
     || category(a).localeCompare(category(b), "th")
     || order(a.group_sort_order) - order(b.group_sort_order)
     || order(a.group_sort_id ?? a.group_id) - order(b.group_sort_id ?? b.group_id)
@@ -102,6 +102,7 @@ async function loadQuestionOptions() {
           <option
             value="${esc(item.option_key || item.group_id || item.datalist_id)}"
             data-group-id="${esc(item.group_id || "")}"
+            data-custom="${item.is_custom === true}" data-default-type="${esc(item.default_question_type || "rating")}"
             data-category="${esc(item.category_title || item.category || "")}"
             data-used-in-label="${esc(item.used_in_label || "")}"
             data-datalist-id="${esc(item.datalist_id || "")}"
@@ -304,6 +305,7 @@ async function addQuestion() {
   await api(`/api/admin/questions${editingQuestionId ? "/" + editingQuestionId : ""}?role=${encodeURIComponent(role)}`, {
     method: editingQuestionId ? "PUT" : "POST",
     body: JSON.stringify({
+      ...globalThis.MixedAdmin?.fields(),
       group_id: group_id || null,
       category,
       used_in_label,
@@ -417,6 +419,7 @@ function resetQuestionEditor() {
   document.getElementById("cancelEditQuestion").hidden = true;
   document.getElementById("customDropdownFields").hidden = true;
   btnAddQuestion.textContent = "เพิ่มคำถาม";
+  globalThis.MixedAdmin?.reset();
 }
 window.editQuestion = function(id) {
   const q = allQuestions.find(q => Number(q.id) === Number(id));
@@ -429,6 +432,7 @@ window.editQuestion = function(id) {
   document.getElementById("cancelEditQuestion").hidden = false;
   document.getElementById("customDropdownFields").hidden = true;
   btnAddQuestion.textContent = "บันทึกการแก้ไข";
+  globalThis.MixedAdmin?.edit(q);
   questionInput.focus();
 };
 usedInInput.addEventListener("change", () => {

@@ -544,6 +544,7 @@ async function loadResult() {
       throw new Error(data.error || "โหลดผลการดำเนินงานไม่สำเร็จ");
     }
 
+    globalThis.MixedUI?.report(data.custom_questions || []);
     const level = getEvaluationLevel(data.average_score);
 
     setText("formTitle", data.form_title || "-");

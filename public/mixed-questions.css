@@ -1,0 +1,37 @@
+.mixed-panel { margin:20px 0; padding:20px; background:#fff; border:1px solid #ead8c8; border-radius:14px; color:#452b2b; overflow-wrap:anywhere; }
+.mixed-panel h2,.mixed-panel h3,.mixed-panel summary { color:#7a1414; }
+.mixed-panel details { margin:10px 0; padding-left:12px; }
+.mixed-panel label { display:flex; align-items:center; gap:10px; margin:10px 0; }
+.mixed-panel input[type=checkbox],.mixed-panel input[type=radio] { width:auto; flex:none; }
+.mixed-panel textarea { width:100%; box-sizing:border-box; min-height:90px; }
+.mixed-panel fieldset { margin:14px 0; border:1px solid #ead8c8; border-radius:10px; min-width:0; }
+.mixed-panel .mixed-invalid { border:2px solid #b00020; }
+.mixed-panel .mixed-other-row { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:10px 0; min-width:0; }
+.mixed-panel .mixed-other-row label { margin:0; max-width:100%; }
+.mixed-panel .mixed-other-input { flex:1 1 250px; width:auto; max-width:100%; min-width:0; box-sizing:border-box; padding:8px 10px; font:inherit; border:1px solid #d8c7b4; border-radius:8px; }
+.mixed-panel .mixed-other-input[hidden] { display:none; }
+.mixed-choice { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+.mixed-choice input[type=text] { flex:1; min-width:100px; }
+/* Admin editor only: keep choices below the main question fields. */
+.page-admin-questions #mixedQuestionFields { margin-top:18px; min-width:0; }
+.page-admin-questions .mixed-required,
+.page-admin-questions .mixed-choice-other { display:flex; align-items:center; gap:8px; margin:0; font-weight:normal; }
+.page-admin-questions #mixedQuestionFields input[type=checkbox] { width:18px; height:18px; min-height:0; padding:0; margin:0; flex:0 0 18px; }
+.page-admin-questions #mixedChoiceEditor { margin-top:14px; padding:16px; border:1px solid #ead8c8; border-radius:12px; background:#fffaf3; }
+.page-admin-questions #mixedChoiceHeading { margin:0 0 12px; color:#7a1414; font-size:16px; }
+.page-admin-questions .mixed-choice { display:grid; grid-template-columns:28px minmax(0,1fr) 40px 40px 56px; align-items:center; gap:8px; padding:12px 0; margin:0; border-bottom:1px solid #ead8c8; }
+.page-admin-questions .mixed-choice-number { grid-column:1; grid-row:1; text-align:center; }
+.page-admin-questions .mixed-choice input[type=text] { grid-column:2; grid-row:1; width:100%; min-width:0; box-sizing:border-box; }
+.page-admin-questions .mixed-choice-other { grid-column:2 / -1; grid-row:2; }
+.page-admin-questions .mixed-choice button { grid-row:1; padding:8px; min-height:38px; border:1px solid #d8c7b4; border-radius:8px; background:white; color:#7a1414; cursor:pointer; }
+.page-admin-questions #mixedAddChoice { margin-top:14px; }
+@media(max-width:600px) {
+  .page-admin-questions #mixedChoiceEditor { padding:12px; }
+  .page-admin-questions .mixed-choice { grid-template-columns:24px minmax(0,1fr) 40px 40px 56px; }
+  .page-admin-questions .mixed-choice input[type=text] { grid-column:2 / -1; }
+  .page-admin-questions .mixed-choice-other { grid-column:1 / -1; }
+  .page-admin-questions .mixed-choice button { grid-row:3; }
+  .page-admin-questions .mixed-choice button:nth-last-child(3) { grid-column:3; }
+  .page-admin-questions .mixed-choice button:nth-last-child(2) { grid-column:4; }
+  .page-admin-questions .mixed-choice button:last-child { grid-column:5; }
+}

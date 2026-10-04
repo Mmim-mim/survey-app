@@ -481,7 +481,10 @@
     <link rel="stylesheet" href="global.css" />
     <link rel="stylesheet" href="responsive.css" />
     <link rel="stylesheet" href="admin-questions.css" />
-  </head>
+  <link rel="stylesheet" href="mixed-questions.css">
+<script src="mixed-questions.js"></script>
+<script src="mixed-ui.js"></script>
+</head>
 
   <body class="page-admin-questions">
     <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
@@ -539,7 +542,9 @@
           <div>
             <label for="typeInput">ประเภทคำถาม</label>
             <select id="typeInput">
-              <option value="rating">rating</option>
+              <option value="inherit">ใช้ประเภทเริ่มต้นจากโครงสร้าง</option>
+<option value="checkbox">Checkbox</option>
+<option value="rating">rating</option>
               <option value="textarea">
                 textarea (กล่องข้อความหลายบรรทัด)
               </option>
@@ -557,6 +562,14 @@
 
           <div><label for="questionOrder">ลำดับ</label><input id="questionOrder" type="number" value="0"></div>
         </div>
+          <div id="mixedQuestionFields" hidden>
+            <label class="mixed-required"><input id="mixedRequired" type="checkbox" checked> จำเป็นต้องตอบ</label>
+            <section id="mixedChoiceEditor" hidden aria-labelledby="mixedChoiceHeading">
+              <h3 id="mixedChoiceHeading">ตัวเลือกคำตอบ</h3>
+              <div id="mixedChoices"></div>
+              <button type="button" class="btn" id="mixedAddChoice">+ เพิ่มตัวเลือก</button>
+            </section>
+          </div>
           <div id="customDropdownFields" hidden>
             <div><label for="dropdownCategory">Category ของ Dropdown</label><input id="dropdownCategory"></div>
             <div><label for="dropdownLabel">ชื่อหัวข้อ Dropdown</label><input id="dropdownLabel"></div>
@@ -663,7 +676,8 @@
         }
       });
     </script>
-    <script src="admin-questions.js"></script>
+    <script src="mixed-admin.js"></script>
+<script src="admin-questions.js"></script>
 
   </body>
 </html>

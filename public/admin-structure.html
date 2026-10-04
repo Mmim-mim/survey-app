@@ -501,7 +501,10 @@
         place-items: center;
       }
     </style>
-  </head>
+  <link rel="stylesheet" href="mixed-questions.css">
+<script src="mixed-questions.js"></script>
+<script src="mixed-ui.js"></script>
+</head>
 
   <body>
     <div class="page">
@@ -539,7 +542,9 @@
           <label>คำอธิบาย</label>
           <textarea id="descInput" placeholder="คำอธิบายหัวข้อใหญ่"></textarea>
 
-          <label>ลำดับ</label>
+          <label for="defaultQuestionType">ประเภทคำถามเริ่มต้น (Custom Sections เท่านั้น)</label>
+<select id="defaultQuestionType"><option value="">สืบทอดจากระดับบน (Section ใหม่ใช้ Rating)</option><option value="rating">Rating 1–5</option><option value="checkbox">Checkbox</option><option value="textarea">ข้อความหลายบรรทัด</option></select>
+<label>ลำดับ</label>
           <input id="sortInput" type="number" value="0" />
 
           <label>สถานะ</label>

@@ -100,6 +100,19 @@ function clearActive() {
     .forEach((el) => el.classList.remove("active"));
 }
 
+function syncDefaultControl() {
+  const field = document.getElementById("defaultQuestionType");
+  if (!field) return;
+  let sectionId = selectedType === "section" ? selectedId : selectedParentId;
+  if (selectedType === "group") sectionId = findCategoryById(selectedParentId)?.section_id;
+  const section = sections.find(s => Number(s.id) === Number(sectionId));
+  const allowed = (selectedType === "section" && !selectedId) || /^custom_/.test(section?.section_key || "");
+  field.hidden = !allowed;
+  field.disabled = !allowed || !structureReady;
+  const label = document.querySelector('label[for="defaultQuestionType"]');
+  if (label) label.hidden = !allowed;
+}
+
 function resetForm() {
   selectedType = "section";
   selectedId = null;
@@ -111,8 +124,10 @@ function resetForm() {
   descInput.value = "";
   sortInput.value = "0";
   activeInput.value = "1";
+  document.getElementById("defaultQuestionType").value = "";
 
   formTitle.textContent = "เพิ่ม Section";
+  syncDefaultControl();
   clearActive();
 }
 
@@ -127,8 +142,10 @@ function resetCategoryForm(sectionId) {
   descInput.value = "";
   sortInput.value = "0";
   activeInput.value = "1";
+  document.getElementById("defaultQuestionType").value = "";
 
   formTitle.textContent = "เพิ่ม Category";
+  syncDefaultControl();
   clearActive();
 }
 
@@ -143,8 +160,10 @@ function resetGroupForm(categoryIdValue) {
   descInput.value = "";
   sortInput.value = "0";
   activeInput.value = "1";
+  document.getElementById("defaultQuestionType").value = "";
 
   formTitle.textContent = "เพิ่ม Group";
+  syncDefaultControl();
   clearActive();
 }
 
@@ -159,8 +178,10 @@ function fillSectionForm(section) {
   descInput.value = section.description || "";
   sortInput.value = section.sort_order || 0;
   activeInput.value = section.is_active ? "1" : "0";
+  document.getElementById("defaultQuestionType").value = section.default_question_type || "";
 
   formTitle.textContent = "แก้ไข Section";
+  syncDefaultControl();
   clearActive();
 
   document
@@ -179,8 +200,10 @@ function fillCategoryForm(category) {
   descInput.value = category.description || "";
   sortInput.value = category.sort_order || 0;
   activeInput.value = category.is_active ? "1" : "0";
+  document.getElementById("defaultQuestionType").value = category.default_question_type || "";
 
   formTitle.textContent = "แก้ไข Category";
+  syncDefaultControl();
   clearActive();
 
   document
@@ -199,8 +222,10 @@ function fillGroupForm(group) {
   descInput.value = group.description || "";
   sortInput.value = group.sort_order || 0;
   activeInput.value = group.is_active ? "1" : "0";
+  document.getElementById("defaultQuestionType").value = group.default_question_type || "";
 
   formTitle.textContent = "แก้ไข Group";
+  syncDefaultControl();
   clearActive();
 
   document
@@ -419,6 +444,7 @@ async function saveData() {
     description: descInput.value.trim(),
     sort_order: Number(sortInput.value || 0),
     is_active: activeInput.value === "1",
+    ...(document.getElementById("defaultQuestionType").disabled ? {} : {default_question_type: document.getElementById("defaultQuestionType").value || null}),
   };
 
   let url = "";

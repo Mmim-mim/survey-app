@@ -797,25 +797,27 @@
       const select = document.getElementById("budgetYear");
       select.addEventListener("change", loadFormsList);
 
-      // ปีปัจจุบัน (พ.ศ.)
-      const currentYearBE = new Date().getFullYear() + 543;
-
-      // ช่วงปีที่ต้องการให้เลือก
-      const startYear = currentYearBE - 3;
-      const endYear = currentYearBE + 1;
-
-      for (let year = startYear; year <= endYear; year++) {
-        const option = document.createElement("option");
-        option.value = year;
-        option.textContent = year;
-
-        // ให้ปีปัจจุบันถูกเลือกอัตโนมัติ
-        if (year === currentYearBE) {
-          option.selected = true;
+      // Calendar-based filter only; never creates Question Bank years or changes Forms.
+      function populateBudgetYears(now = new Date()) {
+        const parts = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Bangkok", calendar: "gregory", year: "numeric", month: "numeric",
+        }).formatToParts(now);
+        const year = Number(parts.find(p => p.type === "year").value);
+        const month = Number(parts.find(p => p.type === "month").value);
+        const currentFiscalYear = year + 543 + (month >= 10 ? 1 : 0);
+        // Preserve the earliest year offered by the existing UAT implementation.
+        const years = new Set();
+        for (let fiscalYear = 2566; fiscalYear <= currentFiscalYear + 1; fiscalYear++) years.add(fiscalYear);
+        select.replaceChildren();
+        for (const fiscalYear of years) {
+          const option = document.createElement("option");
+          option.value = String(fiscalYear);
+          option.textContent = String(fiscalYear);
+          select.appendChild(option);
         }
-
-        select.appendChild(option);
+        select.value = String(currentFiscalYear);
       }
+      populateBudgetYears();
 
       // ไปหน้าเพิ่มข้อมูล (คงเดิมตามไฟล์ของคุณ)
       document.getElementById("btnAdd").addEventListener("click", () => {
@@ -1166,6 +1168,7 @@
             end_date: data.end_date ?? data.form?.end_date ?? "",
           };
 
+          copied.mixed_copy_source_form_id = id;
           copied.form_title = (copied.form_title || "ฟอร์มใหม่") + " (copy)";
 
           localStorage.setItem("copyForm", JSON.stringify(copied));

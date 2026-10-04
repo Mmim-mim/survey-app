@@ -6,6 +6,16 @@ const source = fs.readFileSync(require('node:path').join(__dirname, '../public/a
 const context = vm.createContext({});
 vm.runInContext(source.slice(source.indexOf('function sortQuestionOptions('), source.indexOf('async function loadQuestions(')), context);
 
+test('Structure category order takes precedence over historical model names', () => {
+  const rows = [
+    { category_title: 'LibQUAL+', category_id: 1, category_sort_order: 5, group_id: 1 },
+    { category_title: 'New category', category_id: 90, category_sort_order: 1, group_id: 12, group_sort_order: 2 },
+    { category_title: 'New category', category_id: 90, category_sort_order: 1, group_id: 11, group_sort_order: 2 },
+    { category_title: 'New category', category_id: 90, category_sort_order: 1, group_id: 13, group_sort_order: 0 },
+  ];
+  assert.deepEqual(Array.from(context.sortQuestionOptions(rows), r => r.group_id), [13, 11, 12, 1]);
+});
+
 test('Admin option rendering groups model types, then category/group order and ID without mutation', () => {
   const rows = [
     { category_title: 'ESQUAL', group_id: 1 },

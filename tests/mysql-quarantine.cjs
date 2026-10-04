@@ -6,19 +6,27 @@ const snapshot = require('../public/section-snapshot');
 const root = path.resolve(__dirname, '..');
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 (async () => {
-  const config = { host: '127.0.0.1', port: 33308, user: 'root', dateStrings: true };
+  const safety = require('../test-db-safety');
+  const target = safety.assertQuarantineTarget({...safety.QUARANTINE_TARGET,user:'root',dateStrings:true});
+  safety.assertDestructiveTarget(target, process.argv.includes('--allow-destructive-test'));
+  const {database, ...config} = target;
   const control = await mysql.createConnection(config);
   let pool;
   try {
     const [[identity]] = await control.query('SELECT @@port port, VERSION() version');
     assert.equal(identity.port, 33308); assert.match(identity.version, /^8\.0\./);
-    const database = 'survey_quarantine_test_' + Date.now();
+    if (process.argv.includes('--reset-fixtures')) {
+      // Exact local test target is checked above before allowing fixture reset.
+      await control.query('DROP DATABASE IF EXISTS ' + database);
+    }
     await control.query('CREATE DATABASE ' + database);
     const restored = cp.spawnSync('D:/Project mfu/mysql8-test/mysql-8.0.45-winx64/bin/mysql.exe',
       ['--no-defaults', '--host=127.0.0.1', '--port=33308', '--user=root', database],
       { input: fs.readFileSync('D:/Project mfu/backups/survey-precleanup-20260924/survey_app.sql'), encoding: 'utf8', windowsHide: true });
     assert.equal(restored.status, 0, 'Restore must succeed before any test');
     pool = mysql.createPool({ ...config, database, connectionLimit: 8 });
+    const migration = fs.readFileSync(path.join(root,'migrations/002-mixed-questions.sql'),'utf8').replace(/^--.*$/gm,'');
+    for(const sql of migration.split(';').map(s=>s.trim()).filter(Boolean)) await pool.query(sql);
     const originalForms = (await pool.query('SELECT * FROM survey_forms WHERE id<>114 ORDER BY id'))[0];
     const originalSubmissions = (await pool.query('SELECT * FROM submissions ORDER BY id'))[0];
     const legacy = {};

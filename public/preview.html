@@ -317,7 +317,10 @@
     </style>
     <link rel="stylesheet" href="global.css" />
     <link rel="stylesheet" href="responsive.css" />
-  </head>
+  <link rel="stylesheet" href="mixed-questions.css">
+<script src="mixed-questions.js"></script>
+<script src="mixed-ui.js"></script>
+</head>
 
   <body class="page-preview">
     <div class="wrap">
@@ -1125,6 +1128,7 @@
         }
 
         renderPage();
+        globalThis.MixedUI?.renderAnswers(data);
         SectionSnapshot.render(document, data.sections);
         // Prompts are content, distinct from the Admin section heading.
         for (const [key, prompt] of [
@@ -1343,7 +1347,7 @@
       document
         .getElementById("confirmBtn")
         .addEventListener("click", async () => {
-          if (!validateFormBeforeSubmit()) {
+          if (!validateFormBeforeSubmit() || (globalThis.MixedUI && !MixedUI.validate())) {
             return;
           }
           let verifiedYear;
@@ -1438,6 +1442,7 @@
           // ===== 5) สร้าง payload สำหรับเก็บลง DB =====
           const payload = {
             ...verifiedYear,
+            mixed_questions: { answers: globalThis.MixedUI?.collectAnswers() || [], snapshot_token: globalThis.MixedQuestions.snapshotToken(data) },
             profile: {
               fullname: pf_fullname,
               status: pf_role,

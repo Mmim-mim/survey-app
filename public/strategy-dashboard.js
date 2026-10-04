@@ -531,6 +531,7 @@ async function loadSummary() {
   if (!res.ok) throw new Error(json?.error || "โหลดข้อมูลไม่สำเร็จ");
 
   kpiForms.textContent = json.kpi?.forms || 0;
+  globalThis.MixedUI?.report(json.custom_questions || []);
   kpiRespondents.textContent = json.kpi?.respondents || 0;
   kpiAvg.textContent = Number(json.kpi?.avgSatisfaction || 0).toFixed(2);
   kpiComments.textContent = json.kpi?.totalComments || 0;

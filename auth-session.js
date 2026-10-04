@@ -69,6 +69,13 @@ function createAuth(pool, { production = false, now = Date.now, ttl = 8 * 60 * 6
       if (path === "/login") return next();
       // Respondents remain anonymous. No user privileges are inferred from their payload.
       if (path === "/submissions" && req.method === "POST") return next();
+      // Preserve anonymous legacy Result access, but disclose new free-text results only
+      // when a live server session has been identified (never from role query strings).
+      if (!write && /^\/forms\/\d+\/results$/.test(path)) {
+        res.set("Cache-Control", "no-store");
+        if (session(req) && !await identify(req, res)) return;
+        return next();
+      }
       const admin = path.startsWith("/admin/") || (write && /^\/survey-(sections|question-categories|question-groups)(\/|$)/.test(path));
       const scopedRead = path === "/forms" || /^\/(dashboard|strategy-dashboard)\//.test(path);
       const publicReport = !write && /^\/(dashboard|strategy-dashboard)\//.test(path) && req.query.role === "public";

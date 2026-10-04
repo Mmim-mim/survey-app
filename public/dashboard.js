@@ -405,6 +405,7 @@ async function loadSummary() {
 
   if (!res.ok) throw new Error(json?.error || "โหลด summary ไม่สำเร็จ");
 
+  globalThis.MixedUI?.report(json.custom_questions || []);
   kpiRespondents.textContent = json.kpi?.respondents || 0;
   kpiAvg.textContent = Number(json.kpi?.avgSatisfaction || 0).toFixed(2);
   kpiComments.textContent = json.kpi?.totalComments || 0;

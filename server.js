@@ -9,6 +9,7 @@ const { randomUUID } = require("crypto");
 const QuestionBankYears = require("./question-bank-years");
 const Quarantine = require("./test-data-quarantine");
 const FiscalYear = require("./public/fiscal-year");
+const Mixed = require("./public/mixed-questions");
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -18,7 +19,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ตั้งค่าเชื่อม MySQL (XAMPP ปกติ root / รหัสว่าง)
 
-const pool = mysql.createPool({
+const databaseConfig = {
   host: process.env.DB_HOST || "127.0.0.1",
   port: process.env.DB_PORT || 25248,
   user: process.env.DB_USER || "root",
@@ -29,7 +30,16 @@ const pool = mysql.createPool({
   ssl: {
     rejectUnauthorized: false,
   },
-});
+};
+if (["1", "disposable"].includes(process.env.SURVEY_MIXED_TEST)) {
+  delete databaseConfig.ssl;
+  const safety = require("./test-db-safety");
+  if (process.env.SURVEY_MIXED_TEST === "disposable") {
+    safety.assertDestructiveTarget(databaseConfig, process.env.SURVEY_ALLOW_DESTRUCTIVE_TEST === "1");
+    if (databaseConfig.database !== safety.DISPOSABLE_TARGET.database) throw new Error("Wrong disposable runtime database");
+  } else safety.assertTarget(databaseConfig);
+}
+const pool = mysql.createPool(databaseConfig);
 
 const auth = require("./auth-session").createAuth(pool, {
   production: process.env.NODE_ENV === "production" || process.env.RENDER === "true",
@@ -87,6 +97,7 @@ function parseSubmissionPayload(payloadJson) {
     dept: String(profile.dept || "").trim(),
     fullname: String(profile.fullname || "").trim(),
     ratings,
+    mixed_questions: p.mixed_questions,
     comments,
     raw: p,
   };
@@ -181,7 +192,10 @@ app.post("/api/login", async (req, res) => {
  *  1) บันทึก submission
  * ----------------------------- */
 app.post("/api/submissions", async (req, res) => {
+  let connection;
   try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
     const { form_id, created_by, form_title, payload } = req.body;
     Quarantine.assertFormId(form_id);
 
@@ -194,8 +208,8 @@ app.post("/api/submissions", async (req, res) => {
     }
     Quarantine.assertReferences(payload);
 
-    const [forms] = await pool.execute(
-      "SELECT fiscal_year, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, form_json FROM survey_forms WHERE id = ? LIMIT 1",
+    const [forms] = await connection.execute(
+      "SELECT fiscal_year, DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, form_json FROM survey_forms WHERE id = ? LIMIT 1 FOR UPDATE",
       [form_id],
     );
     if (!forms.length) return res.status(404).json({ error: "ไม่พบฟอร์ม" });
@@ -205,18 +219,33 @@ app.post("/api/submissions", async (req, res) => {
     }
     Quarantine.assertReferences(savedForm);
     const verifiedYear = FiscalYear.resolveSubmission(savedForm, forms[0]);
-    const payload_json = JSON.stringify({ ...payload, ...verifiedYear });
+    Mixed.assertPreview(savedForm, payload.mixed_questions?.snapshot_token, !!payload.mixed_questions?.answers?.length);
+    const mixedAnswers = Mixed.validateAnswers(savedForm, payload.mixed_questions?.answers);
+    const customIds = new Set(Mixed.flatten(savedForm).map(x => x.q.questionId));
+    const customBankIds = new Set(Mixed.flatten(savedForm).map(x => x.q.questionBankId));
+    if (Array.isArray(payload.ratings) && payload.ratings.some(r => customIds.has(r?.questionId || r?.question_id) || customBankIds.has(Number(r?.questionBankId || r?.question_bank_id)))) {
+      return res.status(400).json({ error: "Custom Rating ต้องส่งแยกจากคะแนน Section 2" });
+    }
+    const cleanPayload = { ...payload, ...verifiedYear };
+    delete cleanPayload.custom_sections;
+    delete cleanPayload.mixed_questions;
+    if ((savedForm.custom_sections || []).length) cleanPayload.mixed_questions = { version: 1, sections: Mixed.sections(savedForm), answers: mixedAnswers };
+    const payload_json = JSON.stringify(cleanPayload);
 
-    const [result] = await pool.execute(
+    const [result] = await connection.execute(
       `INSERT INTO submissions
         (form_id, created_by, form_title, payload_json)
        VALUES (?, ?, ?, ?)`,
       [form_id, created_by || null, form_title || null, payload_json],
     );
 
+    await connection.commit();
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
+    if (connection) await connection.rollback();
     res.status(e.status || 500).json({ error: e.message, code: e.code });
+  } finally {
+    if (connection) { await connection.rollback().catch(() => {}); connection.release(); }
   }
 });
 
@@ -968,6 +997,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     return res.json({
+      custom_questions: Mixed.aggregate(filteredSubmissions, false),
       kpi: {
         respondents: respondentCount,
         avgSatisfaction: overallAverage,
@@ -1008,7 +1038,7 @@ app.get("/api/dashboard/summary", async (req, res) => {
       comments: comments.slice(0, 50),
     });
   } catch (error) {
-    console.error("GET /api/dashboard/summary error:", error);
+    console.error("GET /api/dashboard/summary error:");
 
     return res.status(500).json({
       error: error.message || "โหลดข้อมูล Dashboard ไม่สำเร็จ",
@@ -1182,7 +1212,7 @@ app.get("/api/forms/:id", async (req, res) => {
       `SELECT id, created_at, created_by, created_by_username, form_title,
               dept_name, uni_strategy, center_strategy, center_mission,
               goal_text, kpi_quantity, kpi_quality,
-              DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, end_date, fiscal_year, budget_received, budget_spent, attachment_url, form_json
+              DATE_FORMAT(start_date, '%Y-%m-%d') AS start_date, DATE_FORMAT(end_date, '%Y-%m-%d') AS end_date, fiscal_year, budget_received, budget_spent, attachment_url, form_json
        FROM survey_forms
        WHERE id = ?
        LIMIT 1`,
@@ -1289,7 +1319,7 @@ app.put("/api/forms/:id", Quarantine.formWriter(pool, async (req, res, pool) => 
       `SELECT id, created_by_username, form_json
        FROM survey_forms
        WHERE id = ?
-       LIMIT 1`,
+       LIMIT 1 FOR UPDATE`,
       [id],
     );
 
@@ -1321,7 +1351,6 @@ app.put("/api/forms/:id", Quarantine.formWriter(pool, async (req, res, pool) => 
     );
 
     const existingResponseCount = Number(submissionRows[0]?.total || 0);
-    console.log("existingResponseCount =", existingResponseCount);
 
     /*
      * ถ้ามีผู้ตอบแล้ว แต่ผู้ใช้ยังไม่ได้ยืนยัน
@@ -1337,13 +1366,17 @@ app.put("/api/forms/:id", Quarantine.formWriter(pool, async (req, res, pool) => 
     }
 
     const storedForm = safeJsonParse(existing.form_json) || {};
+    if (!Object.hasOwn(form, "custom_sections") && storedForm.custom_sections) form.custom_sections = Mixed.copy(storedForm.custom_sections);
+    const [historyRows] = existingResponseCount > 0 ? await pool.execute('SELECT payload_json FROM submissions WHERE form_id = ?', [id]) : [[]];
+    const history = historyRows.map(r => ({custom_sections:(safeJsonParse(r.payload_json) || {}).mixed_questions?.sections || []}));
+    Mixed.assertUnchanged(storedForm, form, existingResponseCount > 0, history);
     const verifiedFormYear = FiscalYear.resolve(form, { start_date, fiscal_year }, true);
     form.fiscal_year = verifiedFormYear.fiscal_year;
     form.start_date = form.start_date || start_date;
     if (Object.prototype.hasOwnProperty.call(storedForm, "question_bank_fiscal_year")) {
       form.question_bank_fiscal_year = storedForm.question_bank_fiscal_year;
     }
-    await QuestionBankYears.validateForm(pool, form);
+    await QuestionBankYears.validateForm(pool, form, storedForm);
     const preservedSections = SectionSnapshot.normalize(storedForm);
     const incomingSections = SectionSnapshot.normalize(form);
     for (const [key] of SectionSnapshot.definitions) {
@@ -1397,7 +1430,7 @@ app.put("/api/forms/:id", Quarantine.formWriter(pool, async (req, res, pool) => 
       response_count: existingResponseCount,
     });
   } catch (e) {
-    console.error("PUT /api/forms/:id error:", e);
+    console.error("PUT /api/forms/:id error:");
 
     return res.status(e.status || 500).json({
       error: e.message || "อัปเดตฟอร์มไม่สำเร็จ",
@@ -1751,19 +1784,8 @@ WHERE 1=1
       ? parsed.filter((r) => yearList.includes(Number(r.fiscal_year)))
       : parsed;
 
-    // ===== DEBUG สำคัญ =====
-    console.log("===== STRATEGY DASHBOARD DEBUG =====");
-    console.log("query:", req.query);
-    console.log("uniList:", uniList);
-    console.log("centerList:", centerList);
-    console.log("yearList:", yearList);
-    console.log("rows from DB:", rows.length);
-    console.log("years in rows:", [
-      ...new Set(parsed.map((r) => r.fiscal_year)),
-    ]);
-    console.log("sample parsed:", parsed[0]);
-    console.log("after filter:", filtered.length);
-    console.log("====================================");
+
+
 
     const allScores = [];
     const comments = [];
@@ -1858,6 +1880,7 @@ WHERE 1=1
     comments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     res.json({
+      custom_questions: Mixed.aggregate(filtered.map(r => safeJsonParse(r.payload_json) || {}), false),
       kpi: {
         forms: new Set(
           filtered.map((r) => Number(r.form_id)).filter(Number.isFinite),
@@ -1898,7 +1921,7 @@ WHERE 1=1
       },
     });
   } catch (e) {
-    console.error("strategy-dashboard summary error:", e);
+    console.error("strategy-dashboard summary error:");
     res.status(500).json({ error: e.message });
   }
 });
@@ -2376,6 +2399,7 @@ FROM survey_forms
       }
 
       Object.entries(value).forEach(([key, child]) => {
+        if (key === "mixed_questions" || key === "custom_sections") return;
         if (
           key === "score" ||
           key === "rating" ||
@@ -2432,6 +2456,7 @@ FROM survey_forms
         }
 
         Object.entries(value).forEach(([k, v]) => {
+          if (k === "mixed_questions" || k === "custom_sections") return;
           if (k === "dissatisfaction_text" || k === "suggestion") return;
           walk(v, k);
         });
@@ -2498,6 +2523,7 @@ FROM survey_forms
     });
 
     res.json({
+      custom_questions: Mixed.aggregate(subs.map(r => safeJsonParse(r.payload_json) || {}), !!req.authUser),
       form_id: form.id,
       form_title: formTitle,
 
@@ -2530,7 +2556,7 @@ FROM survey_forms
       respondent_summary: respondentSummary,
     });
   } catch (err) {
-    console.error("GET /api/forms/:id/results error:", err);
+    console.error("GET /api/forms/:id/results error:");
     res.status(500).json({
       error: err.message || "โหลดผลการดำเนินงานไม่สำเร็จ",
     });
@@ -2549,7 +2575,7 @@ FROM survey_forms
 app.get("/api/survey-sections", async (req, res) => {
   try {
     const [rows] = await pool.execute(`
-      SELECT id, section_key, title, description, sort_order, is_active, created_at
+      SELECT id, section_key, title, description, sort_order, is_active, created_at, default_question_type
       FROM survey_sections
       ORDER BY sort_order ASC, id ASC
     `);
@@ -2574,15 +2600,15 @@ app.post("/api/survey-sections", async (req, res) => {
     const [result] = await pool.execute(
       `
       INSERT INTO survey_sections
-      (section_key, title, description, sort_order, is_active)
-      VALUES (?, ?, ?, ?, ?)
+      (section_key, title, description, sort_order, is_active, default_question_type)
+      VALUES (?, ?, ?, ?, ?, ?)
       `,
-      [`custom_${randomUUID()}`, title, description || null, sort_order, is_active],
+      [`custom_${randomUUID()}`, title, description || null, sort_order, is_active, Mixed.type(req.body.default_question_type || "rating")],
     );
 
     res.json({ ok: true, id: result.insertId });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message });
   }
 });
 
@@ -2603,18 +2629,20 @@ app.put("/api/survey-sections/:id", async (req, res) => {
       return res.status(400).json({ error: "กรุณากรอกชื่อส่วนหลัก" });
     }
 
+    const [currentSections] = await pool.execute("SELECT * FROM survey_sections WHERE id = ?", [id]);
+    const sectionDefault = Mixed.custom(currentSections[0]?.section_key) ? Mixed.type(req.body.default_question_type || currentSections[0]?.default_question_type || "rating") : null;
     await pool.execute(
       `
       UPDATE survey_sections
-      SET title = ?, description = ?, sort_order = ?, is_active = ?
+      SET title = ?, description = ?, sort_order = ?, is_active = ?, default_question_type = ?
       WHERE id = ?
       `,
-      [title, description || null, sort_order, is_active, id],
+      [title, description || null, sort_order, is_active, sectionDefault, id],
     );
 
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message });
   }
 });
 
@@ -2650,10 +2678,10 @@ app.delete("/api/survey-sections/:id", async (req, res) => {
 
     res.json({ ok: true });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    res.status(e.status || 500).json({ error: e.message });
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, ["1", "disposable"].includes(process.env.SURVEY_MIXED_TEST) ? "127.0.0.1" : "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

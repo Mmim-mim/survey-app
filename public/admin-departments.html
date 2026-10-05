@@ -35,81 +35,24 @@
         color: var(--text);
       }
 
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: -280px;
-        width: 280px;
-        height: 100vh;
-        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-        padding: 86px 22px 22px;
-        color: white;
-        z-index: 2000;
-        transition: left 0.28s ease;
-        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-      }
 
-      body.sidebar-open .sidebar {
-        left: 0;
-      }
-      body.sidebar-open .sidebar {
-        left: 0;
-      }
 
-      .brand {
-        font-size: 22px;
-        font-weight: 900;
-        margin-bottom: 24px;
-        color: #fff;
-      }
 
-      .nav {
-        display: grid;
-        gap: 10px;
-      }
 
-      .nav a {
-        display: block;
-        color: #fff;
-        text-decoration: none;
-        padding: 12px 14px;
-        border-radius: 14px;
-        font-weight: 800;
-      }
 
-      .nav a:hover,
-      .nav a.active {
-        background: rgba(255, 255, 255, 0.18);
-      }
 
-      .sidebar-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.38);
-        display: none;
-        z-index: 1500;
-      }
 
-      body.sidebar-open .sidebar-overlay {
-        display: block;
-      }
 
-      .hamburger {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 2100;
-        width: 46px;
-        height: 46px;
-        border: 1px solid #ead8c8;
-        border-radius: 14px;
-        background: #fff;
-        color: #8b1515;
-        font-size: 24px;
-        font-weight: 900;
-        cursor: pointer;
-        box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
-      }
+
+
+
+
+
+
+
+
+
+
 
       .page {
         padding: 28px 42px 42px;
@@ -121,10 +64,7 @@
           width 0.28s ease;
       }
 
-      body.sidebar-open .page {
-        margin-left: 280px;
-        width: calc(100% - 280px);
-      }
+
 
       .header {
         display: flex;
@@ -388,14 +328,21 @@ legend { font-weight:600; margin-bottom:8px; }
 .dialog-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:24px; }
 .btn:focus-visible, a:focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
 #notice { color:#22613c; min-height:24px; margin:12px 0 0; }
-@media(max-width:600px) { h1 { font-size:27px; } .header { flex-direction:column; } .header-actions { width:100%; } .header-actions .btn { flex:1; text-align:center; } .panel { padding:12px; } body.sidebar-open .page { margin-left:0; width:100%; } .sidebar { max-width:85vw; } }
-</style></head><body>
-<button class="hamburger" id="hamburgerBtn" type="button" aria-label="เปิดเมนู" aria-expanded="false">☰</button><div class="sidebar-overlay" id="sidebarOverlay"></div>
-<aside class="sidebar"><div class="brand">👑 Admin</div><nav class="nav"><a href="admin.html">🏠 Dashboard</a><a href="admin-users.html">👥 จัดการผู้ใช้</a><a href="admin-departments.html" class="active" aria-current="page">🏢 จัดการฝ่าย</a><a href="admin-forms.html">📄 จัดการฟอร์ม</a><a href="admin-questions.html">📝 จัดการคำถาม</a></nav></aside>
-<main class="page"><div class="header"><div><h1>🏢 จัดการฝ่าย</h1><div class="sub">เพิ่ม แก้ไข และกำหนดสถานะฝ่ายภายในศูนย์บรรณสารและสื่อการศึกษา</div></div><div class="header-actions"><button class="btn primary" id="addDepartment" type="button">+ เพิ่มฝ่าย</button><a class="btn" href="admin-users.html">ย้อนกลับ</a></div></div>
+@media(max-width:600px) { h1 { font-size:27px; } .header { flex-direction:column; } .header-actions { width:100%; } .header-actions .btn { flex:1; text-align:center; } .panel { padding:12px; }   }
+</style><link rel="stylesheet" href="admin-navigation.css">
+</head><body>
+<button class="hamburger" id="hamburgerBtn" type="button" aria-label="เปิดเมนู Admin" aria-controls="sidebar" aria-expanded="false">☰</button><div class="sidebar-overlay" id="sidebarOverlay"></div>
+<aside class="sidebar" id="sidebar"><div class="brand">👑 Admin</div><nav class="nav"><a href="admin.html">🏠 Dashboard</a>
+<a href="admin-users.html" class="active" aria-current="page">👥 จัดการผู้ใช้</a>
+<a href="admin-forms.html">📄 จัดการฟอร์ม</a>
+<a href="admin-questions.html">📝 จัดการคำถาม</a>
+<a href="admin-structure.html">🧩 จัดการโครงสร้างแบบประเมิน</a>
+<a href="login.html">🚪 ออกจากระบบ</a></nav></aside>
+<main class="page"><div class="header admin-page-header"><div class="admin-heading"><a class="admin-back" href="admin.html" aria-label="ย้อนกลับ" title="ย้อนกลับ">←</a><div class="admin-heading-text"><h1>🏢 จัดการฝ่าย</h1><div class="sub">เพิ่ม แก้ไข และกำหนดสถานะฝ่ายภายในศูนย์บรรณสารและสื่อการศึกษา</div></div></div><div class="header-actions"><button class="btn primary" id="addDepartment" type="button">+ เพิ่มฝ่าย</button></div></div>
 
 <section class="panel" aria-labelledby="listHeading"><div class="panel-head"><h2 id="listHeading">รายการฝ่าย</h2><span class="group-count" id="departmentCount"></span></div><div class="table-wrap" tabindex="0" aria-label="ตารางฝ่าย เลื่อนแนวนอนได้"><table class="department-table"><thead><tr><th scope="col">ลำดับ</th><th scope="col">ชื่อฝ่าย</th><th scope="col">สถานะ</th><th scope="col">จัดการ</th></tr></thead><tbody id="departmentRows"></tbody></table></div><p id="notice" role="status" aria-live="polite"></p></section></main>
 <dialog id="departmentDialog" aria-labelledby="dialogTitle"><form id="departmentForm"><div class="dialog-heading"><h2 id="dialogTitle">เพิ่มฝ่าย</h2><button class="btn danger" id="deleteDepartment" type="button" hidden>ลบฝ่าย</button></div><label class="field-label" for="departmentName">ชื่อฝ่าย</label><input id="departmentName" name="name" required maxlength="255" autocomplete="off" placeholder="กรอกชื่อฝ่าย"><fieldset><legend>สถานะ</legend><div class="radio-row"><label><input type="radio" name="status" value="active" checked>ใช้งาน</label><label><input type="radio" name="status" value="inactive">ปิดใช้งาน</label></div></fieldset><div class="dialog-actions"><button class="btn" type="button" id="cancelDepartment">ยกเลิก</button><button class="btn primary" type="submit">บันทึก</button></div></form></dialog>
 <script src="auth-client.js"></script>
 <script src="admin-departments.js"></script>
+<script src="admin-navigation.js"></script>
 </body></html>

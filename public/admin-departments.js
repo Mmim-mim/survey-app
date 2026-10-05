@@ -53,11 +53,6 @@ form.onsubmit = e => {
   const method = editing ? 'PUT' : 'POST';
   saveAction(() => api(url, {method, body:JSON.stringify(body)}), 'บันทึกฝ่ายแล้ว');
 };
-const menu = document.getElementById('hamburgerBtn');
-function closeMenu() { document.body.classList.remove('sidebar-open'); menu.setAttribute('aria-expanded','false'); }
-menu.onclick = () => { const open = document.body.classList.toggle('sidebar-open'); menu.setAttribute('aria-expanded',String(open)); };
-document.getElementById('sidebarOverlay').onclick = closeMenu;
-document.addEventListener('keydown',e => { if (e.key === 'Escape') closeMenu(); });
 (async () => {
   try {
     const session = await api('/api/session');

@@ -46,82 +46,25 @@
         min-height: 100vh;
       }
 
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: -280px;
-        width: 280px;
-        height: 100vh;
-        background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
-        padding: 86px 22px 22px;
-        color: white;
-        z-index: 2000;
-        transition: left 0.28s ease;
-        box-shadow: 8px 0 30px rgba(0, 0, 0, 0.18);
-      }
 
-      body.sidebar-open .sidebar {
-        left: 0;
-      }
 
-      body.sidebar-open .sidebar {
-        left: 0;
-      }
 
-      .brand {
-        font-size: 22px;
-        font-weight: 900;
-        margin-bottom: 24px;
-        color: #fff;
-      }
 
-      .nav {
-        display: grid;
-        gap: 10px;
-      }
 
-      .nav a {
-        display: block;
-        color: #fff;
-        text-decoration: none;
-        padding: 12px 14px;
-        border-radius: 14px;
-        font-weight: 800;
-      }
 
-      .nav a:hover,
-      .nav a.active {
-        background: rgba(255, 255, 255, 0.18);
-      }
 
-      .sidebar-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.38);
-        display: none;
-        z-index: 1500;
-      }
 
-      body.sidebar-open .sidebar-overlay {
-        display: block;
-      }
 
-      .hamburger {
-        position: fixed;
-        top: 20px;
-        left: 20px;
-        z-index: 2100;
-        width: 46px;
-        height: 46px;
-        border: 1px solid #ead8c8;
-        border-radius: 14px;
-        background: #fff;
-        color: #8b1515;
-        font-size: 24px;
-        font-weight: 900;
-        cursor: pointer;
-        box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
-      }
+
+
+
+
+
+
+
+
+
+
 
       .page {
         padding: 28px 42px 42px;
@@ -133,10 +76,7 @@
           width 0.28s ease;
       }
 
-      body.sidebar-open .page {
-        margin-left: 280px;
-        width: calc(100% - 280px);
-      }
+
       .header {
         display: flex;
         justify-content: space-between;
@@ -484,29 +424,27 @@
   <link rel="stylesheet" href="mixed-questions.css">
 <script src="mixed-questions.js"></script>
 <script src="mixed-ui.js"></script>
+<link rel="stylesheet" href="admin-navigation.css">
 </head>
 
   <body class="page-admin-questions">
-    <button class="hamburger" id="hamburgerBtn" type="button">☰</button>
+    <button class="hamburger" id="hamburgerBtn" type="button" aria-label="เปิดเมนู Admin" aria-controls="sidebar" aria-expanded="false">☰</button>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <aside class="sidebar" id="sidebar">
-      <div class="brand">👑 Admin</div>
-      <nav class="nav">
-        <a href="admin.html">Dashboard</a>
-        <a href="admin-users.html">จัดการผู้ใช้</a>
-        <a href="admin-forms.html">จัดการฟอร์ม</a>
-        <a href="admin-questions.html" class="active">จัดการคำถาม</a>
-        <a href="login.html">ออกจากระบบ</a>
-      </nav>
-    </aside>
+    <aside class="sidebar" id="sidebar"><div class="brand">👑 Admin</div><nav class="nav"><a href="admin.html">🏠 Dashboard</a>
+<a href="admin-users.html">👥 จัดการผู้ใช้</a>
+<a href="admin-forms.html">📄 จัดการฟอร์ม</a>
+<a href="admin-questions.html" class="active" aria-current="page">📝 จัดการคำถาม</a>
+<a href="admin-structure.html">🧩 จัดการโครงสร้างแบบประเมิน</a>
+<a href="login.html">🚪 ออกจากระบบ</a></nav></aside>
 
     <main class="page">
-      <div class="header">
-        <div>
+      <div class="header admin-page-header">
+        <div class="admin-heading"><a class="admin-back" href="admin.html" aria-label="ย้อนกลับ" title="ย้อนกลับ">←</a><div class="admin-heading-text">
           <h1>📝 จัดการคำถาม</h1>
           <div class="sub">สร้างและจัดการคำถามกลางสำหรับนำไปใช้ในแบบฟอร์ม</div>
-        </div>
+        </div></div>
+
       </div>
 
       <section class="panel">
@@ -650,34 +588,10 @@
       </section>
     </main>
 
-    <script>
-      document.body.classList.remove("sidebar-open");
 
-      const hamburgerBtn = document.getElementById("hamburgerBtn");
-      const sidebarOverlay = document.getElementById("sidebarOverlay");
-
-      hamburgerBtn.addEventListener("click", () => {
-        document.body.classList.toggle("sidebar-open");
-      });
-
-      sidebarOverlay.addEventListener("click", () => {
-        document.body.classList.remove("sidebar-open");
-      });
-
-      document.querySelectorAll(".sidebar a").forEach((link) => {
-        link.addEventListener("click", () => {
-          document.body.classList.remove("sidebar-open");
-        });
-      });
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          document.body.classList.remove("sidebar-open");
-        }
-      });
-    </script>
     <script src="mixed-admin.js"></script>
 <script src="admin-questions.js"></script>
 
-  </body>
+  <script src="admin-navigation.js"></script>
+</body>
 </html>

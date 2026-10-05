@@ -504,19 +504,27 @@
   <link rel="stylesheet" href="mixed-questions.css">
 <script src="mixed-questions.js"></script>
 <script src="mixed-ui.js"></script>
+<link rel="stylesheet" href="admin-navigation.css">
 </head>
 
   <body>
+<button class="hamburger" id="hamburgerBtn" type="button" aria-label="เปิดเมนู Admin" aria-controls="sidebar" aria-expanded="false">☰</button><div class="sidebar-overlay" id="sidebarOverlay"></div><aside class="sidebar" id="sidebar"><div class="brand">👑 Admin</div><nav class="nav"><a href="admin.html">🏠 Dashboard</a>
+<a href="admin-users.html">👥 จัดการผู้ใช้</a>
+<a href="admin-forms.html">📄 จัดการฟอร์ม</a>
+<a href="admin-questions.html">📝 จัดการคำถาม</a>
+<a href="admin-structure.html" class="active" aria-current="page">🧩 จัดการโครงสร้างแบบประเมิน</a>
+<a href="login.html">🚪 ออกจากระบบ</a></nav></aside>
     <div class="page">
-      <div class="topbar">
-        <div>
+      <div class="topbar admin-page-header">
+        <div class="admin-heading"><a class="admin-back" href="admin.html" aria-label="ย้อนกลับ" title="ย้อนกลับ">←</a><div class="admin-heading-text">
           <h1>จัดการส่วนหลักของแบบประเมิน</h1>
           <div class="subtitle">
             จัดการ 5 ส่วนหลัก เช่น ข้อมูลผู้ประเมิน, คำถาม, ข้อเสนอแนะ
           </div>
-        </div>
+        </div></div>
 
         <div style="display: flex; gap: 10px; flex-wrap: wrap">
+
           <button class="btn primary" id="btnNew">+ เพิ่ม Section</button>
           <button class="btn" id="btnNewCategory">+ เพิ่ม Category</button>
           <button class="btn" id="btnNewGroup">+ เพิ่ม Group</button>
@@ -563,5 +571,6 @@
     </div>
 
     <script src="admin-structure.js"></script>
-  </body>
+  <script src="admin-navigation.js"></script>
+</body>
 </html>

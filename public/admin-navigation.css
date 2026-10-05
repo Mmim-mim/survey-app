@@ -1,0 +1,101 @@
+/* Shared navigation control; separate from each page's primary actions. */
+.hamburger {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 2100;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border: 1px solid #ead8c8;
+  border-radius: 14px;
+  background: #fff;
+  color: #8b1515;
+  font: 900 24px/1 system-ui, sans-serif;
+  /* Global button typography uses !important; keep this icon consistent too. */
+  font-size: 24px !important;
+  font-family: "Noto Sans Thai", system-ui, sans-serif !important;
+  cursor: pointer;
+  box-shadow: 0 10px 24px rgba(139, 21, 21, 0.16);
+}
+.hamburger:hover { background: #fff1e6; }
+.hamburger:focus-visible, .sidebar .nav a:focus-visible {
+  outline: 3px solid #c9a34e;
+  outline-offset: 3px;
+}
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 280px;
+  max-width: 85vw;
+  height: 100dvh;
+  box-sizing: border-box;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #8b1515, #b85b47, #f1d7bd);
+  padding: 86px 22px 22px;
+  color: white;
+  font-family: "Noto Sans Thai", system-ui, sans-serif;
+  font-size: 16px;
+  z-index: 2000;
+  transform: translateX(-100%);
+  transition: transform 0.28s ease;
+}
+body.sidebar-open .sidebar { transform: translateX(0); box-shadow: 8px 0 30px rgba(0,0,0,.18); }
+.sidebar .brand { font-size: 22px; font-weight: 900; margin-bottom: 24px; color: #fff; }
+.sidebar .nav { display: grid; gap: 10px; }
+.sidebar .nav a {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  box-sizing: border-box;
+  color: #fff;
+  text-decoration: none;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 800;
+}
+.sidebar .nav a:hover, .sidebar .nav a.active { background: rgba(255,255,255,.18); }
+.sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.38); display: none; z-index: 1500; }
+body.sidebar-open .sidebar-overlay { display: block; }
+/* Drawer overlays the page so opening it never squeezes the form actions. */
+.admin-page-header { margin-top: 56px; }
+.admin-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+.admin-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.admin-heading-text { min-width: 0; overflow-wrap: anywhere; }
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  box-sizing: border-box;
+  border: 1px solid #ead8c8;
+  border-radius: 12px;
+  background: #fff;
+  color: #8b1515;
+  font: 24px/1 system-ui, sans-serif;
+  text-decoration: none;
+}
+.admin-back:hover { background: #fff1e6; border-color: #c9a34e; }
+.admin-back:focus-visible { outline: 3px solid #c9a34e; outline-offset: 3px; }
+@media (max-width: 600px) {
+  body:has(.hamburger) .admin-page-header { margin-top: 56px; }
+  .admin-page-header .admin-heading { flex: 0 1 auto; width: 100%; }
+}

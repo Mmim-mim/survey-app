@@ -60,8 +60,10 @@ const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       await page.locator('#cancelDepartment').click();
     }
     await page.getByRole('button',{name:'แก้ไข ฝ่ายเปลี่ยนชื่อ',exact:true}).click();await page.locator('#deleteDepartment').click();
+    await page.getByRole('button',{name:'ยืนยัน',exact:true}).click();
     await page.waitForFunction(()=>document.querySelectorAll('#departmentRows tr').length===1);check(departments.length===1,'confirmed unused deletion');
     await page.getByRole('button',{name:'แก้ไข ฝ่ายเดิม',exact:true}).click();await page.locator('#deleteDepartment').click();
+    await page.getByRole('button',{name:'ยืนยัน',exact:true}).click();
     await page.waitForTimeout(100);check(await page.locator('#departmentDialog').isVisible() && departments.length===1,'used delete error retains record/modal');
     check(errors.length===0,'no browser exceptions');check(requests.some(r=>r.method==='PUT'),'PUT used for edit');
     console.log(checks+' browser checks passed (mock API only)');

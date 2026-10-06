@@ -33,15 +33,21 @@ async function saveAction(action, message) {
   if (busy) return;
   busy = true;
   try { await action(); dialog.close(); await load(); notice.textContent = message; }
-  catch (error) { alert(error.message); }
+  catch (error) { await AdminPopup.alert({type: "error", message: error.message}); }
   finally { busy = false; }
 }
 document.getElementById('addDepartment').onclick = e => openEditor(null, e.currentTarget);
 document.getElementById('cancelDepartment').onclick = () => { if (!busy) dialog.close(); };
-document.getElementById('deleteDepartment').onclick = () => {
-  if (!editing || !confirm('ยืนยันลบฝ่าย “' + editing.dept_name + '” หรือไม่?')) return;
-  const id = editing.id;
-  saveAction(() => api('/api/admin/departments/' + id, {method:'DELETE'}), 'ลบฝ่ายแล้ว');
+let deletePending = false;
+document.getElementById('deleteDepartment').onclick = async () => {
+  if (!editing || busy || deletePending) return;
+  deletePending = true;
+  const {id, dept_name} = editing;
+  try {
+    const confirmed = await AdminPopup.confirm({title: 'ยืนยันการลบ', message: 'ยืนยันลบฝ่าย “' + dept_name + '” หรือไม่?', destructive: true});
+    if (!confirmed) return;
+    await saveAction(() => api('/api/admin/departments/' + id, {method:'DELETE'}), 'ลบฝ่ายแล้ว');
+  } finally { deletePending = false; }
 };
 dialog.addEventListener('close', () => { if (opener?.isConnected) opener.focus(); else document.getElementById('addDepartment').focus(); });
 nameInput.oninput = () => nameInput.setCustomValidity('');

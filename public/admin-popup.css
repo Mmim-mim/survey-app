@@ -1,0 +1,35 @@
+dialog.admin-popup {
+  box-sizing: border-box;
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 28px;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  color: #292524;
+  text-align: center;
+  font-family: inherit;
+  box-shadow: 0 16px 48px #0003;
+}
+dialog.admin-popup::backdrop { background: #1c191780; }
+.admin-popup .admin-popup-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f5f5f4;
+  color: #7f1d1d;
+  font-size: 28px;
+  font-weight: 700;
+}
+.admin-popup[data-type="success"] .admin-popup-icon { background: #dcfce7; color: #166534; }
+.admin-popup[data-type="warning"] .admin-popup-icon { background: #fef3c7; color: #92400e; }
+.admin-popup[data-type="error"] .admin-popup-icon { background: #fee2e2; color: #991b1b; }
+.admin-popup h2 { margin: 16px 0 8px; font-size: 1.3rem; }
+.admin-popup p { margin: 0 0 24px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-popup button { min-height: 44px; padding: 10px 28px; border: 0; border-radius: 8px; background: #7f1d1d; color: white; font: inherit; cursor: pointer; }
+.admin-popup button:focus-visible { outline: 3px solid #d4a72c; outline-offset: 3px; }
+.admin-popup .admin-popup-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.admin-popup .admin-popup-cancel { background: #f5f5f4; color: #44403c; border: 1px solid #d6d3d1; }

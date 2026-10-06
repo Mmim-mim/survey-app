@@ -40,6 +40,7 @@ const root = path.join(__dirname, '../public');
           sections: snapshots.definitions.map(([section_key, title]) => ({ section_key, title })),
           models: [{ title: 'LibQUAL+', dimensions: [{ id: group, title: 'Service', datalist_id: `group_${group}_suggestions` }] }],
         };
+        else if (url.pathname === '/api/session') json = {user: {role: 'staff', username: 'tester'}, csrfToken: 'a'.repeat(64)};
         else if (url.pathname === '/api/question-bank/custom-structure') json = [];
         else if (url.pathname === '/api/forms/1') json = { created_by_username: 'tester', form };
         else throw Error('Unexpected API: ' + url.pathname);

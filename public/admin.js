@@ -8,11 +8,13 @@ const recentFormsBody = document.getElementById("recentFormsBody");
 
 const btnRefresh = document.getElementById("btnRefresh");
 
-function guardAdmin() {
+async function guardAdmin() {
   if (role !== "admin") {
-    alert("หน้านี้สำหรับ admin เท่านั้น");
+    await AdminPopup.alert({type: "warning", message: "หน้านี้สำหรับ admin เท่านั้น"});
     window.location.href = "dashboard.html";
+    return false;
   }
+  return true;
 }
 
 function esc(s) {
@@ -99,5 +101,5 @@ function refreshDashboard() {
 
 btnRefresh.addEventListener("click", refreshDashboard);
 
-guardAdmin();
-refreshDashboard();
+const adminReady = guardAdmin();
+adminReady.then(ok => { if (ok) refreshDashboard(); });

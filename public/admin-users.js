@@ -18,11 +18,13 @@ function esc(s) {
     .replaceAll("'", "&#039;");
 }
 
-function guardAdmin() {
+async function guardAdmin() {
   if (role !== "admin") {
-    alert("หน้านี้สำหรับ admin เท่านั้น");
+    await AdminPopup.alert({type: "warning", message: "หน้านี้สำหรับ admin เท่านั้น"});
     window.location.href = "dashboard.html";
+    return false;
   }
+  return true;
 }
 
 async function api(path, options = {}) {
@@ -155,7 +157,7 @@ async function updateUserDept(id, nextDept) {
     body: JSON.stringify({ department_id: nextDept ? Number(nextDept) : null }),
   });
 
-  } catch (error) { alert(error.message); }
+  } catch (error) { await AdminPopup.alert({type: "error", message: error.message}); }
   await loadUsers();
 }
 
@@ -169,7 +171,7 @@ async function addUser() {
 };
 
   if (!body.username || !body.password) {
-    alert("กรุณากรอก username และ password");
+    await AdminPopup.alert({type: "warning", message: "กรุณากรอก username และ password"});
     return;
   }
 
@@ -196,22 +198,28 @@ async function updateUserRole(id, nextRole) {
   await loadUsers();
 }
 
+let deletePending = false;
 async function deleteUser(id, name) {
-  if (!confirm(`ต้องการลบผู้ใช้ "${name}" ใช่ไหม?`)) return;
+  if (deletePending) return;
+  deletePending = true;
+  try {
+    const confirmed = await AdminPopup.confirm({title: "ยืนยันการลบ", message: `ต้องการลบผู้ใช้ "${name}" ใช่ไหม?`, destructive: true});
+    if (!confirmed) return;
 
-  await api(`/api/admin/users/${id}?role=${encodeURIComponent(role)}`, {
-    method: "DELETE",
-  });
+    await api(`/api/admin/users/${id}?role=${encodeURIComponent(role)}`, {
+      method: "DELETE",
+    });
 
-  await loadUsers();
+    await loadUsers();
+  } finally { deletePending = false; }
 }
 
 window.updateUserRole = updateUserRole;
 window.updateUserDept = updateUserDept;
 window.deleteUser = deleteUser;
 
-btnAddUser.addEventListener("click", () => addUser().catch(error => alert(error.message)));
-btnRefresh.addEventListener("click", () => loadUsers().catch(error => alert(error.message)));
+btnAddUser.addEventListener("click", () => addUser().catch(async error => await AdminPopup.alert({type: "error", message: error.message})));
+btnRefresh.addEventListener("click", () => loadUsers().catch(async error => await AdminPopup.alert({type: "error", message: error.message})));
 
-guardAdmin();
-loadUsers().catch(error => { userGroups.textContent = error.message; });
+const adminReady = guardAdmin();
+adminReady.then(ok => { if (ok) return loadUsers(); }).catch(error => { userGroups.textContent = error.message; });

@@ -25,11 +25,13 @@ function esc(s) {
     .replaceAll("'", "&#039;");
 }
 
-function guardAdmin() {
+async function guardAdmin() {
   if (role !== "admin") {
-    alert("หน้านี้สำหรับ admin เท่านั้น");
+    await AdminPopup.alert({type: "warning", message: "หน้านี้สำหรับ admin เท่านั้น"});
     window.location.href = "dashboard.html";
+    return false;
   }
+  return true;
 }
 
 async function api(path, options = {}) {
@@ -247,14 +249,20 @@ async function loadForms() {
   }
 }
 
+let deletePending = false;
 async function deleteForm(id, title) {
-  if (!confirm(`ต้องการลบฟอร์ม "${title || id}" ใช่ไหม?`)) return;
+  if (deletePending) return;
+  deletePending = true;
+  try {
+    const confirmed = await AdminPopup.confirm({title: "ยืนยันการลบ", message: `ต้องการลบฟอร์ม "${title || id}" ใช่ไหม?`, destructive: true});
+    if (!confirmed) return;
 
-  await api(`/api/admin/forms/${id}?role=${encodeURIComponent(role)}`, {
-    method: "DELETE",
-  });
+    await api(`/api/admin/forms/${id}?role=${encodeURIComponent(role)}`, {
+      method: "DELETE",
+    });
 
-  await loadForms();
+    await loadForms();
+  } finally { deletePending = false; }
 }
 
 window.deleteForm = deleteForm;
@@ -272,32 +280,37 @@ document.getElementById("selectAllForms")?.addEventListener("change", (e) => {
 });
 
 document.getElementById("btnDeleteSelected")?.addEventListener("click", async () => {
-  const selectedIds = Array.from(
-    document.querySelectorAll(".form-check:checked")
-  ).map((checkbox) => checkbox.value);
-
-  if (!selectedIds.length) {
-    alert("กรุณาเลือกฟอร์มที่ต้องการลบ");
-    return;
-  }
-
-  if (!confirm(`ต้องการลบฟอร์มที่เลือกทั้งหมด ${selectedIds.length} รายการใช่หรือไม่?`)) {
-    return;
-  }
-
+  if (deletePending) return;
+  deletePending = true;
   try {
-    for (const id of selectedIds) {
-      await api(`/api/admin/forms/${id}?role=${encodeURIComponent(role)}`, {
-        method: "DELETE",
-      });
+    const selectedIds = Array.from(
+      document.querySelectorAll(".form-check:checked")
+    ).map((checkbox) => checkbox.value);
+
+    if (!selectedIds.length) {
+      await AdminPopup.alert({type: "warning", message: "กรุณาเลือกฟอร์มที่ต้องการลบ"});
+      return;
     }
 
-    alert("ลบฟอร์มที่เลือกเรียบร้อยแล้ว");
-    await loadForms();
-  } catch (err) {
-    alert("ลบไม่สำเร็จ: " + err.message);
-  }
+    const confirmed = await AdminPopup.confirm({title: "ยืนยันการลบ", message: `ต้องการลบฟอร์มที่เลือกทั้งหมด ${selectedIds.length} รายการใช่หรือไม่?`, destructive: true});
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      for (const id of selectedIds) {
+        await api(`/api/admin/forms/${id}?role=${encodeURIComponent(role)}`, {
+          method: "DELETE",
+        });
+      }
+
+      await AdminPopup.alert({type: "success", message: "ลบฟอร์มที่เลือกเรียบร้อยแล้ว"});
+      await loadForms();
+    } catch (err) {
+      await AdminPopup.alert({type: "error", message: "ลบไม่สำเร็จ: " + err.message});
+    }
+  } finally { deletePending = false; }
 });
 
-guardAdmin();
-loadForms();
+const adminReady = guardAdmin();
+adminReady.then(ok => { if (ok) return loadForms(); });

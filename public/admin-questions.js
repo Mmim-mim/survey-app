@@ -22,11 +22,13 @@ let allQuestions = [];
 let questionOptions = [];
 let selectedCategory = "";
 
-function guardAdmin() {
+async function guardAdmin() {
   if (role !== "admin") {
-    alert("หน้านี้สำหรับ admin เท่านั้น");
+    await AdminPopup.alert({type: "warning", message: "หน้านี้สำหรับ admin เท่านั้น"});
     window.location.href = "dashboard.html";
+    return false;
   }
+  return true;
 }
 
 function esc(value) {
@@ -293,12 +295,12 @@ async function addQuestion() {
   const status = statusInput.value;
 
   if (!question_text) {
-    alert("กรุณากรอกคำถาม");
+    await AdminPopup.alert({type: "warning", message: "กรุณากรอกคำถาม"});
     return;
   }
 
   if (!group_id && (!category || !used_in_label || !datalist_id)) {
-    alert("กรุณาเลือก Dropdown/หัวข้อ");
+    await AdminPopup.alert({type: "warning", message: "กรุณาเลือก Dropdown/หัวข้อ"});
     return;
   }
 
@@ -325,18 +327,25 @@ async function addQuestion() {
 
   await loadQuestionOptions();
   await loadQuestions();
-  alert("บันทึกคำถามเรียบร้อย");
+  await AdminPopup.alert({type: "success", message: "บันทึกคำถามเรียบร้อย"});
 }
 
+let deletePending = false;
 async function deleteQuestion(id) {
-  const ok = confirm("ต้องการลบคำถามนี้ใช่หรือไม่?");
-  if (!ok) return;
+  if (deletePending) return;
+  deletePending = true;
+  const year = bankYear.value;
+  try {
+    const ok = await AdminPopup.confirm({title: "ยืนยันการลบ", message: "ต้องการลบคำถามนี้ใช่หรือไม่?", destructive: true});
+    if (!ok) return;
+    if (bankYear.value !== year) return;
 
-  await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
-    method: "DELETE",
-  });
+    await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
+      method: "DELETE",
+    });
 
-  await loadQuestions();
+    await loadQuestions();
+  } finally { deletePending = false; }
 }
 
 function getSelectedQuestionIds() {
@@ -346,44 +355,51 @@ function getSelectedQuestionIds() {
 }
 
 async function deleteSelectedQuestions() {
-  const ids = getSelectedQuestionIds();
-
-  if (!ids.length) {
-    alert("กรุณาเลือกคำถามที่ต้องการลบ");
-    return;
-  }
-
-  const ok = confirm(`ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`);
-  if (!ok) return;
-
+  if (deletePending) return;
+  deletePending = true;
+  const year = bankYear.value;
   try {
-    if (btnDeleteSelected) {
-      btnDeleteSelected.disabled = true;
-      btnDeleteSelected.textContent = "กำลังลบ...";
+    const ids = getSelectedQuestionIds();
+
+    if (!ids.length) {
+      await AdminPopup.alert({type: "warning", message: "กรุณาเลือกคำถามที่ต้องการลบ"});
+      return;
     }
 
-    for (const id of ids) {
-      await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
-        method: "DELETE",
-      });
-    }
+    const ok = await AdminPopup.confirm({title: "ยืนยันการลบ", message: `ต้องการลบคำถามที่เลือกทั้งหมด ${ids.length} รายการใช่ไหม?`, destructive: true});
+    if (!ok) return;
+    if (bankYear.value !== year) return;
 
-    await loadQuestions();
-    alert("ลบคำถามที่เลือกเรียบร้อยแล้ว");
-  } catch (err) {
-    alert(err.message || "ลบคำถามไม่สำเร็จ");
-  } finally {
-    if (btnDeleteSelected) {
-      btnDeleteSelected.disabled = false;
-      btnDeleteSelected.textContent = "ลบที่เลือก";
+    try {
+      if (btnDeleteSelected) {
+        btnDeleteSelected.disabled = true;
+        btnDeleteSelected.textContent = "กำลังลบ...";
+      }
+
+      for (const id of ids) {
+        if (bankYear.value !== year) return;
+        await api(`/api/admin/questions/${id}?role=${encodeURIComponent(role)}`, {
+          method: "DELETE",
+        });
+      }
+
+      await loadQuestions();
+      await AdminPopup.alert({type: "success", message: "ลบคำถามที่เลือกเรียบร้อยแล้ว"});
+    } catch (err) {
+      await AdminPopup.alert({type: "error", message: err.message || "ลบคำถามไม่สำเร็จ"});
+    } finally {
+      if (btnDeleteSelected) {
+        btnDeleteSelected.disabled = false;
+        btnDeleteSelected.textContent = "ลบที่เลือก";
+      }
     }
-  }
+  } finally { deletePending = false; }
 }
 
 window.deleteQuestion = deleteQuestion;
 
 if (btnAddQuestion) {
-  btnAddQuestion.addEventListener("click", () => addQuestion().catch(err => alert(err.message)));
+  btnAddQuestion.addEventListener("click", () => addQuestion().catch(async err => await AdminPopup.alert({type: "error", message: err.message})));
 }
 
 if (btnClearDemo) {
@@ -410,7 +426,7 @@ if (btnDeleteSelected) {
   btnDeleteSelected.addEventListener("click", deleteSelectedQuestions);
 }
 
-guardAdmin();
+const adminReady = guardAdmin();
 
 
 function resetQuestionEditor() {
@@ -475,17 +491,17 @@ bankYear.addEventListener("change", loadSelectedYear);
 document.getElementById("createBankYear").addEventListener("click", async event => {
   const year = Number(newBankYear.value);
   if (!newBankYear.value.trim() || !Number.isInteger(year) || year < 2570) {
-    alert("ปีงบประมาณต้องเป็น พ.ศ. 2570 ขึ้นไป และเป็นจำนวนเต็ม");
+    await AdminPopup.alert({type: "warning", message: "ปีงบประมาณต้องเป็น พ.ศ. 2570 ขึ้นไป และเป็นจำนวนเต็ม"});
     newBankYear.focus();
     return;
   }
   if (year > 2999) {
-    alert("ปีงบประมาณต้องไม่เกิน พ.ศ. 2999");
+    await AdminPopup.alert({type: "warning", message: "ปีงบประมาณต้องไม่เกิน พ.ศ. 2999"});
     newBankYear.focus();
     return;
   }
   if (existingFiscalYears.includes(year)) {
-    alert("ปีงบประมาณนี้มีอยู่แล้ว กรุณาระบุปีใหม่");
+    await AdminPopup.alert({type: "warning", message: "ปีงบประมาณนี้มีอยู่แล้ว กรุณาระบุปีใหม่"});
     newBankYear.focus();
     return;
   }
@@ -495,7 +511,7 @@ document.getElementById("createBankYear").addEventListener("click", async event 
       method: "POST", body: JSON.stringify({ fiscal_year: document.getElementById("newBankYear").value }),
     });
     await loadYears(String(result.fiscal_year));
-  } catch (error) { alert(error.message); }
+  } catch (error) { await AdminPopup.alert({type: "error", message: error.message}); }
   finally { event.target.disabled = false; bankYear.disabled = false; }
 });
-loadYears().catch(error => { yearMessage.textContent = error.message; btnAddQuestion.disabled = true; });
+adminReady.then(ok => { if (ok) return loadYears(); }).catch(error => { yearMessage.textContent = error.message; btnAddQuestion.disabled = true; });

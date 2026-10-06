@@ -4,6 +4,21 @@
   let sessionRequest;
   let expired = false;
   let loggingOut = false;
+  let popupRequest;
+  function showAuthPopup(options) {
+    if (window.AdminPopup) return window.AdminPopup.alert(options);
+    // Non-Admin pages share this client. Load the same component only on demand.
+    if (!popupRequest) popupRequest = new Promise((resolve, reject) => {
+      const style = document.createElement('link');
+      style.rel = 'stylesheet'; style.href = '/admin-popup.css';
+      const script = document.createElement('script');
+      script.src = '/admin-popup.js';
+      script.onload = () => window.AdminPopup ? resolve(window.AdminPopup) : reject(Error('Popup component unavailable'));
+      script.onerror = () => { popupRequest = null; reject(Error('Popup component unavailable')); };
+      document.head.append(style, script);
+    });
+    return popupRequest.then(popup => popup.alert(options));
+  }
   const authKeys = ["isLoggedIn", "user", "displayName", "role", "dept_name"];
   const protectedPage = location.pathname === '/' || /^\/(?:index|admin|admin-users|admin-forms|admin-questions|admin-structure|admin-departments|dashboard|strategy-dashboard|from)\.html$/i.test(location.pathname);
   function clearAuthState() {
@@ -22,9 +37,10 @@
     if (!expired) {
       expired = true;
       sessionRequest = null;
-      clearAuthState();
-      alert("เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง");
-      location.replace('/login.html');
+      showAuthPopup({type: 'warning', title: 'เซสชันหมดอายุ',
+        message: 'กรุณาเข้าสู่ระบบอีกครั้งเพื่อดำเนินการต่อ', confirmText: 'เข้าสู่ระบบ', dismissible: false})
+        .then(() => { clearAuthState(); location.replace('/login.html'); })
+        .catch(() => { console.error('Session expiry popup unavailable; reload this page to retry.'); });
     }
     // Navigation replaces this document. Do not let page-level handlers render
     // empty data or raise duplicate alerts while the redirect is in progress.
@@ -73,6 +89,10 @@
       if (!response.ok && response.status !== 401) throw Error("ออกจากระบบไม่สำเร็จ กรุณาลองใหม่");
       clearAuthState();
       location.href = "login.html";
-    } catch (error) { loggingOut = false; alert(error.message); }
+    } catch (error) {
+      loggingOut = false;
+      await showAuthPopup({type: 'error', title: 'ออกจากระบบไม่สำเร็จ', message: error.message, confirmText: 'ตกลง'})
+        .catch(() => { console.error('Logout error popup unavailable; reload this page to retry.'); });
+    }
   }, true);
 })();

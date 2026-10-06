@@ -435,7 +435,7 @@ async function saveData() {
   const title = titleInput.value.trim();
 
   if (!title) {
-    alert("กรุณากรอกชื่อ");
+    await AdminPopup.alert({type: "warning", message: "กรุณากรอกชื่อ"});
     return;
   }
 
@@ -481,7 +481,7 @@ async function saveData() {
     body: JSON.stringify(payload),
   });
 
-  alert("บันทึกข้อมูลเรียบร้อย");
+  await AdminPopup.alert({type: "success", message: "บันทึกข้อมูลเรียบร้อย"});
 
   categoryMap = {};
   groupMap = {};
@@ -489,57 +489,67 @@ async function saveData() {
   resetForm();
 }
 
+let deletePending = false;
 async function deleteData() {
-  if (!structureReady) return;
-  if (!selectedId) {
-    alert("กรุณาเลือกรายการที่ต้องการลบก่อน");
-    return;
-  }
-
-  const typeText =
-    selectedType === "section"
-      ? "Section"
-      : selectedType === "category"
-        ? "Category"
-        : "Group";
-
-  const ok = confirm(selectedType === "section" ? `ยืนยันลบ ${typeText} นี้หรือไม่?` : `ปิดใช้งาน ${typeText} ในปีนี้หรือไม่? ข้อมูลเดิมจะยังคงอยู่`);
-  if (!ok) return;
-
-  const url =
-    selectedType === "section"
-      ? `/api/survey-sections/${encodeURIComponent(selectedId)}`
-      : selectedType === "category"
-        ? `/api/survey-question-categories/${encodeURIComponent(selectedId)}`
-        : `/api/survey-question-groups/${encodeURIComponent(selectedId)}`;
-
+  if (!structureReady || deletePending) return;
+  deletePending = true;
   try {
-    await api(url, { method: "DELETE" });
-
-    alert(selectedType === "section" ? "ลบข้อมูลเรียบร้อย" : "ปิดใช้งานในปีนี้เรียบร้อย ข้อมูลเดิมยังคงอยู่");
-
-    if (selectedType === "section") {
-      openSectionIds.delete(selectedId);
+    if (!selectedId) {
+      await AdminPopup.alert({type: "warning", message: "กรุณาเลือกรายการที่ต้องการลบก่อน"});
+      return;
     }
 
-    if (selectedType === "category") {
-      openCategoryIds.delete(selectedId);
-    }
+    const target = {id: selectedId, type: selectedType, year: structureYear.value};
+    const typeText =
+      target.type === "section"
+        ? "Section"
+        : target.type === "category"
+          ? "Category"
+          : "Group";
 
-    categoryMap = {};
-    groupMap = {};
-    await refreshTree();
-    resetForm();
-  } catch (err) {
-    alert(err.message || "ลบข้อมูลไม่สำเร็จ");
-  }
+    const ok = await AdminPopup.confirm({
+      title: target.type === "section" ? "ยืนยันการลบ" : "ยืนยันปิดใช้งาน",
+      message: target.type === "section" ? `ยืนยันลบ ${typeText} นี้หรือไม่?` : `ปิดใช้งาน ${typeText} ในปีนี้หรือไม่? ข้อมูลเดิมจะยังคงอยู่`,
+      destructive: true,
+    });
+    if (!ok) return;
+    if (structureYear.value !== target.year) return;
+
+    const url =
+      target.type === "section"
+        ? `/api/survey-sections/${encodeURIComponent(target.id)}`
+        : target.type === "category"
+          ? `/api/survey-question-categories/${encodeURIComponent(target.id)}`
+          : `/api/survey-question-groups/${encodeURIComponent(target.id)}`;
+
+    try {
+      await api(url, { method: "DELETE" });
+
+      await AdminPopup.alert({type: "success", message: target.type === "section" ? "ลบข้อมูลเรียบร้อย" : "ปิดใช้งานในปีนี้เรียบร้อย ข้อมูลเดิมยังคงอยู่"});
+
+      if (target.type === "section") {
+        openSectionIds.delete(target.id);
+      }
+
+      if (target.type === "category") {
+        openCategoryIds.delete(target.id);
+      }
+
+      categoryMap = {};
+      groupMap = {};
+      await refreshTree();
+      resetForm();
+    } catch (err) {
+      await AdminPopup.alert({type: "error", message: err.message || "ลบข้อมูลไม่สำเร็จ"});
+    }
+  } finally { deletePending = false; }
 }
 
 btnNew.addEventListener("click", resetForm);
 
 btnNewCategory.addEventListener("click", async () => {
   if (selectedType !== "section" || !selectedId) {
-    alert("กรุณาเลือก Section ก่อน เช่น ส่วนของคำถาม");
+    await AdminPopup.alert({type: "warning", message: "กรุณาเลือก Section ก่อน เช่น ส่วนของคำถาม"});
     return;
   }
 
@@ -551,7 +561,7 @@ btnNewCategory.addEventListener("click", async () => {
 
 btnNewGroup.addEventListener("click", async () => {
   if (selectedType !== "category" || !selectedId) {
-    alert("กรุณาเลือก Category ก่อน เช่น LibQUAL+");
+    await AdminPopup.alert({type: "warning", message: "กรุณาเลือก Category ก่อน เช่น LibQUAL+"});
     return;
   }
 
@@ -597,7 +607,7 @@ btnSave.addEventListener("click", saveData);
   } catch (err) {
     structureYearError.textContent = err.message || "โหลดข้อมูลไม่สำเร็จ";
     console.error(err);
-    alert(err.message || "โหลดข้อมูลไม่สำเร็จ");
+    await AdminPopup.alert({type: "error", message: err.message || "โหลดข้อมูลไม่สำเร็จ"});
   } finally { structureYear.disabled = false; }
 })();
 

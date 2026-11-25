@@ -392,15 +392,30 @@ function renderGroupChart(groups = []) {
   });
 }
 
-function renderLevelChart(levelCounts = {}) {
+function renderLevelChart(levelCounts) {
   const ctx = document.getElementById("levelChart");
 
   if (!ctx) return;
 
   if (levelChartInstance) levelChartInstance.destroy();
+  levelChartInstance = null;
+
+  let message = document.getElementById("levelChartStatus");
+  if (!message) {
+    message = document.createElement("p");
+    message.id = "levelChartStatus";
+    message.setAttribute("role", "status");
+    ctx.insertAdjacentElement("afterend", message);
+  }
+  const available = levelCounts && !Array.isArray(levelCounts) && typeof levelCounts === "object";
+  const values = available ? Object.values(levelCounts) : [];
+  const hasData = values.length > 0 && values.every(n => Number.isSafeInteger(n) && n >= 0) && values.some(n => n > 0);
+  message.textContent = !available ? "ข้อมูลระดับผลประเมินรายผู้ตอบยังไม่พร้อม" : !hasData ? "ไม่มีข้อมูลคะแนนสำหรับแสดงกราฟระดับผลประเมินรายผู้ตอบ" : "";
+  message.hidden = hasData;
+  ctx.hidden = !hasData;
+  if (!hasData) return;
 
   const labels = Object.keys(levelCounts);
-  const values = Object.values(levelCounts);
 
   levelChartInstance = new Chart(ctx, {
     type: "doughnut",
@@ -414,6 +429,13 @@ function renderLevelChart(levelCounts = {}) {
     },
     options: {
       responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: context => `${context.label}: ${context.raw} ผู้ตอบ (Submission)`,
+          },
+        },
+      },
     },
   });
 }
@@ -567,7 +589,7 @@ async function loadResult() {
     renderWeakTable(data.question_scores || []);
     renderSuggestions(data.suggestions || []);
     renderGroupChart(data.group_scores || []);
-    renderLevelChart(data.level_counts || {});
+    renderLevelChart(data.respondent_level_counts);
 
     renderRespondentChart(
       "statusChart",

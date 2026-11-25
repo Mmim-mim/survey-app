@@ -2457,7 +2457,10 @@ FROM survey_forms
       return [...new Set(found)];
     }
 
+    const respondentLevelCounts = Object.fromEntries(Object.keys(levelCounts).map(k => [k, 0]));
+    let scoredSubmissions = 0, unscoredSubmissions = 0;
     subs.forEach((row) => {
+      const scoreStart = allScores.length;
       let payload = {};
 
       try {
@@ -2471,6 +2474,12 @@ FROM survey_forms
 
       collectRespondentProfile(payload);
       walkForScores(payload);
+      const scores = allScores.slice(scoreStart);
+      if (scores.length) {
+        const mean = scores.reduce((sum, score) => sum + score, 0) / scores.length;
+        respondentLevelCounts[getLevel(mean)] += 1;
+        scoredSubmissions += 1;
+      } else unscoredSubmissions += 1;
 
       collectSuggestions(payload).forEach((s) => {
         if (s && !suggestions.includes(s)) suggestions.push(s);
@@ -2543,6 +2552,9 @@ FROM survey_forms
       suggestions,
 
       level_counts: levelCounts,
+      respondent_level_counts: respondentLevelCounts,
+      scored_submissions: scoredSubmissions,
+      unscored_submissions: unscoredSubmissions,
       respondent_summary: respondentSummary,
     });
   } catch (err) {
